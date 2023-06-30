@@ -91,10 +91,9 @@ def user_input():
 
     # Send a message to the user terminal listener
     if respond_to_user_input == True:
-        response = requests.get(
+        requests.get(
             "http://127.0.0.1:5001/response", params={"msg": response_message}
         )
-        return response.text.strip()
 
     write_log("Conversation:")
     write_log(terminal_input_history)
