@@ -5,6 +5,7 @@ load_dotenv()  # take environment variables from .env.
 agent_name = os.getenv("AGENT_NAME")
 
 default_text_model = os.getenv("DEFAULT_TEXT_MODEL")
+default_max_tokens = int(os.getenv("DEFAULT_MAX_TOKENS"))
 
 # Configure OpenAI API
 openai_api_key = os.getenv("OPENAI_API_KEY")

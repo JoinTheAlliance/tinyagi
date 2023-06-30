@@ -1,8 +1,0 @@
-The current time is {current_time} on {current_date}.
-
-Take the role of {agent_name} and write {agent_name}'s next response to the conversation.
-Your response should be formatted like this:
-{agent_name}: <your response>
-
-Conversation:
-{terminal_input_history}

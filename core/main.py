@@ -3,14 +3,12 @@ import time
 import uuid
 import logging
 
-from functions import register_skill_functions, get_all_functions
+from skill_handling import register_skills, get_all_skills
 
 import loop
 import memory
 
 from flask import Flask, request
-
-from user_input import user_input
 
 app = Flask(__name__)
 
@@ -26,26 +24,25 @@ def create_input_event():
     # generate a uuid
     document_id = uuid.uuid4()
 
-    collections["terminal_input_history"].add(
+    collections["events"].add(
         ids=[str(document_id)],
         documents=[userText],
-        metadatas=[{"processed":"false", "sender": "user"}],
+        metadatas=[{"type": "conversation", "connector": "admin_chat", "read": True, "event_creator": "administrator"}],
     )
-    print("input event created")
+
     return "", 200  # Return a successful HTTP response
 
 
 def run_loop():
     while True:
-        user_input()
         loop.main()
         time.sleep(1)
 
 
 def main():
-    register_skill_functions()
+    register_skills()
     print("Registering skills...")
-    print(get_all_functions())
+    print(get_all_skills())
     print("I am waking up...")
     # Start the loop in a separate thread
     threading.Thread(target=run_loop, daemon=True).start()

@@ -1,7 +1,10 @@
-from constants import agent_name
+# Add some debug collection data for testing
+from constants import agent_name, debug
 
 
 def seed_collections(collections):
+    if(debug != True):
+        return
     collections["skills"].add(
         ids=["1"],
         # JSON with a name, description and function
@@ -30,7 +33,7 @@ def seed_collections(collections):
     collections["events"].add(
         ids=["1"],
         documents=["Hello, I am " + agent_name],
-        metadatas=[{"type": "test", "event_creator": agent_name}],
+        metadatas=[{"type": "conversation", "connector": "admin_chat", "read": True, "event_creator": agent_name}],
     )
 
     collections["knowledge"].add(

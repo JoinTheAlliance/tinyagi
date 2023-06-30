@@ -1,3 +1,5 @@
 openai
 python-dotenv
 flask
+tiktoken
+chromadb

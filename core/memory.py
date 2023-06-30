@@ -1,17 +1,23 @@
 import chromadb
 from seed_collections import seed_collections
-from utils import write_debug_log
-
+from utils import (
+    get_current_date,
+    get_formatted_time,
+    get_agent_name,
+    write_debug_log,
+    messages_to_dialogue,
+    events_to_stream
+)
 chroma_client = chromadb.Client()
 
 collection_names = [
-    "terminal_input_history",
     "skills",
     "personality",
     "goals",
     "events",
     "tasks",
     "knowledge",
+    "connectors"
 ]  # add people
 
 collections = {}
@@ -53,7 +59,10 @@ def get_documents(collection_name, where=None, include=["metadatas", "documents"
     return collections[collection_name].get(where=where, include=include)
 
 def get_formatted_collection_data(collection_name, query_text, n_results=5):
-    write_debug_log(f"Searching for similar " + collection_name + " to {query_text}")
+    if query_text == None:
+        print("query_text is None for collection_name", collection_name)
+        return
+    write_debug_log(f"Searching for similar " + collection_name)
     collection_data = search_collection(
         collection_name=collection_name,
         query_texts=[query_text],
@@ -86,9 +95,35 @@ def get_knowledge(query_text, n_results=5):
 def get_personality(query_text, n_results=5):
     return get_formatted_collection_data("personality", query_text, n_results)
 
-def get_recent_terminal_input(query_text, n_results=10):
-    collection_data = get_formatted_collection_data("terminal_input_history", query_text, n_results)
-    collection_data = collection_data.split("\n")
-    collection_data.reverse()
-    collection_data = "\n".join(collection_data)
-    return collection_data
+def get_all_values_for_text(text):
+    conversation = messages_to_dialogue(
+        collections["events"].peek(limit=12)
+    )
+    return {
+        "formatted_time": get_formatted_time(),
+        "current_date": get_current_date(),
+        "conversation": conversation,
+        "agent_name": get_agent_name(),
+        "skills": get_skills(text),
+        "goals": get_goals(text),
+        "tasks": get_tasks(text),
+        "events": get_events(limit=12),
+        "similar_events": get_similar_events(text),
+        "personality": get_personality(text),
+        "knowledge": get_knowledge(text),
+    }
+
+def get_conversation_history(limit=10):
+    return messages_to_dialogue(
+        collections["events"].get(where={"metadatas.type": "conversation"}, limit=limit)
+    )
+
+def get_similar_events(text, n_results=5):
+    return get_formatted_collection_data("events", text, n_results)
+
+def get_events(limit=12):
+    events = events_to_stream(
+        collections["events"].peek(limit=limit)
+    )
+    print("events", events)
+    return events
