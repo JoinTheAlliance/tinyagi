@@ -1,26 +1,23 @@
 import openai
-from utils import debug_write_file
+from utils import write_debug_log
 from constants import default_text_model, openai_api_key
 from dotenv import load_dotenv
 import time
+
 load_dotenv()  # take environment variables from .env.
 
 # Configure OpenAI API
 openai.api_key = openai_api_key
 
+
 def create_chat_completion(messages, functions=None, model=default_text_model):
     # if
     if functions == None:
-      response = openai.ChatCompletion.create(
-        model=model,
-        messages=messages
-      )
+        response = openai.ChatCompletion.create(model=model, messages=messages)
     else:
-      response = openai.ChatCompletion.create(
-        model=model,
-        messages=messages,
-        functions=functions
-      )
+        response = openai.ChatCompletion.create(
+            model=model, messages=messages, functions=functions
+        )
 
     response_str = str(response)
 
@@ -30,9 +27,9 @@ def create_chat_completion(messages, functions=None, model=default_text_model):
 
     function = response_data.get("function", None)
 
-    debug_write_file(response_str, "responses/response_"+str(time.time()))
+    write_debug_log("create_chat_completion called")
+    write_debug_log("messages: " + str(messages))
+    write_debug_log("functions: " + str(functions))
+    write_debug_log("response_str: " + response_str)
 
-    return {
-        "message": message,
-        "function": function
-    }
+    return {"message": message, "function": function}

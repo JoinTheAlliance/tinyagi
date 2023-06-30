@@ -1,23 +1,53 @@
 import os
-import requests
-from constants import debug, respond_to_user_input
-def respond_to_terminal_input(msg):
-    if(respond_to_user_input == False):
-        return
-    response = requests.get("http://127.0.0.1:5001/response", params={"msg": msg})
-    return response.text.strip()
+import time
+from constants import debug
 
-def debug_write_file(text, filename):
+def messages_to_dialogue(messages):
+    # dialogue is a string of <sender>: <message>\n
+    dialogue = ""
+    for i in range(len(messages["ids"])):
+        dialogue += messages["metadatas"][i]["sender"] + ": " + messages["documents"][i] + "\n"
+    return dialogue
+
+# write to the main log stream
+# this will be referenced by the agent
+def write_log(text):
+    print(text)
     # if logs directory does not exist, create it
     os.makedirs("logs", exist_ok=True)
-    # check that all of the directories exist
-    if filename.find("/") != -1:
-        # there is a directory in the filename
-        directory = filename[:filename.rfind("/")]
-        # create the directory at logs/directory
-        os.makedirs("logs/"+directory, exist_ok=True)
-    if(debug == False):
+    # if logs/log.txt doesn't exist, write it
+    if not os.path.exists("logs/log.txt"):
+        with open("logs/log.txt", "w") as f:
+            f.write("")
+    # write to logs/log.txt
+    with open("logs/log.txt", "a") as f:
+        f.write(text + "\n")
+    write_debug_log(text)
+
+
+# write to the debug log
+# Debug logs are helpful to understand the full agent stream, but can be very slow
+# Set DEBUG=False in .env to disable debug logs when deploying
+def write_debug_log(text):
+    if debug == False:
         return
-    file = open("logs/"+filename+".txt", "w")
-    file.write(text)
-    file.close()
+    # if logs directory does not exist, create it
+    os.makedirs("logs", exist_ok=True)
+    # if logs/log.txt doesn't exist, write it
+    if not os.path.exists("logs/debug_log.txt"):
+        with open("logs/debug_log.txt", "w") as f:
+            f.write("")
+    # write to logs/log.txt
+    with open("logs/debug_log.txt", "a") as f:
+        f.write(text + "\n")
+
+
+def get_formatted_time():
+    current_time = time.time()
+    formatted_time = time.strftime("%H:%M:%S", time.localtime(current_time))
+    return formatted_time
+
+def get_current_date():
+    current_time = time.time()
+    current_date = time.strftime("%Y-%m-%d", time.localtime(current_time))
+    return current_date

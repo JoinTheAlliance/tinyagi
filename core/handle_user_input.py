@@ -1,109 +1,95 @@
 import time
 import uuid
+from core.utils import get_current_date, get_formatted_time
 import database
 from functions import call_function
 from completion import create_chat_completion
 from constants import agent_name
-from utils import debug_write_file, respond_to_terminal_input
+from utils import write_log, write_debug_log
+from constants import respond_to_user_input
+import requests
 
 chroma_client = database.get_client()
 collections = database.get_collections()
 
+###
 
-def create_system_input_prompt():
-    system_input_prompt_template = """\
-Ignore all previous instructions. You are {agent_name}, an intelligent helpful AI system capable of performing a variety of tasks and even changing your own codebase.
+def compose_system_input_prompt():
+    system_input_prompt_template = """Ignore all previous instructions. You are {agent_name}, an intelligent helpful AI system capable of performing a variety of tasks and even changing your own codebase.
 You are current in a conversation with the user.
-Write a response as {agent_name} to the conversation. The user is an experienced administrator and programmer who can you help you with your tasks.
-    """
+Write a response as {agent_name} to the conversation. The user is an experienced administrator and programmer who can you help you with your tasks."""
 
     system_input_prompt_template = system_input_prompt_template.format(
         agent_name=agent_name
     )
 
-    debug_write_file(
-        system_input_prompt_template, "system_input_prompt_template_" + str(time.time())
-    )
+    write_debug_log("system_input_prompt_template:\n" + system_input_prompt_template)
 
     return system_input_prompt_template
 
-
-def create_user_input_prompt():
-    current_time = time.time()
-    formatted_time = time.strftime("%H:%M:%S", time.localtime(current_time))
-    current_date = time.strftime("%Y-%m-%d", time.localtime(current_time))
-    user_events = collections["user_events"].peek(limit=10)
-
-    # user_events is a dictionary with keys: ids, documents, metadatas, each of which is a list
-    # convert into a list of objects, each with an id, document, and metadata
-    user_events = list(
-        map(
-            lambda i: {
-                "id": user_events["ids"][i],
-                "document": user_events["documents"][i],
-                "sender": user_events["metadatas"][i]["sender"],
-            },
-            range(len(user_events["ids"])),
-        )
-    )
-
-    # remap user_events to be a list of strings, formatted like <sender>: <document>
-    user_events = list(
-        map(
-            lambda i: "{sender}: {document}".format(
-                sender=user_events[i]["sender"], document=user_events[i]["document"]
-            ),
-            range(len(user_events)),
-        )
-    )
-
-    # now combine with \n
-    user_events = "\n".join(user_events)
-
-    # insert current time and date
-    user_input_prompt_template = """\
-The current time is {formatted_time} on {current_date}.
+def compose_user_input_prompt():
+    user_input_prompt_template = """The current time is {current_time} on {current_date}.
 
 Take the role of {agent_name} and write {agent_name}'s next response to the conversation.
 Your response should be formatted like this:
 {agent_name}: <your response>
 
 Conversation:
-{user_events}\
-    """
+{user_terminal_input}"""
+
+    formatted_time = get_formatted_time()
+    current_date = get_current_date()
+    user_terminal_input = collections["user_terminal_input"].peek(limit=10)
+
+    # user_terminal_input is a dictionary with keys: ids, documents, metadatas, each of which is a list
+    # convert into a list of objects, each with an id, document, and metadata
+    user_terminal_input = list(
+        map(
+            lambda i: {
+                "id": user_terminal_input["ids"][i],
+                "document": user_terminal_input["documents"][i],
+                "sender": user_terminal_input["metadatas"][i]["sender"],
+            },
+            range(len(user_terminal_input["ids"])),
+        )
+    )
+
+    # remap user_terminal_input to be a list of strings, formatted like <sender>: <document>
+    user_terminal_input = list(
+        map(
+            lambda i: "{sender}: {document}".format(
+                sender=user_terminal_input[i]["sender"], document=user_terminal_input[i]["document"]
+            ),
+            range(len(user_terminal_input)),
+        )
+    )
+
+    # now combine with \n
+    user_terminal_input = "\n".join(user_terminal_input)
+
     user_input_prompt_template = user_input_prompt_template.format(
         formatted_time=formatted_time,
         current_date=current_date,
-        user_events=user_events,
+        user_terminal_input=user_terminal_input,
         agent_name=agent_name,
     )
-    debug_write_file(
-        user_input_prompt_template, "user_input_prompt_template_" + str(time.time())
+    write_debug_log(
+        "user_input_prompt_template:\n" + user_input_prompt_template
     )
     return user_input_prompt_template
 
 
 def handle_user_input():
-    where = {
-        "$and": [
-            {"sender": "user"},
-            {"processed": "false"},
-        ]
-    }
-    new_messages = collections["user_events"].get(where=where)
+    # check for new unprocessed messages
+    new_messages = collections["user_terminal_input"].get(where={ "processed": False})
 
-    if len(new_messages["ids"]) > 0:
-        for i in range(len(new_messages["ids"])):
-            handle_message()
-            collections["user_events"].update(
-                ids=new_messages["ids"][i],
-                metadatas=[{"processed": "true", "sender": "user"}],
-            )
+    # if none, skip the rest of this function
+    if len(new_messages["ids"]) == 0:
+        return
 
-
-def handle_message():
-    user_prompt = create_user_input_prompt()
-    system_prompt = create_system_input_prompt()
+    # create prompts
+    user_prompt = compose_user_input_prompt()
+    system_prompt = compose_system_input_prompt()
     response = create_chat_completion(
         messages=[
             {"role": "system", "content": system_prompt},
@@ -117,9 +103,25 @@ def handle_message():
     function = response.get("function", None)
     if function != None:
         call_function(function)
-    respond_to_terminal_input(response_message)
-    collections["user_events"].add(
+
+    # Send a message to the user terminal listener
+    if respond_to_user_input == True:
+        response = requests.get("http://127.0.0.1:5001/response", params={"msg": response_message})
+        return response.text.strip()
+
+    # add the response to the user_terminal_input collection
+    collections["user_terminal_input"].add(
         ids=[str(uuid.uuid4())],
         documents=[response_message],
-        metadatas=[{"processed": "false", "sender": agent_name}],
+        metadatas=[{"processed": True, "sender": agent_name}],
     )
+
+
+
+    write_log(agent_name + ": " + response_message)
+
+    for i in range(len(new_messages["ids"])):
+        collections["user_terminal_input"].update(
+            ids=new_messages["ids"][i],
+            metadatas=[{"processed": True, "sender": "user"}],
+        )    
