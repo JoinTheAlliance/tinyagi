@@ -1,0 +1,1 @@
+# gather the necessary information to generate a plan, suggested as the first step in the planning process of a task
