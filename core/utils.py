@@ -1,6 +1,30 @@
 import os
 import time
-from constants import debug
+from constants import debug, agent_name
+
+# compose a prompt from a template and a list of values to replace
+def compose_prompt(prompt_template_name, values_to_replace):
+    prompt_template = get_prompt_template(prompt_template_name)
+
+    prompt_template = replace_all_in_string(prompt_template, values_to_replace)
+
+    write_debug_log(prompt_template_name + ":\n" + prompt_template)
+
+    return prompt_template
+
+# replacements is a key value dictionary
+def replace_all_in_string(string, replacements):
+    for key, value in replacements.items():
+        string = string.replace("{" + key + "}", value)
+    return string
+
+def get_agent_name():
+    return agent_name
+
+def get_prompt_template(template_name):
+    # read the file in templates/template_name.txt
+    with open("templates/" + template_name + ".txt", "r") as f:
+        return f.read()
 
 def messages_to_dialogue(messages):
     # dialogue is a string of <sender>: <message>\n

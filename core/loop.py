@@ -1,20 +1,22 @@
-import database
+import memory
 
-chroma_client = database.get_client()
-collections = database.get_collections()
-
-self_collection = collections["self"]
-task_collection = collections["task"]
+chroma_client = memory.get_client()
+collections = memory.get_collections()
 
 
 def compose_loop_prompt_template(task_id=None):
-    # get current tasks that are not completed or canceled
+    #if(task_id == None):
+        # handle standard loop prompt
+        # LOOP -- time, date, goals, event stream
+        
 
-    # if task, build task prompt
+    #else:
+        # handle task prompt
 
-    # if no task, build loop prompt
+        # if task, build task prompt
 
-    # LOOP -- time, date, goals, event stream
+        # if no task, build loop prompt
+
 
     # TASK -- time, date, event stream, task, task progress, other tasks
 
@@ -36,17 +38,18 @@ The current time is {formatted_time} on {current_date}.
 
 
 def main():
-    where = {
-        "$and": [
-            {"canceled": False},
-            {"completed": False},
-        ]
-    }
+    print("Looping")
+    # where = {
+    #     "$and": [
+    #         {"canceled": False},
+    #         {"completed": False},
+    #     ]
+    # }
 
-    tasks = task_collection.get(where=where)
+    # tasks = task_collection.get(where=where)
 
-    if len(tasks["ids"]) > 0:
-        task_id = tasks["ids"][0]
-        compose_loop_prompt_template(task_id=task_id)
-    else:
-        compose_loop_prompt_template()
+    # if len(tasks["ids"]) > 0:
+    #     task_id = tasks["ids"][0]
+    #     compose_loop_prompt_template(task_id=task_id)
+    # else:
+    #     compose_loop_prompt_template()
