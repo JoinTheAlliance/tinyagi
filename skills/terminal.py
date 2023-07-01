@@ -378,7 +378,7 @@ def get_skills():
         "terminal_create_tab": {
             "payload": {
                 "name": "terminal_create_tab",
-                "description": "You have access to a terminal. This function creates a new tab in your terminal so you can switch to it.",
+                "description": "This function creates a new tab in your terminal so you can switch to it.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -463,24 +463,7 @@ def get_skills():
         "terminal_run_command": {
             "payload": {
                 "name": "terminal_run_command",
-                "description": "Run a command in the current tab of your terminal.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "command": {
-                            "type": "string",
-                            "description": "The command to run in your terminal.",
-                        },
-                    },
-                    "required": ["command"],
-                },
-            },
-            "handler": run_command,
-        },
-        "use_terminal": {
-            "payload": {
-                "name": "use_terminal",
-                "description": "Use the terminal to run a shell command.",
+                "description": "Run a shell command in the current tab of your terminal. Use this to access your operating system. You can always come back to it!",
                 "parameters": {
                     "type": "object",
                     "properties": {

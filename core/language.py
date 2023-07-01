@@ -184,7 +184,7 @@ def count_tokens(text):
 
     return len(encoding.encode(text))
 
-def compose_prompt(prompt_template_name, values_to_replace):
+def compose_prompt(prompt_template_name, values_to_replace, topic=None):
     """
     Given a template name and a dictionary of values, create a formatted string.
 
@@ -196,6 +196,10 @@ def compose_prompt(prompt_template_name, values_to_replace):
 
     # Substitute placeholders in the template with the corresponding values
     prompt_template = replace_all_in_string(prompt_template, values_to_replace)
+
+    # TODO: This is not the cleanest way to do this, we should refactor if we end up with more of these
+    if(topic):
+        prompt_template = prompt_template.replace("{topic}", topic)
 
     return prompt_template
 

@@ -29,7 +29,7 @@ def get_skills():
 def write_song(arguments):
     topic = arguments.get("topic", None)
     values_to_replace = get_all_values_for_text(topic)
-    user_prompt = compose_prompt("song", values_to_replace)
+    user_prompt = compose_prompt("song", values_to_replace, topic)
     # replace {topic} with topic in user_prompt
     user_prompt = user_prompt.replace("{topic}", topic)
 

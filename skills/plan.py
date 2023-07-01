@@ -38,7 +38,7 @@ def get_skills():
     }
 
 
-def remember_plan():
+def remember_plan(arguments):
     where = {"type": "plan"}
     plan = get_documents("events", where=where, include=["metadatas", "documents"])
 
@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
     # Test `remember_plan` function
     try:
-        remember_plan()
+        remember_plan(None)
         print("The `remember_plan` function ran successfully")
         # Assume get_documents from core.memory returns dictionary as required by remember_plan
         result = get_documents(
