@@ -3,7 +3,8 @@
 from core.language import clean_prompt, use_language_model, compose_prompt
 from core.memory import add_event
 
-prompt = clean_prompt("""
+prompt = clean_prompt(
+    """
 The current time is {current_time} on {current_date}.
 
 These are your most important goals, which you should always keep in mind:
@@ -16,7 +17,9 @@ Event Logs (most recent toward the bottom):
 {events}
 
 Read the most recent events in the event stream. What do you think is wrong? Can you fix it?
-""")
+"""
+)
+
 
 def troubleshoot(arguments):
     assessment = arguments.get("assessment", None)
