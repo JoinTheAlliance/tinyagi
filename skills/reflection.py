@@ -2,7 +2,7 @@
 
 # reflect on things that are going on
 from core.language import clean_prompt, use_language_model, compose_prompt
-from core.memory import add_event, get_all_values_for_text
+from core.memory import add_event
 
 prompt = clean_prompt(
     """
@@ -56,8 +56,7 @@ def get_skills():
 
 def reflect(arguments):
     topic = arguments.get("topic", None)
-    values_to_replace = get_all_values_for_text(topic)
-    user_prompt = compose_prompt(prompt, values_to_replace)
+    user_prompt = compose_prompt(prompt, topic)
     # replace {topic} with topic in user_prompt
     user_prompt = user_prompt.replace("{topic}", topic)
 

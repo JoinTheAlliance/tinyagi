@@ -3,10 +3,13 @@
 
 import textwrap
 import os
+import time
 import openai
 import tiktoken
 from datetime import datetime
 from dotenv import load_dotenv
+
+from core.memory import get_events, get_formatted_collection_data
 
 load_dotenv()  # take environment variables from .env.
 
@@ -19,9 +22,12 @@ if long_text_model == None or long_text_model == "":
 quality_text_model = os.getenv("QUALITY_TEXT_MODEL")
 if quality_text_model == None or quality_text_model == "":
     quality_text_model = "gpt-4"
-default_max_tokens = int(os.getenv("DEFAULT_MAX_TOKENS"))
+default_max_tokens = os.getenv("DEFAULT_MAX_TOKENS")
 if default_max_tokens == None or default_max_tokens == "":
     default_max_tokens = 4000
+# make sure max tokens is an integer
+default_max_tokens = int(default_max_tokens)
+
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
 if openai_api_key == None or openai_api_key == "":
@@ -228,7 +234,7 @@ def clean_prompt(prompt):
     return textwrap.dedent(prompt.strip())
 
 
-def compose_prompt(prompt_template, values_to_replace, topic=None):
+def compose_prompt(prompt_template, topic):
     """
     Given a template name and a dictionary of values, create a formatted string.
 
@@ -236,12 +242,22 @@ def compose_prompt(prompt_template, values_to_replace, topic=None):
     values_to_replace: a dictionary where keys are placeholders in the template and values are the substitutions
     """
 
+    current_time = time.strftime("%I:%M:%S %p", time.localtime(time.time()))
+    current_date = time.strftime("%Y-%m-%d", time.localtime(time.time()))
+
+    values_to_replace = {
+        "current_time": current_time,
+        "current_date": current_date,
+        "skills": get_formatted_collection_data("skills", query_text=topic),
+        "goals": get_formatted_collection_data("goals", query_text=topic),
+        "tasks": get_formatted_collection_data("tasks", query_text=topic),
+        "knowledge": get_formatted_collection_data("knowledge", query_text=topic),
+        "personality": get_formatted_collection_data("personality", query_text=topic),
+        "events": get_events(limit=12),
+        "topic": topic,
+    }
     # Substitute placeholders in the template with the corresponding values
     prompt_template = replace_all_in_string(prompt_template, values_to_replace)
-
-    # TODO: This is not the cleanest way to do this, we should refactor if we end up with more of these
-    if topic:
-        prompt_template = prompt_template.replace("{topic}", topic)
 
     return prompt_template
 

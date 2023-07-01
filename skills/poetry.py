@@ -1,33 +1,37 @@
 # skills/poetry.py
 
 from core.language import clean_prompt, use_language_model, compose_prompt
-from core.memory import add_event, get_all_values_for_text
+from core.memory import add_event
 
 prompt = clean_prompt(
     """
-Here are some relevant things that I have recalled from my memory:
+Some relevant things you know:
 {knowledge}
-Here are some key details about my personality:
+
+Key details about your personality:
 {personality}
-These are my most important goals, which I should always keep in mind:
+
+You most important goals, which you should always keep in mind:
 {goals}
-These are my current tasks, which I should prioritize accomplishing
+
+Your current tasks, which you should prioritize accomplishing
 {tasks}
-I have access to the following functions and should call them often:
+
+You have access to the following functions and should call them often:
 {skills}
-Recent Event History:
+
+Event Logs:
 {events}
 
-Think about this topic: {topic}
-Write a poem that incorporates your recent event history, goals, knowledge and personality.
+Topic: {topic}
+Write a poem based on the most recent events and topic that incorporates your recent event history, goals, knowledge and personality.
 """
 )
 
 
 def write_poem(arguments):
     topic = arguments.get("topic", None)
-    values_to_replace = get_all_values_for_text(topic)
-    user_prompt = compose_prompt(prompt, values_to_replace).replace("{topic}", topic)
+    user_prompt = compose_prompt(prompt, topic)
 
     messages = [
         {

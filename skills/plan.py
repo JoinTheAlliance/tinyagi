@@ -2,17 +2,14 @@
 
 # plan about things that are going on
 from core.language import clean_prompt, use_language_model, compose_prompt
-from core.memory import add_event, get_all_values_for_text, get_documents
+from core.memory import add_event, get_documents
 
 plan_prompt = clean_prompt(
     """
 The current time is {current_time} on {current_date}.
 
-Here are some relevant things that I have recalled from my memory:
+Relevant things you know:
 {knowledge}
-
-Recent Event History:
-{events}
 
 You can call the following functions and should call them often:
 {skills}
@@ -23,9 +20,12 @@ These are your most important goals, which you should always keep in mind:
 These are your current tasks, which you should prioritize accomplishing
 {tasks}
 
+Recent Event History:
+{events}
+
+Prompt: You should write a detailed plan that you can execute on. You should make sure to include what skill or task the plan is related to, and what skills or knowledge you will use. Your goal is to call a function once you have a rough plan.
 Sometimes you get caught in loops, especially with planning, thinking and learning. If you've been planning and thinking for a while, you should try figure out what else you should do, especially exploring, coding or playing with the browser or terminal.
 Always try to advance your goals and complete your tasks. Always try to call the most appropriate function for the immediate context -- or just start working toward your goals.
-Prompt: Write should write a detailed plan that I can execute on. I should make sure to include what skill or task the plan is related to, and what skills or knowledge I will use.
 """
 )
 
@@ -99,8 +99,7 @@ def remember_plan(arguments):
 
 def plan(arguments):
     plan = arguments.get("plan", None)
-    values_to_replace = get_all_values_for_text(plan)
-    user_prompt = compose_prompt(plan_prompt, values_to_replace)
+    user_prompt = compose_prompt(plan_prompt, plan)
 
     messages = [
         {

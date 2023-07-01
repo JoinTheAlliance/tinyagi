@@ -22,15 +22,6 @@ collection_names = [
     "connectors",  # 'people' could be added here as well
 ]
 
-collections = {}  # Holds all the collections
-
-# Create or get collections
-for collection_name in collection_names:
-    collection = client.get_or_create_collection(collection_name)
-    collections[collection_name] = collection
-
-# Below are functions for handling various operations on the collections
-
 
 def wipe_memory():
     client.reset()
@@ -43,12 +34,12 @@ def get_client():
 
 def get_collections():
     """Returns all collections."""
-    return collections
+    return client.list_collections()
 
 
 def get_collection(collection_name):
     """Returns a specified collection."""
-    return collections[collection_name]
+    return client.get_or_create_collection(collection_name)
 
 
 def search_collection(
@@ -62,7 +53,8 @@ def search_collection(
     """
     Search a collection with given query texts.
     """
-    return collections[collection_name].query(
+    collection = client.get_or_create_collection(collection_name)
+    return collection.query(
         query_texts=query_texts,
         where=where,
         where_document=where_document,
@@ -73,7 +65,8 @@ def search_collection(
 
 def get_documents(collection_name, where=None, include=["metadatas", "documents"]):
     """Returns documents from a specified collection."""
-    return collections[collection_name].get(where=where, include=include)
+    collection = client.get_or_create_collection(collection_name)
+    return collection.get(where=where, include=include)
 
 
 def get_collection_data(collection_name, query_text, n_results=5):
@@ -224,31 +217,15 @@ def get_personality(query_text, n_results=5):
     """
     Fetches personality data that match the query text.
     """
-    return get_formatted_collection_data("personality", query_text, n_results)
-
-
-def get_all_values_for_text(text):
-    """
-    Returns a dictionary of various data associated with the provided text.
-    """
-    values = {
-        "current_time": get_formatted_time(),
-        "current_date": get_current_date(),
-        "skills": get_skills(text),
-        "goals": get_goals(text),
-        "tasks": get_tasks(text),
-        "events": get_events(limit=12),
-        "personality": get_personality(text),
-        "knowledge": get_knowledge(text),
-    }
-    return values
+    return get_formatted_collection_data("personality", query_text)
 
 
 def get_events(limit=12):
     """
     Returns a stream of events from the 'events' collection.
     """
-    events = events_to_stream(collections["events"].peek(limit=limit))
+    collection = client.get_or_create_collection("events")
+    events = events_to_stream(collection.peek(limit=limit))
     return events
 
 
@@ -272,25 +249,6 @@ def add_event(
     # Log the event and print the user text
     write_log(userText)
     print(userText)
-
-
-def get_formatted_time():
-    """
-    Returns the current time in the format of 'HH:MM:SS AM/PM'.
-    """
-    current_time = time.time()
-    formatted_time = time.strftime("%I:%M:%S %p", time.localtime(current_time))
-    return formatted_time
-
-
-def get_current_date():
-    """
-    Returns the current date in the format of 'YYYY-mm-dd'.
-    """
-    current_time = time.time()
-    current_date = time.strftime("%Y-%m-%d", time.localtime(current_time))
-    return current_date
-
 
 def events_to_stream(messages):
     """
@@ -353,47 +311,7 @@ if __name__ == "__main__":
     # test the get_formatted_collection_data function
     formatted_data_result = get_formatted_collection_data("skills", "test_query")
     assert isinstance(formatted_data_result, str)
-
-    # test the get_functions function
-    functions_result = get_functions("test_query")
-    assert isinstance(functions_result, list)
-
-    # test the get_skills function
-    skills_result = get_skills("test_query")
-    assert isinstance(skills_result, str)
-
-    # test the get_goals function
-    goals_result = get_goals("test_query")
-    assert isinstance(goals_result, str)
-
-    # test the get_events function
-    events_result = get_events()
-    assert isinstance(events_result, str)
-
-    # test the get_tasks function
-    tasks_result = get_tasks("test_query")
-    assert isinstance(tasks_result, str)
-
-    # test the get_knowledge function
-    knowledge_result = get_knowledge("test_query")
-    assert isinstance(knowledge_result, str)
-
-    # test the get_personality function
-    personality_result = get_personality("test_query")
-    assert isinstance(personality_result, str)
-
-    # test the get_all_values_for_text function
-    all_values_result = get_all_values_for_text("test_query")
-    assert isinstance(all_values_result, dict)
-
-    # test the get_formatted_time function
-    time_result = get_formatted_time()
-    assert isinstance(time_result, str)
-
-    # test the get_current_date function
-    date_result = get_current_date()
-    assert isinstance(date_result, str)
-
+    
     # test the events_to_stream function
     events_stream_result = events_to_stream(
         {"metadatas": [{"event_creator": "test"}], "documents": ["test document"]}

@@ -56,7 +56,6 @@ from core.memory import (
     add_event,
     get_functions,
     get_events,
-    get_all_values_for_text,
     get_client,
     get_collections,
 )
@@ -79,12 +78,9 @@ def main():
     # Get the last 5 events
     events = get_events(limit=5) or "I have awaken."
 
-    # Get all the values that need to be replaced in the events text
-    values_to_replace = get_all_values_for_text(events)
-
     # Compose user and system prompts
-    user_prompt = compose_prompt(prompt, values_to_replace)
-    system_prompt = compose_prompt(system, values_to_replace)
+    user_prompt = compose_prompt(prompt, events)
+    system_prompt = compose_prompt(system, events)
 
     # Get functions from the events
     functions = get_functions(events)
