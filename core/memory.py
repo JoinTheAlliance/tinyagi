@@ -9,7 +9,7 @@ import chromadb
 from core.constants import agent_name
 
 # Create a ChromaDB client
-chroma_client = chromadb.Client()
+client = chromadb.Client()
 
 # Define collection names
 collection_names = [
@@ -55,7 +55,7 @@ def seed(collections):
 
 # Create or get collections
 for collection_name in collection_names:
-    collection = chroma_client.get_or_create_collection(collection_name)
+    collection = client.get_or_create_collection(collection_name)
     collections[collection_name] = collection
 
 # Seed the collections
@@ -63,10 +63,13 @@ seed(collections)
 
 # Below are functions for handling various operations on the collections
 
+def wipe_memory():
+    client.reset()
+    seed(collections)
 
 def get_client():
     """Returns the ChromaDB client."""
-    return chroma_client
+    return client
 
 
 def get_collections():
@@ -272,14 +275,6 @@ def get_all_values_for_text(text):
     }
     return values
 
-
-def get_conversation_history(limit=10):
-    """
-    Returns the conversation history from the 'events' collection.
-    """
-    return messages_to_dialogue(collections["events"].get(limit=limit))
-
-
 def get_events(limit=12):
     """
     Returns a stream of events from the 'events' collection.
@@ -298,7 +293,7 @@ def add_event(userText, event_creator, type="conversation", document_id=None):
     collections["events"].add(
         ids=[str(document_id)],
         documents=[userText],
-        metadatas=[{"type": type, "event_creator": event_creator}],
+        metadatas=[{"type": type, "event_creator": event_creator, "timestamp": time.time()}],
     )
 
     # Log the event and print the user text
@@ -363,3 +358,78 @@ def get_agent_name():
     Returns the agent's name from the constants module.
     """
     return agent_name
+
+if __name__ == "__main__":
+    # test the get_collections function
+    assert isinstance(get_collections(), dict)
+
+    # test the search_collection function
+    search_result = search_collection("skills", ["test_query"])
+    assert "documents" in search_result
+    assert "metadatas" in search_result
+
+    # test the get_documents function
+    documents_result = get_documents("skills")
+    assert "documents" in documents_result
+    assert "metadatas" in documents_result
+
+    # test the get_collection_data function
+    collection_data_result = get_collection_data("skills", "test_query")
+    assert "documents" in collection_data_result
+    assert "metadatas" in collection_data_result
+
+    # test the get_formatted_collection_data function
+    formatted_data_result = get_formatted_collection_data("skills", "test_query")
+    assert isinstance(formatted_data_result, str)
+
+    # test the get_functions function
+    functions_result = get_functions("test_query")
+    assert isinstance(functions_result, list)
+
+    # test the get_skills function
+    skills_result = get_skills("test_query")
+    assert isinstance(skills_result, str)
+
+    # test the get_goals function
+    goals_result = get_goals("test_query")
+    assert isinstance(goals_result, str)
+
+    # test the get_events function
+    events_result = get_events()
+    assert isinstance(events_result, str)
+
+    # test the get_tasks function
+    tasks_result = get_tasks("test_query")
+    assert isinstance(tasks_result, str)
+
+    # test the get_knowledge function
+    knowledge_result = get_knowledge("test_query")
+    assert isinstance(knowledge_result, str)
+
+    # test the get_personality function
+    personality_result = get_personality("test_query")
+    assert isinstance(personality_result, str)
+
+    # test the get_all_values_for_text function
+    all_values_result = get_all_values_for_text("test_query")
+    assert isinstance(all_values_result, dict)
+
+    # test the get_formatted_time function
+    time_result = get_formatted_time()
+    assert isinstance(time_result, str)
+
+    # test the get_current_date function
+    date_result = get_current_date()
+    assert isinstance(date_result, str)
+
+    # test the get_agent_name function
+    agent_name_result = get_agent_name()
+    assert agent_name_result == agent_name
+
+    # test the events_to_stream function
+    events_stream_result = events_to_stream({
+        "metadatas": [{"event_creator": "test"}],
+        "documents": ["test document"]
+    })
+    assert isinstance(events_stream_result, str)
+    print("All tests passed!")

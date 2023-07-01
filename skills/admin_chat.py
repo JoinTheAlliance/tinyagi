@@ -1,7 +1,9 @@
+import os
+import sys
 import requests
 import logging
 import threading
-from core.memory import add_event
+from core.memory import add_event, wipe_memory
 from core.constants import agent_name
 
 
@@ -12,13 +14,10 @@ app = Flask(__name__)
 log = logging.getLogger("werkzeug")
 log.disabled = True
 
-
 @app.route("/msg")
-def create_input_event():
-    userText = request.args.get("msg")  # Get data from input, we named it 'msg'
-    add_event("user: " + userText, "user", "conversation")
+def handle_incoming_message():
+    receive_message(request.args.get("msg"))
     return "", 200  # Return a successful HTTP response
-
 
 def run_app():
     app.run()
@@ -27,8 +26,18 @@ def run_app():
 flask_thread = threading.Thread(target=run_app)
 flask_thread.start()
 
+def receive_message(msg):
+    # if the user calls "reset database", reset the database (wipe_memory)
+    if msg == "reset database":
+        wipe_memory()
+    if msg == "restart":
+        python = sys.executable
+        os.execl(python, python, * sys.argv)
+    else:
+        add_event("user: " + msg, "user", "conversation")
 
-def respond(arguments):
+
+def send_message(arguments):
     message = arguments["message"]
     # Send a message to the user terminal listener
     add_event(message, agent_name, "conversation")
@@ -58,6 +67,21 @@ def get_skills():
                     "required": ["message"],
                 },
             },
-            "handler": respond,
+            "handler": send_message,
         },
     }
+
+if __name__ == "__main__":
+    # Test send_message
+    try:
+        send_message({"message": "Test message"})
+    except Exception as e:
+        print(f"send_message crashed with exception: {e}")
+        
+    # Test receive_message
+    try:
+        receive_message("Test message")
+    except Exception as e:
+        print(f"receive_message crashed with exception: {e}")
+
+    print("Test complete.")

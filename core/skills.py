@@ -31,8 +31,12 @@ def use_skill(name, arguments):
     argument_string = ", ".join(f"{key}: {str(val)}" for key, val in arguments.items())
 
     # Log the usage of a skill as an event
-    add_event(f"I used the skill `{name}` with the arguments: {argument_string}", agent_name, "skill")
-    
+    add_event(
+        f"I used the skill `{name}` with the arguments: {argument_string}",
+        agent_name,
+        "skill",
+    )
+
     # Call the function with its arguments if it exists in the 'functions' dictionary
     if name in functions:
         return functions[name](arguments)
@@ -126,3 +130,51 @@ def register_skills():
 
     # Remove the added path from the Python system path
     sys.path.pop(0)
+
+
+if __name__ == "__main__":
+    register_skills()
+    def test_skill_handler(arguments):
+        input = arguments["input"]
+        return input
+
+    # Test for add_skill
+    test_skill = {
+        "test": {
+            "payload": {
+                "name": "test",
+                "description": "A test skill",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "input": {
+                            "type": "string",
+                            "description": "Some test input",
+                        },
+                    },
+                },
+                "required": ["input"],
+            },
+            "handler": test_skill_handler,
+        },
+    }
+    # for each in test_skill:
+    for each in test_skill:
+        add_skill(each, test_skill[each])
+    assert each in functions
+
+    # Test for use_skill
+    assert use_skill("test", {"input": "test"}) == "test"
+
+    # Test for get_skill
+    assert get_skill("test") == test_skill_handler
+
+    # Test for get_all_skills
+    all_skills = get_all_skills()
+    assert all_skills["test"] == test_skill_handler
+
+    # Test for remove_skill
+    remove_skill("test")
+    assert "test" not in functions
+    assert not skill_collection.get(ids=["test"])["ids"]
+    print("All tests passed!")

@@ -16,5 +16,5 @@ I have access to the following functions and should call them often:
 Recent Event History:
 {events}
 
-My Task: Call one of the provided functions that I think is most appropriate.
-If I just called a function, I probably shouldn't call it again. For example, if the last event was "(thinking)" then I should do something else now.
+Your task: Call one of the provided functions that I think is most appropriate to continue your goals and tasks (if you have any). If you aren't sure, you should try continuing on your plan.
+Do not ask if you can help. Do not ask how you can assist. Focus on the task.

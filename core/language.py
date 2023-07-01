@@ -1,5 +1,10 @@
 # Contains utilities for creating and managing OpenAI GPT-3 based conversations.
 # It also involves writing the chat logs and managing the token counts of messages.
+import sys
+
+# if this module is run directly, set the sys path to ../
+if __name__ == "__main__":
+    sys.path.append("../")
 
 import os
 import openai
@@ -9,6 +14,7 @@ from datetime import datetime
 
 from core.constants import (
     default_text_model,
+    default_max_tokens,
     long_text_model,
     openai_api_key,
     agent_name,
@@ -35,7 +41,7 @@ def use_language_model(messages, functions=None, long=False):
 
     # Select model based on the 'long' parameter
     model = long_text_model if long else default_text_model
-
+    messages = trim_messages(messages, default_max_tokens)
     # Make API request and get response
     if(functions):
         response = openai.ChatCompletion.create(
@@ -67,6 +73,7 @@ def use_language_model(messages, functions=None, long=False):
 def trim_messages(messages, max_tokens):
     """
     Trims the messages to fit within the max token limit.
+    If there are too many tokens, the messages are trimmed from the top.
     
     Parameters:
     messages: List of message objects to be trimmed.
@@ -83,6 +90,17 @@ def trim_messages(messages, max_tokens):
 
     if original_num_tokens <= max_tokens:
         return messages
+    
+    # quick shortcut - remove the system message, then check if it fits
+    # find any messages in messages that are system messages ("role": "system")
+    system_messages = [message for message in messages if message.get("role") == "system"]
+    if system_messages:
+        # remove all system messages from messages
+        messages = [message for message in messages if message not in system_messages]
+        # check if the messages fit
+        new_num_tokens = count_tokens_from_chat_messages(messages)
+        if new_num_tokens <= max_tokens:
+            return messages
 
     # Calculate the total number of tokens used and remove messages if over the limit
     num_tokens = 0
@@ -108,12 +126,6 @@ def trim_messages(messages, max_tokens):
         # Ensure that it does not exceed max_tokens by trimming it.
         new_messages.append(trim_last_message(messages, max_tokens))
 
-    if original_num_tokens != num_tokens:
-        add_event(
-            f"I trimmed some messages to make them fit in my memory. The original number was {original_num_tokens} and the new number is {num_tokens}",
-            agent_name,
-            "completion_status",
-        )
     return new_messages
 
 def trim_last_message(messages, max_tokens):
@@ -220,3 +232,39 @@ def messages_to_dialogue(messages):
         for msg_meta, msg_doc in zip(messages["metadatas"], messages["documents"])
     )
     return dialogue
+
+
+if __name__ == "__main__":
+    # Tests for trimmed_messages function
+    test_messages = [{"role": "system", "content": "This is a test of the system."}, {"role": "user", "content": "Hi, how are you?"}]
+    trimmed_messages = trim_messages(test_messages, 1000)
+    assert test_messages == trimmed_messages
+    test_messages = [{"role": "system", "content": "This is a test of the system."}, {"role": "user", "content": "123" + "0" * 8000 + "456"}]
+    trimmed_messages = trim_messages(test_messages, 100)
+    assert len(trimmed_messages) == 1
+    assert trimmed_messages[0]["role"] == "user"
+    assert trimmed_messages[0]["content"].endswith("456")
+
+    # Tests for count_tokens_from_chat_messages function
+    test_messages = [{"role": "system", "content": "This is a test of the system."}, {"role": "user", "content": "Hi, how are you?"}]
+    assert count_tokens_from_chat_messages(test_messages) == 22 or (count_tokens_from_chat_messages(test_messages) > 18 and count_tokens_from_chat_messages(test_messages) < 26)
+
+    # Tests for count_tokens function
+    test_text = "This is a test."
+    assert count_tokens(test_text) == 5 or (count_tokens(test_text) > 3 and count_tokens(test_text) < 7)
+
+    # Tests for replace_all_in_string function
+    string = "Hello {name}, how are you?"
+    replacements = {"name": "John"}
+    assert replace_all_in_string(string, replacements) == "Hello John, how are you?"
+
+    # Tests for get_prompt_template function
+    # For this test, you need a file named `test.txt` in `templates/` directory with content: "Hello, how are you?"
+    template_name = "test"
+    assert get_prompt_template(template_name) == "This file is used for test validation, please don't touch it."
+
+    # Tests for messages_to_dialogue function
+    messages = {"metadatas": [{"event_creator": "User"}], "documents": ["Hi, how are you?"]}
+    assert messages_to_dialogue(messages) == "User: Hi, how are you?"
+
+    print("All tests passed!")

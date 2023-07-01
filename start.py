@@ -10,9 +10,6 @@ import core.memory
 chroma_client = core.memory.get_client()
 collections = core.memory.get_collections()
 
-# delete logs folder
-os.system("rm -rf logs")
-
 # regenerate codebase log
 os.system("python3 scripts/generate_code.py")
 

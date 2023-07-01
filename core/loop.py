@@ -1,5 +1,6 @@
 # Handles the main execution loop, which repeats at a fixed internal
 
+
 from core.memory import (
     add_event,
     get_functions,
@@ -18,25 +19,6 @@ from core.skills import use_skill
 chroma_client = get_client()
 # Get all collections
 collections = get_collections()
-
-
-def get_most_recent_from_logs(max_characters=1000):
-    """
-    Gets the most recent logs.
-
-    Parameters:
-    max_characters: Maximum characters to read from the log. (Default is 1000)
-
-    Returns:
-    Most recent logs up to the specified max characters.
-    """
-    with open("logs/feed.log", "r") as f:
-        lines = f.readlines()
-        # Reverse the lines to get the most recent ones
-        lines.reverse()
-        lines = "".join(lines)
-        return lines[:max_characters]
-
 
 def main():
     """

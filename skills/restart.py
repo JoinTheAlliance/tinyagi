@@ -3,6 +3,7 @@ import sys
 from core.memory import add_event
 from core.constants import agent_name
 
+
 def get_skills():
     return {
         "restart": {
@@ -24,8 +25,11 @@ def get_skills():
         },
     }
 
+
 def restart(arguments):
     explanation = arguments.get("explanation", None)
-    add_event("I am restarting. Explanation: " + explanation, agent_name, type="restart")
+    add_event(
+        "I am restarting. Explanation: " + explanation, agent_name, type="restart"
+    )
     python = sys.executable
-    os.execl(python, python, * sys.argv)
+    os.execl(python, python, *sys.argv)
