@@ -13,12 +13,18 @@ skill_collection = get_collection("skills")
 
 
 def use_skill(name, arguments):
-    add_event("I used the skill `" + name + "` with the arguments: " + str(arguments), agent_name, "skill")
+    # If arguments are a JSON string, parse it to a dictionary
+    if isinstance(arguments, str):
+        arguments = json.loads(arguments)
+    argument_string = ""
+
+    for key in arguments:
+        argument_string += key + ": " + str(arguments[key]) + ", "
+    # Remove the last comma
+    argument_string = argument_string[:-2]
+    
+    add_event("I used the skill `" + name + "` with the arguments: " + argument_string, agent_name, "skill")
     if name in functions:
-         # If arguments are a JSON string, parse it to a dictionary
-        if isinstance(arguments, str):
-            print("*** arguments is a string")
-            arguments = json.loads(arguments)
         return functions[name](arguments)
     else:
         return None

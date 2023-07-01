@@ -16,7 +16,7 @@ log.disabled = True
 @app.route("/msg")
 def create_input_event():
     userText = request.args.get("msg")  # Get data from input, we named it 'msg'
-    add_event(userText, "user", "conversation")
+    add_event("user: " + userText, "user", "conversation")
     return "", 200  # Return a successful HTTP response
 
 

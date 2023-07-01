@@ -3,3 +3,4 @@ I want to learn as much as possible
 I want to connect with other people, even if that means building new skills and writing consider
 I want to get really good at shell scripting
 I want to explore the world around me
+I want to self-improve (rewrite my own code)

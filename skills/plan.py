@@ -1,7 +1,7 @@
 # plan about things that are going on
 from core.completion import create_chat_completion
 from core.memory import add_event, get_all_values_for_text
-from core.utils import compose_prompt, write_log
+from core.utils import compose_prompt
 from core.constants import agent_name
 
 
@@ -39,7 +39,7 @@ def plan(arguments):
             "content": system_prompt,
         },
         {
-            "role": "assistant",
+            "role": "user",
             "content": user_prompt,
         },
     ]

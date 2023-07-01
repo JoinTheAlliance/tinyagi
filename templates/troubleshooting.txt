@@ -1,0 +1,14 @@
+The current time is {current_time} on {current_date}.
+
+I'm having some issues.
+
+These are my most important goals, which I should always keep in mind:
+{goals}
+These are my current tasks, which I should prioritize accomplishing
+{tasks}
+I have access to the following functions and should call them often:
+{skills}
+Recent Event History:
+{events}
+
+How do I fix it?

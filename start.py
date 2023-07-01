@@ -2,6 +2,7 @@ import time
 import os
 
 from core.skill_handling import register_skills
+from core.constants import update_interval
 
 import core.loop
 import core.memory
@@ -18,6 +19,5 @@ os.system("python3 scripts/generate_code.py")
 register_skills()
 
 while True:
-    time.sleep(5)
-    print("looping")
+    time.sleep(update_interval)
     core.loop.main()

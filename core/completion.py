@@ -1,7 +1,9 @@
+import os
 import openai
 from dotenv import load_dotenv
 import tiktoken
 from core.memory import add_event
+from datetime import datetime
 
 from core.constants import (
     default_text_model,
@@ -31,7 +33,17 @@ def create_chat_completion(messages, functions=None, long=False):
             model=model, messages=messages, functions=functions
         )
 
-    response_str = str(response)
+    # serialize the model, functions, messages and response to a text file and write it to logs/completions/<timestamp>.txt
+    text = f"*** MODEL: {model}\n*** FUNCTIONS: {functions}\n*** MESSAGES: {messages}\n*** RESPONSE: {response}"
+
+    # write the text to a file
+    os.makedirs("logs/completions", exist_ok=True)
+
+    # create a timestamp
+    now = datetime.now()
+
+    with open("logs/completions/" + now.strftime("%Y-%m-%d_%H-%M-%S") + ".txt", "w") as f:
+        f.write(text)
 
     response_data = response["choices"][0]["message"]
 

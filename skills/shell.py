@@ -14,7 +14,7 @@ def get_skills():
         "execute_shell_command": {
             "payload": {
                 "name": "execute_shell_command",
-                "description": "Execute a shell command. You are running on "
+                "description": "Execute a shell command using standard linux commands. You are running on "
                 + get_platform()
                 + " and have full operating system access. Use this to explore. You can curl, grep, cat, etc.",
                 "parameters": {
@@ -89,24 +89,76 @@ def get_skills():
             },
             "handler": curl,
         },
+        "write_python_file": {
+            "payload": {
+                "name": "write_python_file",
+                "description": "Write a Python file to disk. This is useful for creating new skills.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "file_name": {
+                            "type": "string",
+                            "description": "The name of the file to write",
+                        },
+                        "file_contents": {
+                            "type": "string",
+                            "description": "The contents of the file to write",
+                        },
+                    },
+                    "required": ["file_name", "file_contents"],
+                },
+            },
+            "handler": write_python_file,
+        },
     }
+
+def write_python_file(arguments):
+    file_name = arguments.get("file_name", None)
+    file_contents = arguments.get("file_contents", None)
+    command = "echo " + file_contents + " > " + file_name
+    try:
+        # call the command
+        os.system(command)
+        add_event(
+            "I am writing a Python file: ```"
+            + file_name
+            + "```\nWith the contents: ```"
+            + file_contents
+            + "```",
+            agent_name,
+            type="shell_command",
+        )
+    except Exception as e:
+        add_event(
+            "I tried to write a Python file: ```"
+            + file_name
+            + "```\nWith the contents: ```"
+            + file_contents
+            + "```\nBut I got an error: "
+            + str(e),
+            agent_name,
+            type="shell_command",
+        )
+
 
 def curl(arguments):
     url = arguments.get("url", None)
     arguments = arguments.get("arguments", None)
     command = "curl " + url + " " + arguments
-    command_trimmed = command[:100] + (command[100:] and "..")
 
     # try to execute the command
     try:
         result = subprocess.check_output(command, shell=True)
+        # transform result with utf-8 encoding
+        result = result.decode("utf-8")
+        
         # trim the result
-        result = result[:100] + (result[100:] and "..")
+        result = result[:2000] + (result[2000:] and "..")
         # trim command to first 100 characters
         add_event(
-            "I successfully ran the curl command: "
-            + command_trimmed
-            + "\nThe result was: "
+            "I successfully ran the curl command: ```"
+            + command
+            + "```\nThe result was: "
             + result,
             agent_name,
             type="shell_command",
@@ -114,9 +166,9 @@ def curl(arguments):
 
     except Exception as e:
         add_event(
-            "I tried to run the curl command: "
-            + command_trimmed
-            + "\nBut I got an error: "
+            "I tried to run the curl command: ```"
+            + command
+            + "```\nBut I got an error: "
             + str(e),
             agent_name,
             type="shell_command",
@@ -125,18 +177,18 @@ def curl(arguments):
 def pip_install(arguments):
     package = arguments.get("package", None)
     command = "pip install " + package
-    command_trimmed = command[:100] + (command[100:] and "..")
 
     # try to execute the command
     try:
         result = subprocess.check_output(command, shell=True)
-        # trim the result
-        result = result[:100] + (result[100:] and "..")
+        
+        result = result.decode("utf-8")
+        
         # trim command to first 100 characters
         add_event(
-            "I successfully ran the command: "
-            + command_trimmed
-            + "\nThe result was: "
+            "I successfully ran the command: ```"
+            + command
+            + "```\nThe result was: "
             + result,
             agent_name,
             type="shell_command",
@@ -144,9 +196,9 @@ def pip_install(arguments):
 
     except Exception as e:
         add_event(
-            "I tried to run the command: "
-            + command_trimmed
-            + "\nBut I got an error: "
+            "I tried to run the command: ```"
+            + command
+            + "```\nBut I got an error: "
             + str(e),
             agent_name,
             type="shell_command",
@@ -155,17 +207,18 @@ def pip_install(arguments):
 def run_shell_command(arguments):
     description = arguments.get("description", None)
     command = arguments.get("command", None)
-    command_trimmed = command[:100] + (command[100:] and "..")
 
-    add_event("I'm running a shell command with the command: " + command_trimmed, agent_name, type="shell_command")
+    add_event("I'm running a shell command with the command: " + command, agent_name, type="shell_command")
 
     # try to execute the command
     try:
         result = subprocess.check_output(command, shell=True)
+        result = result.decode("utf-8")
+
         # trim command to first 100 characters
         add_event(
             "I successfully ran the command: "
-            + command_trimmed
+            + command
             + "\nThe result was: "
             + result,
             agent_name,
@@ -175,7 +228,7 @@ def run_shell_command(arguments):
     except Exception as e:
         add_event(
             "I tried to run the command: "
-            + command_trimmed
+            + command
             + "\nBut I got an error: "
             + str(e),
             agent_name,

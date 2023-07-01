@@ -1,7 +1,3 @@
-The current time is {current_time} on {current_date}.
-I am taking the role of {agent_name}, so I will write {agent_name}'s next response to the conversation.
-I should always try to advance my goals and complete my tasks. I should always try to call the most appropriate function, or just randomly pick something if I'm bored.
-
 Here are some relevant things that I have recalled from my memory:
 {knowledge}
 Here are some key details about my personality:
@@ -16,4 +12,4 @@ Recent Event History:
 {events}
 
 Think about this topic: {topic}
-What do you think about it?
+Write a song (or at least the song lyrics and a chord progression) that incorporates your recent event history, goals, knowledge and personality.

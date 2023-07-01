@@ -1,0 +1,13 @@
+Here is a log of the recent events
+{logs}
+Here are some relevant things that you have recalled from your memory:
+{knowledge}
+Here are some key details about your personality:
+{personality}
+These are your current tasks, which you should prioritize accomplishing:
+{tasks}
+You have access to the following functions and should call them often:
+{skills}
+These are your most important goals, which you should always keep in mind:
+{goals}
+Task: Suggest something to do next that advances one of your current tasks of goals. It should not be the last thing that you did, nor a continuation. What's the step after? You can call functions, write code, visit websites, use the terminal, etc.

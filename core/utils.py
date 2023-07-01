@@ -39,7 +39,6 @@ def messages_to_dialogue(messages):
             + messages["documents"][i]
             + "\n"
         )
-    print("dialogue", dialogue)
     return dialogue
 
 def events_to_stream(messages):
@@ -56,7 +55,6 @@ def events_to_stream(messages):
 # write to the main log stream
 # this will be referenced by the agent
 def write_log(text, header=None):
-    print(text)
     # add timestamp
     prefix = get_formatted_time() + "|" + get_current_date() + "|>"
     if header != None:

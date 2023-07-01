@@ -1,4 +1,5 @@
 import json
+import uuid
 
 from core.memory import (
     add_event,
@@ -13,18 +14,24 @@ from core.constants import agent_name
 from core.skill_handling import use_skill
 from core.utils import (
     compose_prompt,
-    write_log
 )
 
 chroma_client = get_client()
 collections = get_collections()
 
+def get_most_recent_from_logs(max_characters=1000):
+    with open("logs/feed.log", "r") as f:
+        lines = f.readlines()
+        lines.reverse()
+        lines = "".join(lines)
+        lines = lines[:max_characters]
+        return lines
+
 def main():
-    write_log("loop started")
-    events = get_events()
+    events = get_events(limit=5)
 
     if events == None or len(events) == 0:
-        events = "You have awaken."
+        events = "I have awaken."
 
     # TODO: we should make sure we're getting a good search here
     values_to_replace = get_all_values_for_text(events)
@@ -33,9 +40,6 @@ def main():
     system_prompt = compose_prompt("system", values_to_replace)
 
     functions = get_functions(events)
-
-    print("functions", functions)
-
     response = create_chat_completion(
         messages=[
             {"role": "system", "content": system_prompt},
@@ -45,12 +49,13 @@ def main():
     )
     response_message = response["message"]
 
-    # if response_message != None:
-    #     response_message = response_message.replace(f"{agent_name}: ", "", 1)
-    #     add_event(response_message, agent_name, "loop")
+    if response_message != None:
+        response_message = response_message.replace(f"{agent_name}: ", "", 1)
+        add_event("I wrote this response: " + response_message, agent_name, "loop")
 
     function_call = response["function_call"]
 
     if function_call != None:
-        use_skill(function_call.get("name", None), function_call.get("arguments", None))
-        add_event(json.dumps(function_call), agent_name, "function_call")
+        function_name = function_call.get("name", None)
+        args = function_call.get("arguments", None)
+        use_skill(function_name, args)

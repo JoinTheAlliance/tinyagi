@@ -92,10 +92,11 @@ def close_tab(arguments):
 
 def get_tabs(arguments):
     add_event(
-        "I got a list of tabs from the virtual terminal:\n" + str(terminal.get_sessions()),
+        "I got a list of tabs from the virtual terminal:\n" + str(terminal.get_sessions()) + "\n" + "Next I can run a command in the terminal (run_command function).", 
         agent_name,
         type="virtual_terminal_command",
     )
+
     return terminal.get_sessions()
 
 
@@ -108,7 +109,7 @@ def get_tabs_formatted_as_string(arguments):
         formatted_string += f"Current Directory: {info['current_directory']}\n"
         formatted_string += "----\n"
     add_event(
-        "I got a list of tabs from the virtual terminal:\n" + formatted_string,
+        "I got a list of tabs from the virtual terminal:\n" + formatted_string + "\n" + "Next I can run a command in the terminal (run_command function).",
         agent_name,
         type="virtual_terminal_command",
     )
@@ -127,10 +128,8 @@ def run_command(arguments):
     session["last_output"] = result
     command_trimmed = command[:100]
     add_event(
-        "I tried to run the command: "
-        + command_trimmed
-        + "\nBut I got an error: "
-        + str(e),
+        "I ran the command: "
+        + command_trimmed,
         agent_name,
         type="virtual_terminal_command",
     )

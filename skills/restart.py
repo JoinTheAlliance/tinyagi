@@ -1,6 +1,5 @@
 import os
 import sys
-from core.utils import write_log
 from core.memory import add_event
 from core.constants import agent_name
 
@@ -27,8 +26,6 @@ def get_skills():
 
 def restart(arguments):
     explanation = arguments.get("explanation", None)
-    print("*** RESTARTING")
-    add_event("Restarting agent. Explanation: " + explanation, agent_name, type="restart")
-    write_log("*** RESTARTING AGENT")
+    add_event("I am restarting. Explanation: " + explanation, agent_name, type="restart")
     python = sys.executable
     os.execl(python, python, * sys.argv)

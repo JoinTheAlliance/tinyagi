@@ -95,7 +95,7 @@ def get_collection_data(collection_name, query_text, n_results=5):
     )
     return collection_data
 
-def get_formatted_collection_data(collection_name, query_text, n_results=5, randomize=True):
+def get_formatted_collection_data(collection_name, query_text, n_results=5, deduplicate=True):
     collection_data = search_collection(
         collection_name=collection_name,
         query_texts=[query_text],
@@ -103,16 +103,51 @@ def get_formatted_collection_data(collection_name, query_text, n_results=5, rand
         n_results=n_results
     )
     # if randomize is true, randomize the collection data
-    collection_data_documents = collection_data["documents"]
-    # randomize the collection data order
-    if randomize:
-        random.shuffle(collection_data_documents)
+    collection_data_documents = collection_data["documents"][0]
+    collection_data_metadatas = collection_data["metadatas"][0]
+
+    if(deduplicate):
+        # use a set to keep track of the unique documents
+        unique_docs = set()
+        # stores the indices of duplicates
+        duplicate_indices = []
+        for i, doc in enumerate(collection_data_documents):
+            # if the document is already in the set, it's a duplicate
+            if doc in unique_docs:
+                duplicate_indices.append(i)
+            else:
+                unique_docs.add(doc)
+        # iterate over the list of duplicate indices in reverse order
+        # (to not mess with the indices of remaining elements)
+        for i in sorted(duplicate_indices, reverse=True):
+            collection_data_documents.pop(i)
+            collection_data_metadatas.pop(i)
+
     formatted_collection_data = ""
-    for document in collection_data_documents:
-        # if document is an array, join it
-        if isinstance(document, list):
-            document = "\n".join(document)
-        formatted_collection_data += document + "\n"
+    for i in range(len(collection_data_documents)):
+        metadata = collection_data_metadatas[i]
+        document = collection_data_documents[i]
+        if(i > 0):
+            formatted_collection_data += "\n"
+
+        new_string = ""
+        if(metadata != None):
+            # try to get type from metadata
+            type = metadata.get("type", None)
+            if(type != None):
+                new_string += f"[{type}] "
+            event_creator = metadata.get("event_creator", None)
+            function_call = metadata.get("function_call", None)
+            # if function_call is a string, parse is as a json
+            if(function_call != None):
+                if isinstance(function_call, str):
+                    function_call = json.loads(function_call)
+                name = function_call.get("name", None)
+                new_string += f"[function called: {name}] "
+            if(event_creator != None):
+                new_string += f"{event_creator}: "
+        new_string += document
+        formatted_collection_data += new_string
     return formatted_collection_data
 
 # get the payload
@@ -152,30 +187,23 @@ def get_personality(query_text, n_results=5):
     return get_formatted_collection_data("personality", query_text, n_results)
 
 def get_all_values_for_text(text):
-    conversation = messages_to_dialogue(
-        collections["events"].peek(limit=12)
-    )
-    return {
+    values = {
         "current_time": get_formatted_time(),
         "current_date": get_current_date(),
-        "conversation": conversation,
         "agent_name": get_agent_name(),
         "skills": get_skills(text),
         "goals": get_goals(text),
         "tasks": get_tasks(text),
         "events": get_events(limit=12),
-        "similar_events": get_similar_events(text),
         "personality": get_personality(text),
         "knowledge": get_knowledge(text)
     }
+    return values
 
 def get_conversation_history(limit=10):
     return messages_to_dialogue(
-        collections["events"].get(where={"metadatas.type": "conversation"}, limit=limit)
+        collections["events"].get(limit=limit)
     )
-
-def get_similar_events(text, n_results=5):
-    return get_formatted_collection_data("events", text, n_results)
 
 def get_events(limit=12):
     events = events_to_stream(
@@ -191,4 +219,5 @@ def add_event(userText, event_creator, type="conversation", document_id=None ):
         documents=[userText],
         metadatas=[{"type": type, "event_creator": event_creator}],
     )
-    write_log(type + " event created by " + event_creator + ": " + userText)
+    write_log(userText)
+    print(userText)

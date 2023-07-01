@@ -7,39 +7,34 @@ from core.constants import agent_name
 
 def get_skills():
     return {
-        "think": {
+        "write_song": {
             "payload": {
-                "name": "think",
-                "description": "Think about a topic, consider what to do next or dig into a creative impulse.",
+                "name": "write_song",
+                "description": "Write a song about everything that is going on.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "topic": {
                             "type": "string",
-                            "description": "The topic to think about",
+                            "description": "The topic to think about. Can be detailed and complicated.",
                         },
                     },
                     "required": ["topic"],
                 },
             },
-            "handler": think,
+            "handler": write_song,
         },
     }
 
 
-def think(arguments):
+def write_song(arguments):
     topic = arguments.get("topic", None)
     values_to_replace = get_all_values_for_text(topic)
-    user_prompt = compose_prompt("thought", values_to_replace)
+    user_prompt = compose_prompt("song", values_to_replace)
     # replace {topic} with topic in user_prompt
     user_prompt = user_prompt.replace("{topic}", topic)
-    system_prompt = compose_prompt("system", values_to_replace)
 
     messages = [
-        {
-            "role": "system",
-            "content": system_prompt,
-        },
         {
             "role": "user",
             "content": user_prompt,
@@ -48,4 +43,4 @@ def think(arguments):
     response = create_chat_completion(messages=messages)
     response_message = response.get("message", None)
     if response_message != None:
-        add_event(response_message, agent_name, type="thought")
+        add_event(response_message, agent_name, type="song")

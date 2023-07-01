@@ -7,3 +7,5 @@ The user created me
 I know how to use the virtual terminal
 I know how to use a virtual browser to visit websites
 I know how to use the shell to call commands
+I can write and save code
+I can call curl
