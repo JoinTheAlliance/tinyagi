@@ -1,6 +1,5 @@
 import uuid
 
-from core.constants import agent_name
 from core.memory import add_event
 from connectors import browser
 
@@ -11,7 +10,6 @@ def create_tab(arguments):
     page_id = str(uuid.uuid4())
     add_event(
         "I created a new tab in the virtual browser for page ID " + page_id,
-        agent_name,
         type="virtual_browser",
     )
     # if site is not null
@@ -19,7 +17,6 @@ def create_tab(arguments):
         browser.loop.run_until_complete(page.goto(site))
         add_event(
             "I navigated to " + site + " in the virtual browser for page ID " + page_id,
-            agent_name,
             type="virtual_browser",
         )
     browser.pages[page_id] = page
@@ -32,14 +29,12 @@ def switch_to(arguments):
         browser.current_page_id = page_id
         add_event(
             "I switched to the virtual browser for page ID " + page_id,
-            agent_name,
             type="virtual_browser",
         )
     else:
         add_event(
             "I tried to switch to the virtual browser, but it didn't exist. The page ID was "
             + page_id,
-            agent_name,
             type="virtual_browser",
         )
         raise ValueError(f"Page ID {page_id} does not exist.")
@@ -55,14 +50,12 @@ def close_tab(arguments):
             browser.current_page_id = None
         add_event(
             "I closed a tab in the virtual browser for page ID " + page_id,
-            agent_name,
             type="virtual_browser",
         )
     else:
         add_event(
             "I tried to close a tab in the virtual browser, but it didn't exist. The page ID was "
             + page_id,
-            agent_name,
             type="virtual_browser",
         )
         raise ValueError(f"Page ID {page_id} does not exist.")
@@ -80,7 +73,6 @@ def navigate_to(arguments):
         + url
         + " in the virtual browser for page ID "
         + browser.current_page_id,
-        agent_name,
         type="virtual_browser",
     )
 
@@ -94,7 +86,6 @@ def get_html(arguments):
     add_event(
         "I got the HTML from the virtual browser for page ID "
         + browser.current_page_id,
-        agent_name,
         type="virtual_browser",
     )
 
@@ -110,7 +101,6 @@ def get_body_text(arguments):
     add_event(
         "I got the text from the virtual browser for page ID "
         + browser.current_page_id,
-        agent_name,
         type="virtual_browser",
     )
 
@@ -127,7 +117,6 @@ def search_google(arguments):
         + query
         + " in the virtual browser for page ID "
         + browser.current_page_id,
-        agent_name,
         type="virtual_browser",
     )
 
@@ -139,13 +128,11 @@ def execute_pyppeteer_code(arguments):
         + browser.current_page_id
         + ": "
         + code,
-        agent_name,
         type="virtual_browser",
     )
     if not browser.current_page_id:
         add_event(
             "I tried to execute code in the virtual browser, but there was no active page.",
-            agent_name,
             type="virtual_browser",
         )
         raise ValueError("No active page.")
@@ -155,7 +142,6 @@ def execute_pyppeteer_code(arguments):
         add_event(
             "I executed code in the virtual browser for page ID "
             + browser.current_page_id,
-            agent_name,
             type="virtual_browser",
         )
 

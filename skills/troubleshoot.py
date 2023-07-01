@@ -1,7 +1,6 @@
 # think about things that are going on
 from core.language import clean_prompt, use_language_model, compose_prompt
 from core.memory import add_event
-from core.constants import agent_name
 
 prompt = clean_prompt("""
 The current time is {current_time} on {current_date}.
@@ -33,7 +32,7 @@ def troubleshoot(arguments):
     response = use_language_model(messages=messages)
     response_message = response.get("message", None)
     if response_message != None:
-        add_event(response_message, agent_name, type="troubleshooting")
+        add_event(response_message, type="troubleshooting")
 
 
 def get_skills():

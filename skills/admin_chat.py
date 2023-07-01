@@ -4,7 +4,6 @@ import requests
 import logging
 import threading
 from core.memory import add_event, wipe_memory
-from core.constants import agent_name
 
 
 from flask import Flask, request
@@ -40,13 +39,13 @@ def receive_message(msg):
 def send_message(arguments):
     message = arguments["message"]
     # Send a message to the user terminal listener
-    add_event(message, agent_name, "conversation")
+    add_event(message, "assistant", "conversation")
     try:
         requests.get("http://127.0.0.1:5001/response", params={"msg": message})
-        add_event("The user is connected. I sent them a message.", agent_name, "response_status")
+        add_event("The user is connected. I sent them a message.", "assistant", "response_status")
     except:
         # noop
-        add_event("The user is not connected. They might be able to read the terminal but they might not be there. I guess I'll have to figure it out myself and try them later.", agent_name, "response_status")
+        add_event("The user is not connected. They might be able to read the terminal but they might not be there. I guess I'll have to figure it out myself and try them later.", "assistant", "response_status")
 
 # respond to user input
 def get_skills():

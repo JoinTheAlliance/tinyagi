@@ -1,8 +1,6 @@
 # think about things that are going on
 from core.language import use_language_model, compose_prompt
 from core.memory import add_event, get_all_values_for_text
-from core.constants import agent_name
-
 
 def get_skills():
     return {
@@ -47,4 +45,4 @@ def learn(arguments):
     response = use_language_model(messages=messages)
     response_message = response.get("message", None)
     if response_message != None:
-        add_event(response_message, agent_name, type="thought")
+        add_event(response_message, type="thought")

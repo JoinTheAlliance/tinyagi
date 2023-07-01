@@ -1,7 +1,6 @@
 # think about things that are going on
 from core.language import clean_prompt, use_language_model, compose_prompt
 from core.memory import add_event, get_all_values_for_text
-from core.constants import agent_name
 
 prompt = clean_prompt(
     """
@@ -37,7 +36,7 @@ def write_poem(arguments):
     response = use_language_model(messages=messages)
     response_message = response.get("message", None)
     if response_message != None:
-        add_event(response_message, agent_name, type="poem")
+        add_event(response_message, type="poem")
 
 
 def get_skills():

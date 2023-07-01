@@ -1,13 +1,10 @@
 # plan about things that are going on
 from core.language import clean_prompt, use_language_model, compose_prompt
 from core.memory import add_event, get_all_values_for_text, get_documents
-from core.constants import agent_name
 
 plan_prompt = clean_prompt(
     """
 The current time is {current_time} on {current_date}.
-I am taking the role of {agent_name}, so I will plan on behalf of {agent_name} and speak in the first person as them.
-I should always try to advance my goals and complete my tasks. I should always try to call the most appropriate function, or just randomly pick something if I'm bored.
 
 Here are some relevant things that I have recalled from my memory:
 {knowledge}
@@ -15,26 +12,28 @@ Here are some relevant things that I have recalled from my memory:
 Recent Event History:
 {events}
 
-I have access to the following functions and should call them often:
+You have access to the following functions and should call them often:
 {skills}
 
-These are my most important goals, which I should always keep in mind:
+These are your most important goals, which you should always keep in mind:
 {goals}
 
-These are my current tasks, which I should prioritize accomplishing
+These are your current tasks, which you should prioritize accomplishing
 {tasks}
 
-I should write a detailed plan that I can execute on. I should make sure to include what skill or task the plan is related to, and what skills or knowledge I will use.
+Sometimes you get caught in loops, especially with planning, thinking and learning. If you've been planning and thinking for a while, you should try figure out what else you should do, especially exploring, coding or playing with the browser or terminal.
+Always try to advance your goals and complete your tasks. Always try to call the most appropriate function for the immediate context -- or just start working toward your goals.
+Prompt: Write should write a detailed plan that I can execute on. I should make sure to include what skill or task the plan is related to, and what skills or knowledge I will use.
 """
 )
 
 
 def get_skills():
     return {
-        "form_plan": {
+        "create_plan": {
             "payload": {
-                "name": "form_plan",
-                "description": "Form a plan for what you're going to do to achieve your goals or tasks. Good when you're just getting started.",
+                "name": "create_plan",
+                "description": "Create a new plan for what you're going to do to achieve your goals or tasks. Good when you're just getting started.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -90,11 +89,10 @@ def remember_plan(arguments):
         document = documents_and_metadata[newest_plan_index][0]
         add_event(
             f"(plan) My most recent plan is this one: \n{document}",
-            agent_name,
             type="plan",
         )
     else:
-        add_event(f"(plan) I don't have a plan.", agent_name, type="plan")
+        add_event(f"(plan) I don't have a plan. I should create one.", type="plan")
 
 
 def plan(arguments):
@@ -112,7 +110,7 @@ def plan(arguments):
     response_message = response.get("message", None)
     if response_message != None:
         response_message = "(planning) " + response_message
-        add_event(response_message, agent_name, type="plan")
+        add_event(response_message, type="plan")
 
 
 if __name__ == "__main__":

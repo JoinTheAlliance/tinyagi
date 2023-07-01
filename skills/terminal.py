@@ -3,8 +3,6 @@ import uuid
 
 from connectors.terminal import terminal
 from core.memory import add_event
-from core.constants import agent_name
-
 
 def create_tab(arguments):
     session_id = str(uuid.uuid4())
@@ -16,7 +14,6 @@ def create_tab(arguments):
     terminal.set_current_session_id(session_id)
     add_event(
         "I created a new tab in the terminal for session ID " + session_id,
-        agent_name,
         type="terminal_command",
     )
     return session_id
@@ -30,16 +27,14 @@ def switch_to(arguments):
             "I switched to the terminal for session ID "
             + session_id
             + ". Now I can use the terminal by calling run_command.",
-            agent_name,
-            type="terminal_command",
+                type="terminal_command",
         )
     else:
         session_id = terminal.current_session_id
         add_event(
             "I tried to switch to a different session on the terminal, but the session ID didn't exist. So I got the default session, which has the session ID "
             + session_id,
-            agent_name,
-            type="terminal_command",
+                type="terminal_command",
         )
 
 
@@ -51,15 +46,13 @@ def close_tab(arguments):
             terminal.set_current_session_id(None)
         add_event(
             "I closed a tab in the terminal for session ID " + session_id,
-            agent_name,
-            type="terminal_command",
+                type="terminal_command",
         )
     else:
         add_event(
             "I tried to close a tab in the terminal, but it didn't exist. The session ID was "
             + session_id,
-            agent_name,
-            type="terminal_command",
+                type="terminal_command",
         )
         raise ValueError(f"Session ID {session_id} does not exist.")
 
@@ -70,7 +63,6 @@ def get_tabs(arguments):
         + str(terminal.get_sessions())
         + "\n"
         + "Next I can run a command in the terminal (run_command function).",
-        agent_name,
         type="terminal_command",
     )
 
@@ -90,7 +82,6 @@ def get_tabs_formatted_as_string(arguments):
         + formatted_string
         + "\n"
         + "Next I can run a command in the terminal (run_command function).",
-        agent_name,
         type="terminal_command",
     )
     return formatted_string
@@ -117,7 +108,6 @@ def run_command(arguments):
         + "\n"
         + "The output was: "
         + result.decode("utf-8"),
-        agent_name,
         type="terminal_command",
     )
     return result.decode("utf-8")
@@ -127,13 +117,11 @@ def get_current_working_directory(arguments):
     description = arguments.get("description", None)
     add_event(
         "I'm getting the current working directory because: " + description,
-        agent_name,
         type="shell_command",
     )
     cwd = terminal.get_current_directory()
     add_event(
         "The current working directory is: " + cwd,
-        agent_name,
         type="shell_command",
     )
 
@@ -152,8 +140,7 @@ def curl(arguments):
             + command
             + "```\nThe result was: "
             + result,
-            agent_name,
-            type="shell_command",
+                type="shell_command",
         )
 
     except Exception as e:
@@ -162,8 +149,7 @@ def curl(arguments):
             + command
             + "```\nBut I got an error: "
             + str(e),
-            agent_name,
-            type="shell_command",
+                type="shell_command",
         )
 
 
@@ -173,14 +159,12 @@ def change_current_working_directory(arguments):
         terminal.set_current_directory(directory)
         add_event(
             f"I have changed the current working directory to: {directory}",
-            agent_name,
-            type="shell_command",
+                type="shell_command",
         )
     except Exception as e:
         add_event(
             f"I tried to change the current working directory to: {directory}, but I got an error: {str(e)}",
-            agent_name,
-            type="shell_command",
+                type="shell_command",
         )
 
 
@@ -197,8 +181,7 @@ def write_python_file(arguments):
             + "```\nWith the contents: ```"
             + file_contents
             + "```",
-            agent_name,
-            type="shell_command",
+                type="shell_command",
         )
     except Exception as e:
         add_event(
@@ -208,8 +191,7 @@ def write_python_file(arguments):
             + file_contents
             + "```\nBut I got an error: "
             + str(e),
-            agent_name,
-            type="shell_command",
+                type="shell_command",
         )
 
 
@@ -225,8 +207,7 @@ def pip_install(arguments):
             + command
             + "```\nThe result was: "
             + result,
-            agent_name,
-            type="shell_command",
+                type="shell_command",
         )
 
     except Exception as e:
@@ -235,8 +216,7 @@ def pip_install(arguments):
             + command
             + "```\nBut I got an error: "
             + str(e),
-            agent_name,
-            type="shell_command",
+                type="shell_command",
         )
 
 

@@ -6,8 +6,6 @@ import uuid
 
 import chromadb
 
-from core.constants import agent_name
-
 # Create a ChromaDB client
 client = chromadb.Client()
 
@@ -24,48 +22,17 @@ collection_names = [
 
 collections = {}  # Holds all the collections
 
-seeds = ["goals", "knowledge", "personality"]  # Seeds to start the DB with
-
-
-def seed(collections):
-    """
-    Seeds the DB collections with initial data.
-    """
-    for seed in seeds:
-        counter = 0
-        with open("seeds/" + seed + ".txt", "r") as f:
-            lines = f.readlines()
-            for line in lines:
-                line = line.strip().replace("\n", "").replace("'", "").replace('"', "")
-                # Check if line is already in the collection. If it is, skip it.
-                if (
-                    line
-                    in collections[seed].get(where_document={"$contains": line})[
-                        "documents"
-                    ]
-                ):
-                    continue
-                # Add line to the collection if it's not already there
-                collections[seed].add(
-                    ids=[str(counter)],
-                    documents=[line],
-                )
-                counter += 1
-
-
 # Create or get collections
 for collection_name in collection_names:
     collection = client.get_or_create_collection(collection_name)
     collections[collection_name] = collection
 
-# Seed the collections
-seed(collections)
-
 # Below are functions for handling various operations on the collections
+
 
 def wipe_memory():
     client.reset()
-    seed(collections)
+
 
 def get_client():
     """Returns the ChromaDB client."""
@@ -265,7 +232,6 @@ def get_all_values_for_text(text):
     values = {
         "current_time": get_formatted_time(),
         "current_date": get_current_date(),
-        "agent_name": get_agent_name(),
         "skills": get_skills(text),
         "goals": get_goals(text),
         "tasks": get_tasks(text),
@@ -275,6 +241,7 @@ def get_all_values_for_text(text):
     }
     return values
 
+
 def get_events(limit=12):
     """
     Returns a stream of events from the 'events' collection.
@@ -283,7 +250,7 @@ def get_events(limit=12):
     return events
 
 
-def add_event(userText, event_creator, type="conversation", document_id=None):
+def add_event(userText, event_creator="assistant", type="conversation", document_id=None):
     """
     Adds an event to the 'events' collection.
     """
@@ -293,12 +260,15 @@ def add_event(userText, event_creator, type="conversation", document_id=None):
     collections["events"].add(
         ids=[str(document_id)],
         documents=[userText],
-        metadatas=[{"type": type, "event_creator": event_creator, "timestamp": time.time()}],
+        metadatas=[
+            {"type": type, "event_creator": event_creator, "timestamp": time.time()}
+        ],
     )
 
     # Log the event and print the user text
     write_log(userText)
     print(userText)
+
 
 def get_formatted_time():
     """
@@ -308,6 +278,7 @@ def get_formatted_time():
     formatted_time = time.strftime("%I:%M:%S %p", time.localtime(current_time))
     return formatted_time
 
+
 def get_current_date():
     """
     Returns the current date in the format of 'YYYY-mm-dd'.
@@ -315,6 +286,7 @@ def get_current_date():
     current_time = time.time()
     current_date = time.strftime("%Y-%m-%d", time.localtime(current_time))
     return current_date
+
 
 def events_to_stream(messages):
     """
@@ -327,6 +299,7 @@ def events_to_stream(messages):
         for msg_meta, msg_doc in zip(messages["metadatas"], messages["documents"])
     )
     return event_stream
+
 
 def write_log(text, header=None):
     """
@@ -352,12 +325,6 @@ def write_log(text, header=None):
     # Open the 'feed.log' file and append the log message
     with open("logs/feed.log", "a") as f:
         f.write(text + "\n")
-
-def get_agent_name():
-    """
-    Returns the agent's name from the constants module.
-    """
-    return agent_name
 
 if __name__ == "__main__":
     # test the get_collections function
@@ -422,14 +389,9 @@ if __name__ == "__main__":
     date_result = get_current_date()
     assert isinstance(date_result, str)
 
-    # test the get_agent_name function
-    agent_name_result = get_agent_name()
-    assert agent_name_result == agent_name
-
     # test the events_to_stream function
-    events_stream_result = events_to_stream({
-        "metadatas": [{"event_creator": "test"}],
-        "documents": ["test document"]
-    })
+    events_stream_result = events_to_stream(
+        {"metadatas": [{"event_creator": "test"}], "documents": ["test document"]}
+    )
     assert isinstance(events_stream_result, str)
     print("All tests passed!")

@@ -1,12 +1,10 @@
 # think about things that are going on
 from core.language import clean_prompt, use_language_model, compose_prompt
 from core.memory import add_event, get_all_values_for_text
-from core.constants import agent_name
 
-prompt = clean_prompt("""
+prompt = clean_prompt(
+    """
 The current time is {current_time} on {current_date}.
-I am taking the role of {agent_name}, so I will write {agent_name}'s next response to the conversation.
-I should always try to advance my goals and complete my tasks. I should always try to call the most appropriate function, or just randomly pick something if I'm bored.
 
 Here are some relevant things that I have recalled from my memory:
 {knowledge}
@@ -21,11 +19,10 @@ I have access to the following functions and should call them often:
 Recent Event History:
 {events}
 
-You task is do to the following:
-Consider this topic: {topic}
-- What do you think about it?
-- Using what you know, what are you going to do about it?
-""")
+Think about this topic: {topic}
+"""
+)
+
 
 def get_skills():
     return {
@@ -65,4 +62,4 @@ def think(arguments):
     response = use_language_model(messages=messages)
     response_message = response.get("message", None)
     if response_message != None:
-        add_event(response_message, agent_name, type="thought")
+        add_event(response_message, type="thought")

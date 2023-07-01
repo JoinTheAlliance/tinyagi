@@ -6,7 +6,7 @@ To install
 pip install -r requirements.txt # install the dependencies
 cp .env.example .env # copy the example environment file
 ```
-To change some configuration stuff, edit the `.env` file, especially the `OPENAI_API_KEY` and `AGENT_NAME` variable.
+To change some configuration stuff, edit the `.env` file, especially the `OPENAI_API_KEY` variable.
 
 To run
 ```

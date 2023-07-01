@@ -1,25 +1,23 @@
-# Contains utilities for creating and managing OpenAI GPT-3 based conversations.
-# It also involves writing the chat logs and managing the token counts of messages.
-import sys
+# Contains utilities for creating and managing the language model and conversations.
 import textwrap
-
-# if this module is run directly, set the sys path to ../
-if __name__ == "__main__":
-    sys.path.append("../")
-
 import os
 import openai
 import tiktoken
-from core.memory import add_event
 from datetime import datetime
+from dotenv import load_dotenv
 
-from core.constants import (
-    default_text_model,
-    default_max_tokens,
-    long_text_model,
-    openai_api_key,
-    agent_name,
-)
+load_dotenv()  # take environment variables from .env.
+
+update_interval = int(os.getenv("UPDATE_INTERVAL"))
+default_text_model = os.getenv("DEFAULT_TEXT_MODEL")
+long_text_model = os.getenv("LONG_TEXT_MODEL")
+default_max_tokens = int(os.getenv("DEFAULT_MAX_TOKENS"))
+openai_api_key = os.getenv("OPENAI_API_KEY")
+
+if openai_api_key == None or openai_api_key == "":
+    raise Exception(
+        "OPENAI_API_KEY environment variable not set. Please set it in a .env file."
+    )
 
 # Set OpenAI API key
 openai.api_key = openai_api_key

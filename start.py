@@ -1,5 +1,9 @@
 import os
 import shutil
+
+# set TOKENIZERS_PARALLELISM environment variable to False to avoid warnings
+os.environ["TOKENIZERS_PARALLELISM"] = "False"
+
 # if .env doesn't exist, copy .env.example to .env
 if not os.path.exists(".env"):
     shutil.copy(".env.example", ".env")
@@ -9,12 +13,11 @@ if not os.path.exists(".env"):
 import time
 
 from core.skills import register_skills
-from core.constants import update_interval
 
 import core.loop
 
 register_skills()
 
 while True:
-    time.sleep(update_interval)
+    time.sleep(int(os.getenv("UPDATE_INTERVAL")) or 7)
     core.loop.main()

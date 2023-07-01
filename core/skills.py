@@ -6,7 +6,6 @@ import sys
 import importlib
 import json
 
-from core.constants import agent_name
 from core.memory import add_event, get_collection
 
 # Create an empty dictionary to hold the functions
@@ -40,13 +39,11 @@ def use_skill(name, arguments):
             # Log the usage of a skill as an event
             add_event(
                 f"I called the skill (function call) `{name}` with the arguments: {argument_string}",
-                agent_name,
                 "skill",
             )
             return functions[name](arguments)
     add_event(
         f"I tried to call the skill (function call) `{name}` with the arguments `{argument_string}` but it was not available. I should try again with one of the skills in my memory.",
-        agent_name,
         "skill",
     )
     return None
@@ -102,7 +99,7 @@ def remove_skill(name):
             skill_collection.delete(ids=[name])
 
         # Log the removal of a skill as an event
-        add_event(f"I removed the skill {name}", agent_name, "skill")
+        add_event(f"I removed the skill {name}", "skill")
 
 
 def register_skills():

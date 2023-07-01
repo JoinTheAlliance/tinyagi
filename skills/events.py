@@ -1,1 +1,1 @@
-# TODO: store, retrieve, update, complete and cancel goals
+# TODO: search events

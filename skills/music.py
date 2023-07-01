@@ -1,7 +1,6 @@
 # think about things that are going on
 from core.language import use_language_model, compose_prompt
 from core.memory import add_event, get_all_values_for_text
-from core.constants import agent_name
 from core.language import clean_prompt
 
 prompt = clean_prompt(
@@ -63,4 +62,4 @@ def write_song(arguments):
     response = use_language_model(messages=messages)
     response_message = response.get("message", None)
     if response_message != None:
-        add_event(response_message, agent_name, type="song")
+        add_event(response_message, type="song")
