@@ -1,1 +1,0 @@
-This file is used for test validation, please don't touch it.

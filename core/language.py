@@ -1,6 +1,7 @@
 # Contains utilities for creating and managing OpenAI GPT-3 based conversations.
 # It also involves writing the chat logs and managing the token counts of messages.
 import sys
+import textwrap
 
 # if this module is run directly, set the sys path to ../
 if __name__ == "__main__":
@@ -43,12 +44,26 @@ def use_language_model(messages, functions=None, long=False):
     model = long_text_model if long else default_text_model
     messages = trim_messages(messages, default_max_tokens)
     # Make API request and get response
-    if(functions):
-        response = openai.ChatCompletion.create(
-            model=model, messages=messages, functions=functions
-        )
-    else:
-        response = openai.ChatCompletion.create(model=model, messages=messages)
+    def try_request():
+        try:
+            if(functions):
+                response = openai.ChatCompletion.create(
+                    model=model, messages=messages, functions=functions
+                )
+            else:
+                response = openai.ChatCompletion.create(model=model, messages=messages)
+            return response
+        except Exception as e:
+            print(f"OpenAI Error: {e}")
+            return None
+
+    # try three times
+    num_tries = 3
+    response = None
+    for i in range(num_tries):
+        response = try_request()
+        if response:
+            break
 
     # Log model, functions, messages, and response to a text file
     file_content = f"*** MODEL: {model}\n*** FUNCTIONS: {functions}\n*** MESSAGES: {messages}\n*** RESPONSE: {response}"
@@ -184,15 +199,16 @@ def count_tokens(text):
 
     return len(encoding.encode(text))
 
-def compose_prompt(prompt_template_name, values_to_replace, topic=None):
+def clean_prompt(prompt):
+    return textwrap.dedent(prompt.strip())
+
+def compose_prompt(prompt_template, values_to_replace, topic=None):
     """
     Given a template name and a dictionary of values, create a formatted string.
 
-    prompt_template_name: the filename of the template, excluding extension
+    prompt_template: a template prompt which we will be replacing placeholders in
     values_to_replace: a dictionary where keys are placeholders in the template and values are the substitutions
     """
-    # Fetch the template based on the template name
-    prompt_template = get_prompt_template(prompt_template_name)
 
     # Substitute placeholders in the template with the corresponding values
     prompt_template = replace_all_in_string(prompt_template, values_to_replace)
@@ -213,17 +229,6 @@ def replace_all_in_string(string, replacements):
     for key, value in replacements.items():
         string = string.replace("{" + key + "}", value)
     return string
-
-def get_prompt_template(template_name):
-    """
-    Reads the content of a template file and returns it as a string.
-
-    template_name: the filename of the template, excluding extension
-    """
-    # Build the template file path and open the file
-    with open(f"templates/{template_name}.txt", "r") as f:
-        # Read the file content and return it
-        return f.read()
 
 def messages_to_dialogue(messages):
     """
@@ -261,11 +266,6 @@ if __name__ == "__main__":
     string = "Hello {name}, how are you?"
     replacements = {"name": "John"}
     assert replace_all_in_string(string, replacements) == "Hello John, how are you?"
-
-    # Tests for get_prompt_template function
-    # For this test, you need a file named `test.txt` in `templates/` directory with content: "Hello, how are you?"
-    template_name = "test"
-    assert get_prompt_template(template_name) == "This file is used for test validation, please don't touch it."
 
     # Tests for messages_to_dialogue function
     messages = {"metadatas": [{"event_creator": "User"}], "documents": ["Hi, how are you?"]}

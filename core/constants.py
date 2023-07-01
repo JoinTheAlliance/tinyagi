@@ -15,7 +15,7 @@ default_max_tokens = int(os.getenv("DEFAULT_MAX_TOKENS"))
 
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
-if openai_api_key == None:
+if openai_api_key == None or openai_api_key == "":
     raise Exception(
         "OPENAI_API_KEY environment variable not set. Please set it in a .env file."
     )

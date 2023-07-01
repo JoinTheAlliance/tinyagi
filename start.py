@@ -1,17 +1,17 @@
-import time
 import os
+import shutil
+# if .env doesn't exist, copy .env.example to .env
+if not os.path.exists(".env"):
+    shutil.copy(".env.example", ".env")
+    print("Please edit the .env file and add your API key, then restart the agent")
+    exit()
+
+import time
 
 from core.skills import register_skills
 from core.constants import update_interval
 
 import core.loop
-import core.memory
-
-chroma_client = core.memory.get_client()
-collections = core.memory.get_collections()
-
-# regenerate codebase log
-os.system("python3 scripts/generate_code.py")
 
 register_skills()
 

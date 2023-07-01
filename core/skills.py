@@ -24,24 +24,32 @@ def use_skill(name, arguments):
     Also, the usage of a skill is logged as an event.
     """
     # If arguments are a JSON string, parse it to a dictionary
+    decoded_correctly = True
     if isinstance(arguments, str):
-        arguments = json.loads(arguments)
+        try:
+            arguments = json.loads(arguments)
+        except:
+            decoded_correctly = False
 
     # Convert the arguments dictionary to a string representation
     argument_string = ", ".join(f"{key}: {str(val)}" for key, val in arguments.items())
 
-    # Log the usage of a skill as an event
+    # Call the function with its arguments if it exists in the 'functions' dictionary
+    if name in functions:
+        if decoded_correctly:
+            # Log the usage of a skill as an event
+            add_event(
+                f"I called the skill (function call) `{name}` with the arguments: {argument_string}",
+                agent_name,
+                "skill",
+            )
+            return functions[name](arguments)
     add_event(
-        f"I used the skill `{name}` with the arguments: {argument_string}",
+        f"I tried to call the skill (function call) `{name}` with the arguments `{argument_string}` but it was not available. I should try again with one of the skills in my memory.",
         agent_name,
         "skill",
     )
-
-    # Call the function with its arguments if it exists in the 'functions' dictionary
-    if name in functions:
-        return functions[name](arguments)
-    else:
-        return None
+    return None
 
 
 def add_skill(name, function):
@@ -134,6 +142,7 @@ def register_skills():
 
 if __name__ == "__main__":
     register_skills()
+
     def test_skill_handler(arguments):
         input = arguments["input"]
         return input

@@ -110,10 +110,10 @@ def run_command(arguments):
 
     session["last_command"] = command
     session["last_output"] = result
-    command_trimmed = command[:100]
+
     add_event(
         "I ran the command: "
-        + command_trimmed
+        + command
         + "\n"
         + "The output was: "
         + result.decode("utf-8"),
@@ -123,23 +123,6 @@ def run_command(arguments):
     return result.decode("utf-8")
 
 
-def change_current_working_directory(arguments):
-    directory = arguments.get("directory", None)
-    try:
-        terminal.set_current_directory(directory)
-        add_event(
-            f"I have changed the current working directory to: {directory}",
-            agent_name,
-            type="shell_command",
-        )
-    except Exception as e:
-        add_event(
-            f"I tried to change the current working directory to: {directory}, but I got an error: {str(e)}",
-            agent_name,
-            type="shell_command",
-        )
-
-
 def get_current_working_directory(arguments):
     description = arguments.get("description", None)
     add_event(
@@ -155,35 +138,6 @@ def get_current_working_directory(arguments):
     )
 
 
-def write_python_file(arguments):
-    file_name = arguments.get("file_name", None)
-    file_contents = arguments.get("file_contents", None)
-    command = "echo " + file_contents + " > " + file_name
-    try:
-        # Use terminal's run_command method
-        run_command({"command": command})
-        add_event(
-            "I am writing a Python file: ```"
-            + file_name
-            + "```\nWith the contents: ```"
-            + file_contents
-            + "```",
-            agent_name,
-            type="shell_command",
-        )
-    except Exception as e:
-        add_event(
-            "I tried to write a Python file: ```"
-            + file_name
-            + "```\nWith the contents: ```"
-            + file_contents
-            + "```\nBut I got an error: "
-            + str(e),
-            agent_name,
-            type="shell_command",
-        )
-
-
 def curl(arguments):
     url = arguments.get("url", None)
     arguments = arguments.get("arguments", None)
@@ -193,9 +147,6 @@ def curl(arguments):
     try:
         result = run_command({"command": command})
 
-        # trim the result
-        result = result[:2000] + (result[2000:] and "..")
-        # trim command to first 100 characters
         add_event(
             "I successfully ran the curl command: ```"
             + command
@@ -233,21 +184,6 @@ def change_current_working_directory(arguments):
         )
 
 
-def get_current_working_directory(arguments):
-    description = arguments.get("description", None)
-    add_event(
-        "I'm getting the current working directory because: " + description,
-        agent_name,
-        type="shell_command",
-    )
-    cwd = terminal.get_current_directory()
-    add_event(
-        "The current working directory is: " + cwd,
-        agent_name,
-        type="shell_command",
-    )
-
-
 def write_python_file(arguments):
     file_name = arguments.get("file_name", None)
     file_contents = arguments.get("file_contents", None)
@@ -270,38 +206,6 @@ def write_python_file(arguments):
             + file_name
             + "```\nWith the contents: ```"
             + file_contents
-            + "```\nBut I got an error: "
-            + str(e),
-            agent_name,
-            type="shell_command",
-        )
-
-
-def curl(arguments):
-    url = arguments.get("url", None)
-    arguments = arguments.get("arguments", None)
-    command = "curl " + url + " " + arguments
-
-    # try to execute the command
-    try:
-        result = run_command({"command": command})
-
-        # trim the result
-        result = result[:2000] + (result[2000:] and "..")
-        # trim command to first 100 characters
-        add_event(
-            "I successfully ran the curl command: ```"
-            + command
-            + "```\nThe result was: "
-            + result,
-            agent_name,
-            type="shell_command",
-        )
-
-    except Exception as e:
-        add_event(
-            "I tried to run the curl command: ```"
-            + command
             + "```\nBut I got an error: "
             + str(e),
             agent_name,
@@ -316,8 +220,6 @@ def pip_install(arguments):
     # try to execute the command
     try:
         result = run_command({"command": command})
-
-        # trim command to first 100 characters
         add_event(
             "I successfully ran the command: ```"
             + command
@@ -332,41 +234,6 @@ def pip_install(arguments):
             "I tried to run the command: ```"
             + command
             + "```\nBut I got an error: "
-            + str(e),
-            agent_name,
-            type="shell_command",
-        )
-
-
-def run_shell_command(arguments):
-    description = arguments.get("description", None)
-    command = arguments.get("command", None)
-
-    add_event(
-        "I'm running a shell command with the command: " + command,
-        agent_name,
-        type="shell_command",
-    )
-
-    # try to execute the command
-    try:
-        result = run_command({"command": command})
-
-        # trim command to first 100 characters
-        add_event(
-            "I successfully ran the command: "
-            + command
-            + "\nThe result was: "
-            + result,
-            agent_name,
-            type="shell_command",
-        )
-
-    except Exception as e:
-        add_event(
-            "I tried to run the command: "
-            + command
-            + "\nBut I got an error: "
             + str(e),
             agent_name,
             type="shell_command",
@@ -552,7 +419,7 @@ def get_skills():
                 },
             },
             "handler": write_python_file,
-        }
+        },
     }
 
 
@@ -564,17 +431,6 @@ if __name__ == "__main__":
         )
     except Exception as e:
         print(f"get_current_working_directory function failed with exception: {e}")
-
-    # Test run_shell_command function
-    try:
-        run_shell_command(
-            {
-                "description": "Testing run_shell_command function",
-                "command": "echo 'Hello World'",
-            }
-        )
-    except Exception as e:
-        print(f"run_shell_command function failed with exception: {e}")
 
     # Test pip_install function
     try:

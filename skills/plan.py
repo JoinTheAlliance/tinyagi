@@ -1,7 +1,32 @@
 # plan about things that are going on
-from core.language import use_language_model, compose_prompt
+from core.language import clean_prompt, use_language_model, compose_prompt
 from core.memory import add_event, get_all_values_for_text, get_documents
 from core.constants import agent_name
+
+plan_prompt = clean_prompt(
+    """
+The current time is {current_time} on {current_date}.
+I am taking the role of {agent_name}, so I will plan on behalf of {agent_name} and speak in the first person as them.
+I should always try to advance my goals and complete my tasks. I should always try to call the most appropriate function, or just randomly pick something if I'm bored.
+
+Here are some relevant things that I have recalled from my memory:
+{knowledge}
+
+Recent Event History:
+{events}
+
+I have access to the following functions and should call them often:
+{skills}
+
+These are my most important goals, which I should always keep in mind:
+{goals}
+
+These are my current tasks, which I should prioritize accomplishing
+{tasks}
+
+I should write a detailed plan that I can execute on. I should make sure to include what skill or task the plan is related to, and what skills or knowledge I will use.
+"""
+)
 
 
 def get_skills():
@@ -75,14 +100,9 @@ def remember_plan(arguments):
 def plan(arguments):
     plan = arguments.get("plan", None)
     values_to_replace = get_all_values_for_text(plan)
-    user_prompt = compose_prompt("plan", values_to_replace)
-    system_prompt = compose_prompt("system", values_to_replace)
+    user_prompt = compose_prompt(plan_prompt, values_to_replace)
 
     messages = [
-        {
-            "role": "system",
-            "content": system_prompt,
-        },
         {
             "role": "user",
             "content": user_prompt,
@@ -105,7 +125,6 @@ if __name__ == "__main__":
     # Test `remember_plan` function
     try:
         remember_plan(None)
-        print("The `remember_plan` function ran successfully")
         # Assume get_documents from core.memory returns dictionary as required by remember_plan
         result = get_documents(
             "events", where={"type": "plan"}, include=["metadatas", "documents"]
@@ -116,3 +135,5 @@ if __name__ == "__main__":
         ), "`remember_plan` function did not return a dictionary as expected"
     except Exception as e:
         print(f"The `remember_plan` function failed with exception: {e}")
+
+    print("All tests passed!")
