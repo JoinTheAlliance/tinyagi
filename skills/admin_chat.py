@@ -34,9 +34,10 @@ def respond(arguments):
     add_event(message, agent_name, "conversation")
     try:
         requests.get("http://127.0.0.1:5001/response", params={"msg": message})
+        add_event("The user is connected. I sent them a message.", agent_name, "response_status")
     except:
         # noop
-        pass
+        add_event("The user is not connected. They might be able to read the terminal but they might not be there. I guess I'll have to figure it out myself and try them later.", agent_name, "response_status")
 
 # respond to user input
 def get_skills():

@@ -1,5 +1,4 @@
-import json
-import uuid
+# Handles the main execution loop, which repeats at a fixed internal
 
 from core.memory import (
     add_event,
@@ -9,53 +8,71 @@ from core.memory import (
     get_client,
     get_collections,
 )
-from core.completion import create_chat_completion
+from core.language import use_language_model, compose_prompt
 from core.constants import agent_name
-from core.skill_handling import use_skill
-from core.utils import (
-    compose_prompt,
-)
+from core.skills import use_skill
 
+# as memory handling, composing prompts, handling skills, and creating chat completions.
+
+# Get Chroma client
 chroma_client = get_client()
+# Get all collections
 collections = get_collections()
 
+
 def get_most_recent_from_logs(max_characters=1000):
+    """
+    Gets the most recent logs.
+
+    Parameters:
+    max_characters: Maximum characters to read from the log. (Default is 1000)
+
+    Returns:
+    Most recent logs up to the specified max characters.
+    """
     with open("logs/feed.log", "r") as f:
         lines = f.readlines()
+        # Reverse the lines to get the most recent ones
         lines.reverse()
         lines = "".join(lines)
-        lines = lines[:max_characters]
-        return lines
+        return lines[:max_characters]
+
 
 def main():
-    events = get_events(limit=5)
+    """
+    Main execution function. This retrieves events, prepares prompts, handles skills,
+    and creates chat completions.
+    """
+    # Get the last 5 events
+    events = get_events(limit=5) or "I have awaken."
 
-    if events == None or len(events) == 0:
-        events = "I have awaken."
-
-    # TODO: we should make sure we're getting a good search here
+    # Get all the values that need to be replaced in the events text
     values_to_replace = get_all_values_for_text(events)
 
+    # Compose user and system prompts
     user_prompt = compose_prompt("loop", values_to_replace)
     system_prompt = compose_prompt("system", values_to_replace)
 
+    # Get functions from the events
     functions = get_functions(events)
-    response = create_chat_completion(
+
+    # Create a chat completion
+    response = use_language_model(
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
         functions=functions,
     )
+    # Extract response message and remove the agent's name from it
     response_message = response["message"]
-
-    if response_message != None:
+    if response_message:
         response_message = response_message.replace(f"{agent_name}: ", "", 1)
         add_event("I wrote this response: " + response_message, agent_name, "loop")
 
+    # Extract function call from the response
     function_call = response["function_call"]
-
-    if function_call != None:
-        function_name = function_call.get("name", None)
-        args = function_call.get("arguments", None)
+    if function_call:
+        function_name = function_call.get("name")
+        args = function_call.get("arguments")
         use_skill(function_name, args)

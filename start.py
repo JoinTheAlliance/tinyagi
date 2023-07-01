@@ -1,7 +1,7 @@
 import time
 import os
 
-from core.skill_handling import register_skills
+from core.skills import register_skills
 from core.constants import update_interval
 
 import core.loop

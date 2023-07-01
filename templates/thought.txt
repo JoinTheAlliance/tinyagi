@@ -15,5 +15,7 @@ I have access to the following functions and should call them often:
 Recent Event History:
 {events}
 
-Think about this topic: {topic}
-What do you think about it?
+You task is do to the following:
+Consider this topic: {topic}
+- What do you think about it?
+- Using what you know, what are you going to do about it?

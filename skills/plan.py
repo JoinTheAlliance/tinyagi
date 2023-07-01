@@ -1,7 +1,6 @@
 # plan about things that are going on
-from core.completion import create_chat_completion
+from core.language import use_language_model, compose_prompt
 from core.memory import add_event, get_all_values_for_text
-from core.utils import compose_prompt
 from core.constants import agent_name
 
 
@@ -43,7 +42,7 @@ def plan(arguments):
             "content": user_prompt,
         },
     ]
-    response = create_chat_completion(messages=messages)
+    response = use_language_model(messages=messages)
     response_message = response.get("message", None)
     if response_message != None:
         response_message = "(planning) " + response_message

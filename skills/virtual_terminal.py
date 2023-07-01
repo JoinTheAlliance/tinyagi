@@ -61,16 +61,15 @@ def switch_to(arguments):
     if session_id in terminal.get_sessions():
         terminal.set_current_session_id(session_id)
         add_event(
-            "I switched to the virtual terminal for session ID " + session_id, agent_name, type="virtual_terminal_command"
+            "I switched to the virtual terminal for session ID " + session_id + ". Now I can use the terminal by calling run_command or use_terminal.", agent_name, type="virtual_terminal_command"
         )
     else:
+        session_id = terminal.current_session_id
         add_event(
-            "I tried to switch to the virtual terminal, but it didn't exist. The session ID was " + session_id,
+            "I tried to switch to a different session on the virtual terminal, but the session ID didn't exist. So I got the default session, which has the session ID " + session_id,
             agent_name,
             type="virtual_terminal_command",
         )
-        raise ValueError(f"Session ID {session_id} does not exist.")
-
 
 def close_tab(arguments):
     session_id = arguments.get("session_id")
@@ -121,15 +120,21 @@ def run_command(arguments):
     if not terminal.get_current_session_id():
         raise ValueError("No active session.")
     session = terminal.get_sessions()[terminal.get_current_session_id()]
-    result = subprocess.check_output(
-        command, shell=True, cwd=session["current_directory"]
-    )
+    try:
+        result = subprocess.check_output(
+            command, shell=True, cwd=session["current_directory"]
+        )
+    except subprocess.CalledProcessError as e:
+        result = e.output
+
     session["last_command"] = command
     session["last_output"] = result
     command_trimmed = command[:100]
     add_event(
         "I ran the command: "
-        + command_trimmed,
+        + command_trimmed + "\n"
+        + "The output was: "
+        + result.decode("utf-8"),
         agent_name,
         type="virtual_terminal_command",
     )
@@ -227,6 +232,23 @@ def get_skills():
             "payload": {
                 "name": "terminal_run_command",
                 "description": "Run a command in the current tab of your virtual terminal.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "command": {
+                            "type": "string",
+                            "description": "The command to run in your virtual terminal.",
+                        },
+                    },
+                    "required": ["command"],
+                },
+            },
+            "handler": run_command,
+        },
+        "use_terminal": {
+            "payload": {
+                "name": "use_terminal",
+                "description": "Use the terminal to run a shell command.",
                 "parameters": {
                     "type": "object",
                     "properties": {
