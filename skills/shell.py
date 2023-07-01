@@ -5,9 +5,6 @@ import subprocess
 from core.memory import add_event
 from core.constants import agent_name
 
-def get_platform():
-    return platform.system()
-
 
 def get_skills():
     return {
@@ -15,7 +12,7 @@ def get_skills():
             "payload": {
                 "name": "execute_shell_command",
                 "description": "Execute a shell command using standard linux commands. You are running on "
-                + get_platform()
+                + platform.system()
                 + " and have full operating system access. Use this to explore. You can curl, grep, cat, etc.",
                 "parameters": {
                     "type": "object",
@@ -112,6 +109,7 @@ def get_skills():
         },
     }
 
+
 def write_python_file(arguments):
     file_name = arguments.get("file_name", None)
     file_contents = arguments.get("file_contents", None)
@@ -151,7 +149,7 @@ def curl(arguments):
         result = subprocess.check_output(command, shell=True)
         # transform result with utf-8 encoding
         result = result.decode("utf-8")
-        
+
         # trim the result
         result = result[:2000] + (result[2000:] and "..")
         # trim command to first 100 characters
@@ -174,6 +172,7 @@ def curl(arguments):
             type="shell_command",
         )
 
+
 def pip_install(arguments):
     package = arguments.get("package", None)
     command = "pip install " + package
@@ -181,9 +180,9 @@ def pip_install(arguments):
     # try to execute the command
     try:
         result = subprocess.check_output(command, shell=True)
-        
+
         result = result.decode("utf-8")
-        
+
         # trim command to first 100 characters
         add_event(
             "I successfully ran the command: ```"
@@ -204,11 +203,16 @@ def pip_install(arguments):
             type="shell_command",
         )
 
+
 def run_shell_command(arguments):
     description = arguments.get("description", None)
     command = arguments.get("command", None)
 
-    add_event("I'm running a shell command with the command: " + command, agent_name, type="shell_command")
+    add_event(
+        "I'm running a shell command with the command: " + command,
+        agent_name,
+        type="shell_command",
+    )
 
     # try to execute the command
     try:
@@ -235,12 +239,55 @@ def run_shell_command(arguments):
             type="shell_command",
         )
 
+
 def get_current_working_directory(arguments):
     description = arguments.get("description", None)
-    add_event("I'm getting the current working directory because: " + description, agent_name, type="shell_command")
+    add_event(
+        "I'm getting the current working directory because: " + description,
+        agent_name,
+        type="shell_command",
+    )
     cwd = os.getcwd()
     add_event(
         "The current working directory is: " + cwd,
         agent_name,
         type="shell_command",
     )
+
+if __name__ == "__main__":
+    # Test get_current_working_directory function
+    try:
+        get_current_working_directory({"description": "Testing get_current_working_directory function"})
+    except Exception as e:
+        print(f"get_current_working_directory function failed with exception: {e}")
+
+    # Test run_shell_command function
+    try:
+        run_shell_command({"description": "Testing run_shell_command function", "command": "echo 'Hello World'"})
+    except Exception as e:
+        print(f"run_shell_command function failed with exception: {e}")
+
+    # Test pip_install function
+    try:
+        pip_install({"package": "pytest"})  # We're using pytest for an example, you can replace it with any safe package
+    except Exception as e:
+        print(f"pip_install function failed with exception: {e}")
+
+    # Test curl function
+    try:
+        curl({"url": "https://www.google.com", "arguments": ""})
+    except Exception as e:
+        print(f"curl function failed with exception: {e}")
+
+    # Test write_python_file function
+    try:
+        write_python_file({"file_name": "test.py", "file_contents": "print('Hello World')"})
+    except Exception as e:
+        print(f"write_python_file function failed with exception: {e}")
+
+    # Cleaning up the created file after testing
+    try:
+        os.remove("test.py")
+    except Exception as e:
+        print(f"Error while cleaning up the test file: {e}")
+    print("All tests complete")
