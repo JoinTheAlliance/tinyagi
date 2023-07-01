@@ -43,7 +43,7 @@ These are your goals, which you should always keep in mind and pursue when not d
 These are my current tasks, which you should accomplish (you can cancel and mark tasks as completed if you are finished with them)
 {tasks}
 You can call the following functions and should call them:
-{skills}
+{functions}
 This is the log of your event stream. These are the latest events that have happened:
 {events}
 
@@ -53,16 +53,16 @@ Do not ask if you can help. Do not ask how you can assist. Focus on the task.
 )
 
 from core.memory import (
-    add_event,
+    create_event,
     get_functions,
     get_events,
     get_client,
     get_collections,
 )
 from core.language import use_language_model, compose_prompt
-from core.skills import use_skill
+from core.functions import use_function
 
-# as memory handling, composing prompts, handling skills, and creating chat completions.
+# as memory handling, composing prompts, handling functions, and creating chat completions.
 
 # Get Chroma client
 chroma_client = get_client()
@@ -72,11 +72,11 @@ collections = get_collections()
 
 def main():
     """
-    Main execution function. This retrieves events, prepares prompts, handles skills,
+    Main execution function. This retrieves events, prepares prompts, handles functions,
     and creates chat completions.
     """
     # Get the last 5 events
-    events = get_events(limit=5) or "I have awaken."
+    events = get_events() or "I have awaken."
 
     # Compose user and system prompts
     user_prompt = compose_prompt(prompt, events)
@@ -97,11 +97,11 @@ def main():
     response_message = response["message"]
     if response_message:
         response_message = response_message.replace(f"assistant: ", "", 1)
-        add_event("I wrote this response: " + response_message, "assistant", "loop")
+        create_event("I wrote this response: " + response_message, "assistant", "loop")
 
     # Extract function call from the response
     function_call = response["function_call"]
     if function_call:
         function_name = function_call.get("name")
         args = function_call.get("arguments")
-        use_skill(function_name, args)
+        use_function(function_name, args)

@@ -216,20 +216,6 @@ def count_tokens_from_chat_messages(messages):
     return num_tokens
 
 
-def count_tokens(text):
-    """
-    Counts the number of tokens in a piece of text.
-
-    Parameters:
-    text: The text to be tokenized.
-
-    Returns:
-    The total number of tokens in the text.
-    """
-
-    return len(encoding.encode(text))
-
-
 def clean_prompt(prompt):
     return textwrap.dedent(prompt.strip())
 
@@ -248,12 +234,12 @@ def compose_prompt(prompt_template, topic):
     values_to_replace = {
         "current_time": current_time,
         "current_date": current_date,
-        "skills": get_formatted_collection_data("skills", query_text=topic),
+        "functions": get_formatted_collection_data("functions", query_text=topic),
         "goals": get_formatted_collection_data("goals", query_text=topic),
         "tasks": get_formatted_collection_data("tasks", query_text=topic),
         "knowledge": get_formatted_collection_data("knowledge", query_text=topic),
         "personality": get_formatted_collection_data("personality", query_text=topic),
-        "events": get_events(limit=12),
+        "events": get_events(),
         "topic": topic,
     }
     # Substitute placeholders in the template with the corresponding values
@@ -312,12 +298,6 @@ if __name__ == "__main__":
     assert count_tokens_from_chat_messages(test_messages) == 22 or (
         count_tokens_from_chat_messages(test_messages) > 18
         and count_tokens_from_chat_messages(test_messages) < 26
-    )
-
-    # Tests for count_tokens function
-    test_text = "This is a test."
-    assert count_tokens(test_text) == 5 or (
-        count_tokens(test_text) > 3 and count_tokens(test_text) < 7
     )
 
     # Tests for replace_all_in_string function

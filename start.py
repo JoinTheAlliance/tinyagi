@@ -12,10 +12,10 @@ if not os.path.exists(".env"):
     exit()
 
 
-from core.skills import register_skills
+from core.functions import register_functions
 import core.loop
 
-register_skills()
+register_functions()
 
 interval = os.getenv("UPDATE_INTERVAL")
 if not interval or interval < 1:

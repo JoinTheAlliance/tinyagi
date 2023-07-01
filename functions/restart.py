@@ -1,10 +1,10 @@
-# skills/restart.py
+# functions/restart.py
 
 import os
 import sys
-from core.memory import add_event
+from core.memory import create_event
 
-def get_skills():
+def get_functions():
     return {
         "restart": {
             "payload": {
@@ -28,7 +28,7 @@ def get_skills():
 
 def restart(arguments):
     explanation = arguments.get("explanation", None)
-    add_event(
+    create_event(
         "I am restarting. Explanation: " + explanation, type="restart"
     )
     python = sys.executable

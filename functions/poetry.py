@@ -1,7 +1,7 @@
-# skills/poetry.py
+# functions/poetry.py
 
 from core.language import clean_prompt, use_language_model, compose_prompt
-from core.memory import add_event
+from core.memory import create_event
 
 prompt = clean_prompt(
     """
@@ -18,7 +18,7 @@ Your current tasks, which you should prioritize accomplishing
 {tasks}
 
 You have access to the following functions and should call them often:
-{skills}
+{functions}
 
 Event Logs:
 {events}
@@ -42,10 +42,10 @@ def write_poem(arguments):
     response = use_language_model(messages=messages)
     response_message = response.get("message", None)
     if response_message != None:
-        add_event(response_message, type="poem")
+        create_event(response_message, type="poem")
 
 
-def get_skills():
+def get_functions():
     return {
         "write_poem": {
             "payload": {

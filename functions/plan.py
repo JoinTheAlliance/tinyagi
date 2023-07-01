@@ -1,8 +1,8 @@
-# skills/plan.py
+# functions/plan.py
 
 # plan about things that are going on
 from core.language import clean_prompt, use_language_model, compose_prompt
-from core.memory import add_event, get_documents
+from core.memory import create_event, get_documents
 
 plan_prompt = clean_prompt(
     """
@@ -12,7 +12,7 @@ Relevant things you know:
 {knowledge}
 
 You can call the following functions and should call them often:
-{skills}
+{functions}
 
 These are your most important goals, which you should always keep in mind:
 {goals}
@@ -23,14 +23,14 @@ These are your current tasks, which you should prioritize accomplishing
 Recent Event History:
 {events}
 
-Prompt: You should write a detailed plan that you can execute on. You should make sure to include what skill or task the plan is related to, and what skills or knowledge you will use. Your goal is to call a function once you have a rough plan.
+Prompt: You should write a detailed plan that you can execute on. You should make sure to include what function or task the plan is related to, and what functions or knowledge you will use. Your goal is to call a function once you have a rough plan.
 Sometimes you get caught in loops, especially with planning, thinking and learning. If you've been planning and thinking for a while, you should try figure out what else you should do, especially exploring, coding or playing with the browser or terminal.
 Always try to advance your goals and complete your tasks. Always try to call the most appropriate function for the immediate context -- or just start working toward your goals.
 """
 )
 
 
-def get_skills():
+def get_functions():
     return {
         "create_plan": {
             "payload": {
@@ -89,12 +89,12 @@ def remember_plan(arguments):
                 newest_plan_timestamp = timestamp
 
         document = documents_and_metadata[newest_plan_index][0]
-        add_event(
+        create_event(
             f"(plan) My most recent plan is this one: \n{document}",
             type="plan",
         )
     else:
-        add_event(f"(plan) I don't have a plan. I should create one.", type="plan")
+        create_event(f"(plan) I don't have a plan. I should create one.", type="plan")
 
 
 def plan(arguments):
@@ -111,7 +111,7 @@ def plan(arguments):
     response_message = response.get("message", None)
     if response_message != None:
         response_message = "(planning) " + response_message
-        add_event(response_message, type="plan")
+        create_event(response_message, type="plan")
 
 
 if __name__ == "__main__":

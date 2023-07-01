@@ -1,8 +1,8 @@
-# skills/browser.py
+# functions/browser.py
 
 import uuid
 
-from core.memory import add_event
+from core.memory import create_event
 from connectors import browser
 
 
@@ -10,14 +10,14 @@ def create_tab(arguments):
     site = arguments.get("site")
     page = browser.loop.run_until_complete(browser.browser.newPage())
     page_id = str(uuid.uuid4())
-    add_event(
+    create_event(
         "I created a new tab in the virtual browser for page ID " + page_id,
         type="virtual_browser",
     )
     # if site is not null
     if site:
         browser.loop.run_until_complete(page.goto(site))
-        add_event(
+        create_event(
             "I navigated to " + site + " in the virtual browser for page ID " + page_id,
             type="virtual_browser",
         )
@@ -29,12 +29,12 @@ def switch_to(arguments):
     page_id = arguments.get("page_id")
     if page_id in browser.pages:
         browser.current_page_id = page_id
-        add_event(
+        create_event(
             "I switched to the virtual browser for page ID " + page_id,
             type="virtual_browser",
         )
     else:
-        add_event(
+        create_event(
             "I tried to switch to the virtual browser, but it didn't exist. The page ID was "
             + page_id,
             type="virtual_browser",
@@ -50,12 +50,12 @@ def close_tab(arguments):
         del browser.pages[page_id]
         if browser.current_page_id == page_id:
             browser.current_page_id = None
-        add_event(
+        create_event(
             "I closed a tab in the virtual browser for page ID " + page_id,
             type="virtual_browser",
         )
     else:
-        add_event(
+        create_event(
             "I tried to close a tab in the virtual browser, but it didn't exist. The page ID was "
             + page_id,
             type="virtual_browser",
@@ -70,7 +70,7 @@ def navigate_to(arguments):
 
     page = browser.pages[browser.current_page_id]
     browser.loop.run_until_complete(page.goto(url))
-    add_event(
+    create_event(
         "I navigated to "
         + url
         + " in the virtual browser for page ID "
@@ -85,7 +85,7 @@ def get_html(arguments):
 
     page = browser.pages[browser.current_page_id]
 
-    add_event(
+    create_event(
         "I got the HTML from the virtual browser for page ID "
         + browser.current_page_id,
         type="virtual_browser",
@@ -100,7 +100,7 @@ def get_body_text(arguments):
 
     page = browser.pages[browser.current_page_id]
 
-    add_event(
+    create_event(
         "I got the text from the virtual browser for page ID "
         + browser.current_page_id,
         type="virtual_browser",
@@ -114,7 +114,7 @@ def get_body_text(arguments):
 def search_google(arguments):
     query = arguments.get("query")
     navigate_to({"url": "https://www.google.com/search?q=" + query})
-    add_event(
+    create_event(
         "I searched Google for "
         + query
         + " in the virtual browser for page ID "
@@ -125,7 +125,7 @@ def search_google(arguments):
 
 def execute_pyppeteer_code(arguments):
     code = arguments.get("code")
-    add_event(
+    create_event(
         "I tried to execute the following code in the virtual browser for page ID "
         + browser.current_page_id
         + ": "
@@ -133,7 +133,7 @@ def execute_pyppeteer_code(arguments):
         type="virtual_browser",
     )
     if not browser.current_page_id:
-        add_event(
+        create_event(
             "I tried to execute code in the virtual browser, but there was no active page.",
             type="virtual_browser",
         )
@@ -141,7 +141,7 @@ def execute_pyppeteer_code(arguments):
     else:
         page = browser.pages[browser.current_page_id]
         browser.loop.run_until_complete(page.evaluate(code))
-        add_event(
+        create_event(
             "I executed code in the virtual browser for page ID "
             + browser.current_page_id,
             type="virtual_browser",
@@ -191,7 +191,7 @@ def fill_form_and_submit(arguments):
     )
 
 
-def get_skills():
+def get_functions():
     return {
         "browser_create_tab": {
             "payload": {

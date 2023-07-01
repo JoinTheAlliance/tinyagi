@@ -1,11 +1,11 @@
-# skills/admin_chat.py
+# functions/admin_chat.py
 
 import os
 import sys
 import requests
 import logging
 import threading
-from core.memory import add_event, wipe_memory
+from core.memory import create_event, wipe_memory
 
 
 from flask import Flask, request
@@ -38,23 +38,23 @@ def receive_message(msg):
         python = sys.executable
         os.execl(python, python, *sys.argv)
     else:
-        add_event("user: " + msg, "user", "conversation")
+        create_event("user: " + msg, "user", "conversation")
 
 
 def send_message(arguments):
     message = arguments["message"]
     # Send a message to the user terminal listener
-    add_event(message, "assistant", "conversation")
+    create_event(message, "assistant", "conversation")
     try:
         requests.get("http://127.0.0.1:5001/response", params={"msg": message})
-        add_event(
+        create_event(
             "The user is connected. I sent them a message.",
             "assistant",
             "response_status",
         )
     except:
         # noop
-        add_event(
+        create_event(
             "The user is not connected. They might be able to read the terminal but they might not be there. I guess I'll have to figure it out myself and try them later.",
             "assistant",
             "response_status",
@@ -62,7 +62,7 @@ def send_message(arguments):
 
 
 # respond to user input
-def get_skills():
+def get_functions():
     # return an empty dict
     return {
         "message_user": {

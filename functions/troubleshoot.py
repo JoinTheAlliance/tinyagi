@@ -1,7 +1,7 @@
-# skills/troubleshoot
+# functions/troubleshoot
 
 from core.language import clean_prompt, use_language_model, compose_prompt
-from core.memory import add_event
+from core.memory import create_event
 
 prompt = clean_prompt(
     """
@@ -12,7 +12,7 @@ These are your most important goals, which you should always keep in mind:
 These are you current tasks, which you should prioritize accomplishing:
 {tasks}
 You can call the following functions and should call them often:
-{skills}
+{functions}
 Event Logs (most recent toward the bottom):
 {events}
 
@@ -34,10 +34,10 @@ def troubleshoot(arguments):
     response = use_language_model(messages=messages)
     response_message = response.get("message", None)
     if response_message != None:
-        add_event(response_message, type="troubleshooting")
+        create_event(response_message, type="troubleshooting")
 
 
-def get_skills():
+def get_functions():
     return {
         "troubleshoot": {
             "payload": {

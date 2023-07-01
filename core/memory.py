@@ -13,7 +13,7 @@ client = chromadb.Client()
 
 # Define collection names
 collection_names = [
-    "skills",
+    "functions",
     "personality",
     "goals",
     "events",
@@ -36,13 +36,7 @@ def get_collections():
     """Returns all collections."""
     return client.list_collections()
 
-
-def get_collection(collection_name):
-    """Returns a specified collection."""
-    return client.get_or_create_collection(collection_name)
-
-
-def search_collection(
+def query_collection(
     collection_name,
     query_texts,
     where=None,
@@ -71,7 +65,7 @@ def get_documents(collection_name, where=None, include=["metadatas", "documents"
 
 def get_collection_data(collection_name, query_text, n_results=5):
     """Gets data from a specified collection."""
-    collection_data = search_collection(
+    collection_data = query_collection(
         collection_name=collection_name,
         query_texts=[query_text],
         include=["metadatas", "documents"],
@@ -88,7 +82,7 @@ def get_formatted_collection_data(
     It removes duplicate entries if the deduplicate flag is set to True.
     """
     # Search the collection with the query text
-    collection_data = search_collection(
+    collection_data = query_collection(
         collection_name=collection_name,
         query_texts=[query_text],
         include=["metadatas", "documents"],
@@ -156,9 +150,9 @@ def get_formatted_collection_data(
 
 def get_functions(query_text, n_results=5):
     """
-    This function fetches the functions associated with a particular query text from the 'skills' collection.
+    This function fetches the functions associated with a particular query text from the 'functions' collection.
     """
-    collection_data = get_collection_data("skills", query_text, n_results)
+    collection_data = get_collection_data("functions", query_text, n_results)
     functions = []
 
     # Extract the function calls from the metadata
@@ -178,104 +172,45 @@ def get_functions(query_text, n_results=5):
     return functions
 
 
-def get_skills(query_text, n_results=5):
-    """
-    Fetches skills data that match the query text.
-    """
-    return get_formatted_collection_data("skills", query_text, n_results)
-
-
-def get_goals(query_text, n_results=5):
-    """
-    Fetches goal data that match the query text.
-    """
-    return get_formatted_collection_data("goals", query_text, n_results)
-
-
-def get_events(query_text, n_results=5):
-    """
-    Fetches event data that match the query text.
-    """
-    return get_formatted_collection_data("events", query_text, n_results)
-
-
-def get_tasks(query_text, n_results=5):
-    """
-    Fetches task data that match the query text.
-    """
-    return get_formatted_collection_data("tasks", query_text, n_results)
-
-
-def get_knowledge(query_text, n_results=5):
-    """
-    Fetches knowledge data that match the query text.
-    """
-    return get_formatted_collection_data("knowledge", query_text, n_results)
-
-
-def get_personality(query_text, n_results=5):
-    """
-    Fetches personality data that match the query text.
-    """
-    return get_formatted_collection_data("personality", query_text)
-
-
-def get_events(limit=12):
+def get_events(limit=10, max_tokens=1200):
     """
     Returns a stream of events from the 'events' collection.
     """
     collection = client.get_or_create_collection("events")
-    events = events_to_stream(collection.peek(limit=limit))
-    return events
+    collection_data = collection.peek(limit=limit)
+    # make sure that event_collection_data is less than max_tokens
+    return "\n".join(
+        f'{msg_meta["event_creator"]}: {msg_doc}'
+        for msg_meta, msg_doc in zip(
+            collection_data["metadatas"], collection_data["documents"]
+        )
+    )
 
 
-def add_event(
-    userText, event_creator="assistant", type="conversation", document_id=None
+def create_event(
+    text, event_creator="assistant", type="conversation", document_id=None
 ):
     """
-    Adds an event to the 'events' collection.
+    Adds an event to the 'events' collection, prints it to console and writes it to the log file.
     """
+
+    # Log the event and print the user text
+    print(text)
+
     if document_id is None:
         document_id = str(uuid.uuid4())
     collection = client.get_or_create_collection("events")
     collection.add(
         ids=[str(document_id)],
-        documents=[userText],
+        documents=[text],
         metadatas=[
             {"type": type, "event_creator": event_creator, "timestamp": time.time()}
         ],
     )
 
-    # Log the event and print the user text
-    write_log(userText)
-    print(userText)
-
-
-def events_to_stream(messages):
-    """
-    Converts a list of messages into a string of event stream.
-
-    messages: a dictionary that contains message ids, metadatas and documents
-    """
-    event_stream = "\n".join(
-        f'{msg_meta["event_creator"]}: {msg_doc}'
-        for msg_meta, msg_doc in zip(messages["metadatas"], messages["documents"])
-    )
-    return event_stream
-
-
-def write_log(text, header=None):
-    """
-    Writes a log message to a log file, with an optional header.
-
-    text: the log message
-    header: an optional header for the log message
-    """
     # Add timestamp and current date to the log message
     date_year_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
     prefix = f"{date_year_time}|>"
-    if header is not None:
-        prefix += f"{header}\n"
     text = prefix + text
 
     # Ensure the 'logs' directory exists
@@ -295,28 +230,21 @@ if __name__ == "__main__":
     # test the get_collections function
     assert isinstance(get_collections(), dict)
 
-    # test the search_collection function
-    search_result = search_collection("skills", ["test_query"])
-    assert "documents" in search_result
-    assert "metadatas" in search_result
+    # test the query_collection function
+    query_result = query_collection("functions", ["test_query"])
+    assert "documents" in query_result
+    assert "metadatas" in query_result
 
     # test the get_documents function
-    documents_result = get_documents("skills")
+    documents_result = get_documents("functions")
     assert "documents" in documents_result
     assert "metadatas" in documents_result
 
     # test the get_collection_data function
-    collection_data_result = get_collection_data("skills", "test_query")
+    collection_data_result = get_collection_data("functions", "test_query")
     assert "documents" in collection_data_result
     assert "metadatas" in collection_data_result
 
     # test the get_formatted_collection_data function
-    formatted_data_result = get_formatted_collection_data("skills", "test_query")
+    formatted_data_result = get_formatted_collection_data("functions", "test_query")
     assert isinstance(formatted_data_result, str)
-
-    # test the events_to_stream function
-    events_stream_result = events_to_stream(
-        {"metadatas": [{"event_creator": "test"}], "documents": ["test document"]}
-    )
-    assert isinstance(events_stream_result, str)
-    print("All tests passed!")

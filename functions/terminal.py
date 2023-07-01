@@ -1,10 +1,10 @@
-# skills/terminal.py
+# functions/terminal.py
 
 import subprocess
 import uuid
 
 from connectors.terminal import terminal
-from core.memory import add_event
+from core.memory import create_event
 
 def create_tab(arguments):
     session_id = str(uuid.uuid4())
@@ -14,7 +14,7 @@ def create_tab(arguments):
         "current_directory": terminal.get_current_directory(),
     }
     terminal.set_current_session_id(session_id)
-    add_event(
+    create_event(
         "I created a new tab in the terminal for session ID " + session_id,
         type="terminal_command",
     )
@@ -25,7 +25,7 @@ def switch_to(arguments):
     session_id = arguments.get("session_id")
     if session_id in terminal.get_sessions():
         terminal.set_current_session_id(session_id)
-        add_event(
+        create_event(
             "I switched to the terminal for session ID "
             + session_id
             + ". Now I can use the terminal by calling run_command.",
@@ -33,7 +33,7 @@ def switch_to(arguments):
         )
     else:
         session_id = terminal.current_session_id
-        add_event(
+        create_event(
             "I tried to switch to a different session on the terminal, but the session ID didn't exist. So I got the default session, which has the session ID "
             + session_id,
                 type="terminal_command",
@@ -46,12 +46,12 @@ def close_tab(arguments):
         del terminal.get_sessions()[session_id]
         if terminal.current_session_id == session_id:
             terminal.set_current_session_id(None)
-        add_event(
+        create_event(
             "I closed a tab in the terminal for session ID " + session_id,
                 type="terminal_command",
         )
     else:
-        add_event(
+        create_event(
             "I tried to close a tab in the terminal, but it didn't exist. The session ID was "
             + session_id,
                 type="terminal_command",
@@ -60,7 +60,7 @@ def close_tab(arguments):
 
 
 def get_tabs(arguments):
-    add_event(
+    create_event(
         "I got a list of tabs from the terminal:\n"
         + str(terminal.get_sessions())
         + "\n"
@@ -79,7 +79,7 @@ def get_tabs_formatted_as_string(arguments):
         formatted_string += f"Last Output: {info['last_output']}\n"
         formatted_string += f"Current Directory: {info['current_directory']}\n"
         formatted_string += "----\n"
-    add_event(
+    create_event(
         "I got a list of tabs from the terminal:\n"
         + formatted_string
         + "\n"
@@ -104,7 +104,7 @@ def run_command(arguments):
     session["last_command"] = command
     session["last_output"] = result
 
-    add_event(
+    create_event(
         "I ran the command: "
         + command
         + "\n"
@@ -117,12 +117,12 @@ def run_command(arguments):
 
 def get_current_working_directory(arguments):
     description = arguments.get("description", None)
-    add_event(
+    create_event(
         "I'm getting the current working directory because: " + description,
         type="shell_command",
     )
     cwd = terminal.get_current_directory()
-    add_event(
+    create_event(
         "The current working directory is: " + cwd,
         type="shell_command",
     )
@@ -137,7 +137,7 @@ def curl(arguments):
     try:
         result = run_command({"command": command})
 
-        add_event(
+        create_event(
             "I successfully ran the curl command: ```"
             + command
             + "```\nThe result was: "
@@ -146,7 +146,7 @@ def curl(arguments):
         )
 
     except Exception as e:
-        add_event(
+        create_event(
             "I tried to run the curl command: ```"
             + command
             + "```\nBut I got an error: "
@@ -159,12 +159,12 @@ def change_current_working_directory(arguments):
     directory = arguments.get("directory", None)
     try:
         terminal.set_current_directory(directory)
-        add_event(
+        create_event(
             f"I have changed the current working directory to: {directory}",
                 type="shell_command",
         )
     except Exception as e:
-        add_event(
+        create_event(
             f"I tried to change the current working directory to: {directory}, but I got an error: {str(e)}",
                 type="shell_command",
         )
@@ -177,7 +177,7 @@ def write_python_file(arguments):
     try:
         # Use terminal's run_command method
         run_command({"command": command})
-        add_event(
+        create_event(
             "I am writing a Python file: ```"
             + file_name
             + "```\nWith the contents: ```"
@@ -186,7 +186,7 @@ def write_python_file(arguments):
                 type="shell_command",
         )
     except Exception as e:
-        add_event(
+        create_event(
             "I tried to write a Python file: ```"
             + file_name
             + "```\nWith the contents: ```"
@@ -204,7 +204,7 @@ def pip_install(arguments):
     # try to execute the command
     try:
         result = run_command({"command": command})
-        add_event(
+        create_event(
             "I successfully ran the command: ```"
             + command
             + "```\nThe result was: "
@@ -213,7 +213,7 @@ def pip_install(arguments):
         )
 
     except Exception as e:
-        add_event(
+        create_event(
             "I tried to run the command: ```"
             + command
             + "```\nBut I got an error: "
@@ -222,7 +222,7 @@ def pip_install(arguments):
         )
 
 
-def get_skills():
+def get_functions():
     return {
         "terminal_create_tab": {
             "payload": {
@@ -384,7 +384,7 @@ def get_skills():
         "write_python_file": {
             "payload": {
                 "name": "write_python_file",
-                "description": "Write a Python file to disk. This is useful for creating new skills.",
+                "description": "Write a Python file to disk. This is useful for creating new functions.",
                 "parameters": {
                     "type": "object",
                     "properties": {
