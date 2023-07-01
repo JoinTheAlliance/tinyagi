@@ -237,8 +237,8 @@ def add_event(
     """
     if document_id is None:
         document_id = str(uuid.uuid4())
-
-    collections["events"].add(
+    collection = client.get_or_create_collection("events")
+    collection.add(
         ids=[str(document_id)],
         documents=[userText],
         metadatas=[
@@ -249,6 +249,7 @@ def add_event(
     # Log the event and print the user text
     write_log(userText)
     print(userText)
+
 
 def events_to_stream(messages):
     """
@@ -271,7 +272,8 @@ def write_log(text, header=None):
     header: an optional header for the log message
     """
     # Add timestamp and current date to the log message
-    prefix = f"{get_formatted_time()}|{get_current_date()}|>"
+    date_year_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    prefix = f"{date_year_time}|>"
     if header is not None:
         prefix += f"{header}\n"
     text = prefix + text
@@ -311,7 +313,7 @@ if __name__ == "__main__":
     # test the get_formatted_collection_data function
     formatted_data_result = get_formatted_collection_data("skills", "test_query")
     assert isinstance(formatted_data_result, str)
-    
+
     # test the events_to_stream function
     events_stream_result = events_to_stream(
         {"metadatas": [{"event_creator": "test"}], "documents": ["test document"]}
