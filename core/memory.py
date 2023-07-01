@@ -1,4 +1,6 @@
+# core/memory.py
 # Handles the operations on ChromaDB collections like search, retrieval, and seeding.
+
 import os
 import time
 import json
@@ -250,7 +252,9 @@ def get_events(limit=12):
     return events
 
 
-def add_event(userText, event_creator="assistant", type="conversation", document_id=None):
+def add_event(
+    userText, event_creator="assistant", type="conversation", document_id=None
+):
     """
     Adds an event to the 'events' collection.
     """
@@ -325,6 +329,7 @@ def write_log(text, header=None):
     # Open the 'feed.log' file and append the log message
     with open("logs/feed.log", "a") as f:
         f.write(text + "\n")
+
 
 if __name__ == "__main__":
     # test the get_collections function

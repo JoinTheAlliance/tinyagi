@@ -1,4 +1,5 @@
-# think about things that are going on
+# skills/poetry.py
+
 from core.language import clean_prompt, use_language_model, compose_prompt
 from core.memory import add_event, get_all_values_for_text
 
@@ -21,6 +22,7 @@ Think about this topic: {topic}
 Write a poem that incorporates your recent event history, goals, knowledge and personality.
 """
 )
+
 
 def write_poem(arguments):
     topic = arguments.get("topic", None)

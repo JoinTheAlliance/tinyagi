@@ -1,3 +1,5 @@
+# skills/terminal.py
+
 import subprocess
 import uuid
 

@@ -1,4 +1,6 @@
-# think about things that are going on
+# skills/reflect.py
+
+# reflect on things that are going on
 from core.language import clean_prompt, use_language_model, compose_prompt
 from core.memory import add_event, get_all_values_for_text
 
@@ -6,47 +8,53 @@ prompt = clean_prompt(
     """
 The current time is {current_time} on {current_date}.
 
-Here are some relevant things that I have recalled from my memory:
+Here are some relevant memories:
 {knowledge}
-Here are some key details about my personality:
+Here are some key details about your personality:
 {personality}
-These are my most important goals, which I should always keep in mind:
+These are your most important goals, which you should always keep in mind:
 {goals}
-These are my current tasks, which I should prioritize accomplishing
+These are your current tasks, which you should prioritize accomplishing
 {tasks}
-I have access to the following functions and should call them often:
+You can call the following functions and should call them often:
 {skills}
 Recent Event History:
 {events}
 
-Think about this topic: {topic}
+Reflect on this topic: {topic}
+- Are there any issues in the recent event stream?
+- Are you pursuing your goals?
+- Do you have any tasks that you should be working on?
+- Is there anything that you should be doing differently?
+Pick one of these that is most important to you and write a paragraph about it.
+Your respond should be a single paragraph. Be concise and to the point.
 """
 )
 
 
 def get_skills():
     return {
-        "think": {
+        "reflect": {
             "payload": {
-                "name": "think",
-                "description": "Think about a topic, consider what to do next or dig into a creative impulse.",
+                "name": "reflect",
+                "description": "Reflect on a topic and how things have been going in the event stream.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "topic": {
                             "type": "string",
-                            "description": "The topic to think about",
+                            "description": "The topic to reflect on",
                         },
                     },
                     "required": ["topic"],
                 },
             },
-            "handler": think,
+            "handler": reflect,
         },
     }
 
 
-def think(arguments):
+def reflect(arguments):
     topic = arguments.get("topic", None)
     values_to_replace = get_all_values_for_text(topic)
     user_prompt = compose_prompt(prompt, values_to_replace)
@@ -62,4 +70,4 @@ def think(arguments):
     response = use_language_model(messages=messages)
     response_message = response.get("message", None)
     if response_message != None:
-        add_event(response_message, type="thought")
+        add_event(response_message, type="reflection")

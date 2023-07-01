@@ -1,3 +1,5 @@
+# skills/browser.py
+
 import uuid
 
 from core.memory import add_event

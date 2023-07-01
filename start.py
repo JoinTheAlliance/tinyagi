@@ -18,6 +18,10 @@ import core.loop
 
 register_skills()
 
+interval = int(os.getenv("UPDATE_INTERVAL"))
+if not interval or interval < 1:
+    interval = 7
+
 while True:
-    time.sleep(int(os.getenv("UPDATE_INTERVAL")) or 7)
     core.loop.main()
+    time.sleep(interval)

@@ -1,3 +1,5 @@
+# core/skills.py
+
 # Dynamically load skills and use them
 # Skills are executed by the "function calling" feature of the OpenAI API.
 

@@ -1,3 +1,5 @@
+# skills/admin_chat.py
+
 import os
 import sys
 import requests
@@ -13,10 +15,12 @@ app = Flask(__name__)
 log = logging.getLogger("werkzeug")
 log.disabled = True
 
+
 @app.route("/msg")
 def handle_incoming_message():
     receive_message(request.args.get("msg"))
     return "", 200  # Return a successful HTTP response
+
 
 def run_app():
     app.run()
@@ -25,13 +29,14 @@ def run_app():
 flask_thread = threading.Thread(target=run_app)
 flask_thread.start()
 
+
 def receive_message(msg):
     # if the user calls "reset database", reset the database (wipe_memory)
     if msg == "reset database":
         wipe_memory()
     if msg == "restart":
         python = sys.executable
-        os.execl(python, python, * sys.argv)
+        os.execl(python, python, *sys.argv)
     else:
         add_event("user: " + msg, "user", "conversation")
 
@@ -42,10 +47,19 @@ def send_message(arguments):
     add_event(message, "assistant", "conversation")
     try:
         requests.get("http://127.0.0.1:5001/response", params={"msg": message})
-        add_event("The user is connected. I sent them a message.", "assistant", "response_status")
+        add_event(
+            "The user is connected. I sent them a message.",
+            "assistant",
+            "response_status",
+        )
     except:
         # noop
-        add_event("The user is not connected. They might be able to read the terminal but they might not be there. I guess I'll have to figure it out myself and try them later.", "assistant", "response_status")
+        add_event(
+            "The user is not connected. They might be able to read the terminal but they might not be there. I guess I'll have to figure it out myself and try them later.",
+            "assistant",
+            "response_status",
+        )
+
 
 # respond to user input
 def get_skills():
@@ -70,13 +84,14 @@ def get_skills():
         },
     }
 
+
 if __name__ == "__main__":
     # Test send_message
     try:
         send_message({"message": "Test message"})
     except Exception as e:
         print(f"send_message crashed with exception: {e}")
-        
+
     # Test receive_message
     try:
         receive_message("Test message")

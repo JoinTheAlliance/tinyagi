@@ -1,4 +1,5 @@
-# think about things that are going on
+# skills/music.py
+
 from core.language import use_language_model, compose_prompt
 from core.memory import add_event, get_all_values_for_text
 from core.language import clean_prompt
@@ -35,7 +36,7 @@ def get_skills():
                     "properties": {
                         "topic": {
                             "type": "string",
-                            "description": "The topic to think about. Can be detailed and complicated.",
+                            "description": "The topic to write a song about. Can be detailed and complicated.",
                         },
                     },
                     "required": ["topic"],

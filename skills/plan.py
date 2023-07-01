@@ -1,3 +1,5 @@
+# skills/plan.py
+
 # plan about things that are going on
 from core.language import clean_prompt, use_language_model, compose_prompt
 from core.memory import add_event, get_all_values_for_text, get_documents
@@ -12,7 +14,7 @@ Here are some relevant things that I have recalled from my memory:
 Recent Event History:
 {events}
 
-You have access to the following functions and should call them often:
+You can call the following functions and should call them often:
 {skills}
 
 These are your most important goals, which you should always keep in mind:

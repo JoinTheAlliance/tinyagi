@@ -1,4 +1,5 @@
-# think about things that are going on
+# skills/knowledge.py
+
 from core.language import use_language_model, compose_prompt
 from core.memory import add_event, get_all_values_for_text
 
@@ -13,7 +14,7 @@ def get_skills():
                     "properties": {
                         "topic": {
                             "type": "string",
-                            "description": "The topic to think about",
+                            "description": "The topic to learn about",
                         },
                     },
                     "required": ["topic"],

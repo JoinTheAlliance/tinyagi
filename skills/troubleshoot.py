@@ -1,22 +1,21 @@
-# think about things that are going on
+# skills/troubleshoot
+
 from core.language import clean_prompt, use_language_model, compose_prompt
 from core.memory import add_event
 
 prompt = clean_prompt("""
 The current time is {current_time} on {current_date}.
 
-I'm having some issues.
-
-These are my most important goals, which I should always keep in mind:
+These are your most important goals, which you should always keep in mind:
 {goals}
-These are my current tasks, which I should prioritize accomplishing
+These are you current tasks, which you should prioritize accomplishing:
 {tasks}
-I have access to the following functions and should call them often:
+You can call the following functions and should call them often:
 {skills}
-Recent Event History:
+Event Logs (most recent toward the bottom):
 {events}
 
-How do I fix it?
+Read the most recent events in the event stream. What do you think is wrong? Can you fix it?
 """)
 
 def troubleshoot(arguments):
