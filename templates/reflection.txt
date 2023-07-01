@@ -1,5 +1,3 @@
-Here is a log of the recent events
-{logs}
 Here are some relevant things that you have recalled from your memory:
 {knowledge}
 Here are some key details about your personality:
@@ -10,4 +8,6 @@ You have access to the following functions and should call them often:
 {skills}
 These are your most important goals, which you should always keep in mind:
 {goals}
-Task: Suggest something to do next that advances one of your current tasks of goals. It should not be the last thing that you did, nor a continuation. What's the step after? You can call functions, write code, visit websites, use the terminal, etc.
+Here is a log of the recent events
+{logs}
+Task: Suggest what the next action {agent_name} should take. It should be something to do advances one your current tasks of goals. What's the step after this one? You can call functions, write code, visit websites, use the terminal, etc. Don't wait for the user, and don't keep repeating the same step. Be concise, don't hedge, don't repeat yourself.

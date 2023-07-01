@@ -1,5 +1,4 @@
 # tinyagi
-
 A really simple approach to a self-learning, open-ended system.
 
 To install
