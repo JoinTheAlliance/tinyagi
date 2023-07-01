@@ -1,31 +1,29 @@
-# A virtual chrome browser for the agent to use.
-
-import asyncio  # for asynchronous I/O
-from pyppeteer import launch  # for launching a headless browser
-from collections import defaultdict  # for storing the browser pages
-from typing import Dict  # for type annotation
+import asyncio
+import signal
+from pyppeteer import launch
+from collections import defaultdict
+from typing import Dict
 
 
 class VirtualBrowser:
     def __init__(self):
-        self.loop = (
-            asyncio.get_event_loop()
-        )  # get the current event loop (main thread), if no event loop is active it will create a new one
-        self.browser = self.loop.run_until_complete(
-            launch()
-        )  # launch a new browser in the event loop and wait for it to complete
-        self.pages: Dict[str, Dict] = defaultdict(
-            dict
-        )  # a dictionary to store the pages (browser tabs)
-        self.current_page_id = None  # keeps track of the currently active page (if any)
+        self.loop = asyncio.get_event_loop()
+        self.browser = self.loop.run_until_complete(launch())
+        self.pages: Dict[str, Dict] = defaultdict(dict)
+        self.current_page_id = None
+        signal.signal(signal.SIGINT, self.handle_interrupt)
+
+    async def close_browser(self):
+        await self.browser.close()
+
+    def handle_interrupt(self):
+        asyncio.ensure_future(self.close_browser())
+        self.loop.stop()
 
 
-# create an instance of the VirtualBrowser class
 browser = VirtualBrowser()
-if __name__ == "__main__":
-    # Create an instance of the VirtualBrowser class
-    browser = VirtualBrowser()
 
+if __name__ == "__main__":
     # Check if the browser has been initialized
     assert browser.browser is not None, "Browser initialization failed."
 
@@ -37,5 +35,5 @@ if __name__ == "__main__":
 
     # Check if the current_page_id is None as expected initially
     assert browser.current_page_id is None, "current_page_id initialization failed."
-
+    
     print("All tests passed.")
