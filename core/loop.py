@@ -1,84 +1,56 @@
-import uuid
-from memory import (
+import json
+
+from core.memory import (
+    add_event,
+    get_functions,
     get_events,
     get_all_values_for_text,
     get_client,
     get_collections,
 )
-from skill_handling import use_skill
-from completion import create_chat_completion
-from constants import agent_name
-from utils import (
+from core.completion import create_chat_completion
+from core.constants import agent_name
+from core.skill_handling import use_skill
+from core.utils import (
     compose_prompt,
+    write_log
 )
 
 chroma_client = get_client()
 collections = get_collections()
 
-
-def check_for_user_input():
-    new_messages = collections["events"].get(where={ "$and": [{"type": "conversation"}, {"read": "false"}]})
-
-    # if none, skip the rest of this function
-    if len(new_messages["ids"]) == 0:
-        return False
-
-    for i in range(len(new_messages["ids"])):
-        metadata = new_messages["metadatas"][i]
-        collections["events"].update(
-            ids=new_messages["ids"][i],
-            metadatas=[{"type": "conversation", "read": "true", "event_creator": metadata["event_creator"]}],
-        )
-
-    return True
-
-def check_for_tasks():
-    new_tasks = collections["tasks"].get(where={ "$and": [{"cancelled": "false"}, {"completed": "false"}]})
-
-    # if none, skip the rest of this function
-    if len(new_tasks["ids"]) == 0:
-        return False
-
-    for i in range(len(new_tasks["ids"])):
-        metadata = new_tasks["metadatas"][i]
-        collections["tasks"].update(
-            ids=new_tasks["ids"][i],
-            metadatas=[{"type": "task", "read": "true", "event_creator": metadata["event_creator"]}],
-        )
-
-    return True
-
 def main():
-
+    write_log("loop started")
     events = get_events()
 
-    if events == None:
+    if events == None or len(events) == 0:
         events = "You have awaken."
-    
+
+    # TODO: we should make sure we're getting a good search here
     values_to_replace = get_all_values_for_text(events)
 
-    user_prompt = compose_prompt("loop_user", values_to_replace)
-    system_prompt = compose_prompt("loop_system", values_to_replace)
+    user_prompt = compose_prompt("loop", values_to_replace)
+    system_prompt = compose_prompt("system", values_to_replace)
+
+    functions = get_functions(events)
+
+    print("functions", functions)
 
     response = create_chat_completion(
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
-        ]
+        ],
+        functions=functions,
     )
-    response_message = response.get("message", None)
+    response_message = response["message"]
 
-    if(response_message != None):
-        response_message = response_message.replace(f"{agent_name}: ", "", 1)
+    # if response_message != None:
+    #     response_message = response_message.replace(f"{agent_name}: ", "", 1)
+    #     add_event(response_message, agent_name, "loop")
 
-    # add the response to the terminal_input_history collection
-    collections["events"].add(
-        ids=[str(uuid.uuid4())],
-        documents=[response_message],
-        metadatas=[{"type": "conversation", "connector": "admin_chat", "read": "true", "event_creator": agent_name}],
-    )
+    function_call = response["function_call"]
 
-    function = response.get("function", None)
-    if function != None:
-        print('*** Function!!! ')
-        use_skill(function)
+    if function_call != None:
+        use_skill(function_call.get("name", None), function_call.get("arguments", None))
+        add_event(json.dumps(function_call), agent_name, "function_call")

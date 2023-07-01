@@ -1,8 +1,15 @@
 import openai
-from utils import write_debug_log
-from constants import default_text_model, openai_api_key, default_max_tokens
 from dotenv import load_dotenv
-import time
+import tiktoken
+from core.memory import add_event
+
+from core.constants import (
+    default_text_model,
+    long_text_model,
+    openai_api_key,
+    default_max_tokens,
+    agent_name,
+)
 
 load_dotenv()  # take environment variables from .env.
 
@@ -10,10 +17,14 @@ load_dotenv()  # take environment variables from .env.
 openai.api_key = openai_api_key
 
 
-def create_chat_completion(messages, functions=None, model=default_text_model):
-    messages = trim_messages(messages, default_max_tokens)
+def create_chat_completion(messages, functions=None, long=False):
+    if long:
+        model = long_text_model
+    else:
+        model = default_text_model
+    # messages = trim_messages(messages, default_max_tokens)
     # if
-    if functions == None:
+    if functions == None or len(functions) == 0:
         response = openai.ChatCompletion.create(model=model, messages=messages)
     else:
         response = openai.ChatCompletion.create(
@@ -26,57 +37,78 @@ def create_chat_completion(messages, functions=None, model=default_text_model):
 
     message = response_data["content"]
 
-    function = response_data.get("function", None)
+    # check if response_data["function_call"] exists
+    if "function_call" in response_data:
+        function_call = response_data["function_call"]
+        return {"message": message, "function_call": function_call}
+    else:
+        return {"message": message, "function_call": None}
 
-    write_debug_log("create_chat_completion called")
-    write_debug_log("messages: " + str(messages))
-    write_debug_log("functions: " + str(functions))
-    write_debug_log("response_str: " + response_str)
-
-    return {"message": message, "function": function}
-
-import tiktoken
 
 encoding = tiktoken.encoding_for_model(default_text_model)
 
 def trim_messages(messages, max_tokens):
-    # remove any messages except for the last user message until the total number of tokens is less than max_tokens
-    # if the last message is a user message, remove text from the top of the message
     new_messages = []
 
     tokens_per_message = 3
     tokens_per_name = 1
+    original_num_tokens = count_tokens_from_chat_messages(messages)
+
+    if(original_num_tokens <= max_tokens):
+        return messages
+
     num_tokens = 0
+    break_outer = False  # flag to break outer loop from within inner one
+
     for message in messages:
-        num_tokens += tokens_per_message
+        if break_outer:
+            break
+
+        num_tokens_temp = num_tokens + tokens_per_message
         for key, value in message.items():
-            num_tokens += len(encoding.encode(value))
             if key == "name":
-                num_tokens += tokens_per_name
-            if num_tokens > max_tokens:
-                break
+                num_tokens_temp += tokens_per_name
             else:
-                new_messages.append(message)
-    
-    # make sure that the last message of messages is definitely included
+                num_tokens_temp += len(encoding.encode(value))
+
+            if num_tokens_temp > max_tokens:
+                break_outer = True  # set flag to break outer loop
+                break
+
+        if not break_outer:  # only append the message if it doesn't exceed the max tokens
+            new_messages.append(message)
+            num_tokens = num_tokens_temp  # update the number of tokens after the message is appended
+
+    # ensure the last message of messages is included
     if len(new_messages) == 0:
         message = messages[-1]
 
-        # get the number of tokens in the message
-        num_tokens = count_tokens_from_chat_messages([message])
+        # get number of tokens in the message
+        new_num_tokens = count_tokens_from_chat_messages([message])
 
         # if the message is too long, trim it
-        if num_tokens > max_tokens:
-            # remove tokens from the top of the message until the message is short enough
-            while num_tokens > max_tokens:
+        if new_num_tokens > max_tokens:
+            # remove tokens from the top of the message until it's short enough
+            while new_num_tokens > max_tokens:
                 # remove the first 100 tokens from the message
-                message["content"] = message["content"][100:]
-                num_tokens = count_tokens_from_chat_messages([message])
-            new_messages.append(message)
+                message["content"] = message["content"][10:]
+                # explain how the [100:] works
+                # https://stackoverflow.com/questions/509211/understanding-slice-notation
+
+                new_num_tokens = count_tokens_from_chat_messages([message])
 
         new_messages.append(message)
+    if original_num_tokens != num_tokens:
+        add_event(
+            "I trimmed some messages to make them fit in my memory. The original number was "
+            + str(original_num_tokens)
+            + " and the new number is "
+            + str(num_tokens),
+            agent_name,
+            "completion_status",
+        )
     return new_messages
-    
+
 def count_tokens_from_chat_messages(messages):
     tokens_per_message = 3
     tokens_per_name = 1
@@ -88,6 +120,7 @@ def count_tokens_from_chat_messages(messages):
             if key == "name":
                 num_tokens += tokens_per_name
     return num_tokens
+
 
 def count_tokens(text):
     return len(encoding.encode(text))

@@ -1,6 +1,6 @@
 import os
 import time
-from constants import debug, agent_name
+from core.constants import agent_name
 
 
 # compose a prompt from a template and a list of values to replace
@@ -9,15 +9,12 @@ def compose_prompt(prompt_template_name, values_to_replace):
 
     prompt_template = replace_all_in_string(prompt_template, values_to_replace)
 
-    write_debug_log(prompt_template_name + ":\n" + prompt_template)
-
     return prompt_template
 
 
 # replacements is a key value dictionary
 def replace_all_in_string(string, replacements):
     for key, value in replacements.items():
-        print("replacing", key, "with", value)
         string = string.replace("{" + key + "}", value)
     return string
 
@@ -37,9 +34,7 @@ def messages_to_dialogue(messages):
     dialogue = ""
     for i in range(len(messages["ids"])):
         dialogue += (
-            "(" + messages["metadatas"][i]["connector"] + ")"
-            + " | "
-            + messages["metadatas"][i]["event_creator"]
+            messages["metadatas"][i]["event_creator"]
             + ": "
             + messages["documents"][i]
             + "\n"
@@ -48,13 +43,10 @@ def messages_to_dialogue(messages):
     return dialogue
 
 def events_to_stream(messages):
-    # event stream should be a string of (<connector>) | <event_creator>: <message>\n
     event_stream = ""
     for i in range(len(messages["ids"])):
         event_stream += (
-            "(" + messages["metadatas"][i]["connector"] + ")"
-            + " | "
-            + messages["metadatas"][i]["event_creator"]
+            messages["metadatas"][i]["event_creator"]
             + ": "
             + messages["documents"][i]
             + "\n"
@@ -64,6 +56,7 @@ def events_to_stream(messages):
 # write to the main log stream
 # this will be referenced by the agent
 def write_log(text, header=None):
+    print(text)
     # add timestamp
     prefix = get_formatted_time() + "|" + get_current_date() + "|>"
     if header != None:
@@ -71,36 +64,13 @@ def write_log(text, header=None):
     text = prefix + text
     # if logs directory does not exist, create it
     os.makedirs("logs", exist_ok=True)
-    # if logs/log.txt doesn't exist, write it
-    if not os.path.exists("logs/log.txt"):
-        with open("logs/log.txt", "w") as f:
+
+    if not os.path.exists("logs/feed.log"):
+        with open("logs/feed.log", "w") as f:
             f.write("")
-    # write to logs/log.txt
-    with open("logs/log.txt", "a") as f:
+
+    with open("logs/feed.log", "a") as f:
         f.write(text + "\n")
-    write_debug_log(text)
-
-
-# write to the debug log
-# Debug logs are helpful to understand the full agent stream, but can be very slow
-# Set DEBUG=False in .env to disable debug logs when deploying
-def write_debug_log(text, header=None):
-    if debug == False:
-        return
-    prefix = get_formatted_time() + "|" + get_current_date() + "|>"
-    if header != None:
-        prefix += header + "\n"
-    text = prefix + text
-    # if logs directory does not exist, create it
-    os.makedirs("logs", exist_ok=True)
-    # if logs/log.txt doesn't exist, write it
-    if not os.path.exists("logs/debug_log.txt"):
-        with open("logs/debug_log.txt", "w") as f:
-            f.write("")
-    # write to logs/log.txt
-    with open("logs/debug_log.txt", "a") as f:
-        f.write(text + "\n")
-
 
 def get_formatted_time():
     current_time = time.time()

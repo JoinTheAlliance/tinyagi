@@ -1,13 +1,51 @@
 import requests
+import logging
+import threading
+from core.memory import add_event
+from core.constants import agent_name
+
+
+from flask import Flask, request
+
+app = Flask(__name__)
+
+log = logging.getLogger("werkzeug")
+log.disabled = True
+
+
+@app.route("/msg")
+def create_input_event():
+    userText = request.args.get("msg")  # Get data from input, we named it 'msg'
+    add_event(userText, "user", "conversation")
+    return "", 200  # Return a successful HTTP response
+
+
+def run_app():
+    app.run()
+
+
+flask_thread = threading.Thread(target=run_app)
+flask_thread.start()
+
+
+def respond(arguments):
+    message = arguments["message"]
+    # Send a message to the user terminal listener
+    add_event(message, agent_name, "conversation")
+    try:
+        requests.get("http://127.0.0.1:5001/response", params={"msg": message})
+    except:
+        # noop
+        pass
 
 # respond to user input
-def get_functions():
+def get_skills():
     # return an empty dict
     return {
-        "respond_to_admin_chat": {
+        "message_user": {
             "payload": {
-                "name": "admin_chat",
-                "description": "Respond to a message from the admin_chat channel. ",
+                "name": "message_user",
+                "description": "Send a message to the user's connected terminal window, either as a response to an incoming message in the event stream or to let them know that things are okay, or ask for help if you get stuck. ",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -21,27 +59,4 @@ def get_functions():
             },
             "handler": respond,
         },
-        "message_to_admin_chat": {
-            "payload": {
-                "name": "admin_chat",
-                "description": "Send a message to admin_chat to let the admin know things are okay, or ask for help if you get stuck. ",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "message": {
-                            "type": "string",
-                            "description": "The message to send to the person",
-                        }
-                    },
-                    "required": ["message"],
-                },
-            },
-            "handler": respond,
-        }
     }
-
-def respond(properties):
-    message = properties["message"]
-    print("I'm thinking")
-    # Send a message to the user terminal listener
-    requests.get("http://127.0.0.1:5001/response", params={"msg": message})
