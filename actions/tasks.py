@@ -1,4 +1,4 @@
-# File: ./functions/tasks.py
+# File: ./actions/tasks.py
 
 import uuid
 
@@ -8,7 +8,7 @@ collection_name = "tasks"
 
 def create_task_handler(arguments):
     """
-    Handler function for creating a new task document.
+    Handler action for creating a new task document.
     """
     task_text = arguments.get("text")
     if task_text:
@@ -22,7 +22,7 @@ def create_task_handler(arguments):
 
 def list_tasks_handler(arguments):
     """
-    Handler function for listing recent tasks.
+    Handler action for listing recent tasks.
     """
     limit = arguments.get("limit", 10)
     collection_data = get_formatted_collection_data(
@@ -33,7 +33,7 @@ def list_tasks_handler(arguments):
 
 def search_tasks_handler(arguments):
     """
-    Handler function for searching tasks based on a query text.
+    Handler action for searching tasks based on a query text.
     """
     query_text = arguments.get("query_text")
     n_results = arguments.get("n_results", 5)
@@ -45,7 +45,7 @@ def search_tasks_handler(arguments):
 
 def delete_task_handler(arguments):
     """
-    Handler function for deleting a task document based on its ID.
+    Handler action for deleting a task document based on its ID.
     """
     task_id = arguments.get("task_id")
     if task_id:
@@ -58,7 +58,7 @@ def delete_task_handler(arguments):
 
 def update_task_handler(arguments):
     """
-    Handler function for updating a task document based on its ID.
+    Handler action for updating a task document based on its ID.
     """
     task_id = arguments.get("task_id")
     new_text = arguments.get("new_text")
@@ -70,13 +70,13 @@ def update_task_handler(arguments):
         return False
 
 
-def get_functions():
+def get_actions():
     """
-    Returns a dictionary of functions related to tasks.
+    Returns a dictionary of actions related to tasks.
     """
     return {
         "create_task": {
-            "payload": {
+            "function": {
                 "name": "create_task",
                 "description": "Create a new task document.",
                 "parameters": {
@@ -93,7 +93,7 @@ def get_functions():
             "handler": create_task_handler
         },
         "list_tasks": {
-            "payload": {
+            "function": {
                 "name": "list_tasks",
                 "description": "List recent task documents.",
                 "parameters": {
@@ -109,7 +109,7 @@ def get_functions():
             "handler": list_tasks_handler
         },
         "search_tasks": {
-            "payload": {
+            "function": {
                 "name": "search_tasks",
                 "description": "Search task documents based on a query text.",
                 "parameters": {
@@ -130,7 +130,7 @@ def get_functions():
             "handler": search_tasks_handler
         },
         "delete_task": {
-            "payload": {
+            "function": {
                 "name": "delete_task",
                 "description": "Delete a task document based on its ID.",
                 "parameters": {
@@ -147,7 +147,7 @@ def get_functions():
             "handler": delete_task_handler
         },
         "update_task": {
-            "payload": {
+            "function": {
                 "name": "update_task",
                 "description": "Update a task document based on its ID.",
                 "parameters": {

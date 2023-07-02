@@ -4,7 +4,7 @@ from core.memory import create_event, memory_client
 
 def add_goal_handler(arguments):
     """
-    Handler function for adding a new goal to the 'goals' collection.
+    Handler action for adding a new goal to the 'goals' collection.
     """
     goal = arguments.get("goal")
     print("**** GOAL")
@@ -14,17 +14,16 @@ def add_goal_handler(arguments):
         goal_id = str(uuid.uuid4())
         collection = memory_client.get_or_create_collection("goals")
         collection.add(
-            ids=[goal_id],  # Use the UUID as the ID
+            ids=[goal_id],
             documents=[goal],
-            metadatas=[{"type": "goal", "id": goal_id}]  # Store the UUID in metadata
         )
         print(f"Added goal with ID {goal_id}: {goal}")  # Debug print
-        create_event(f"Added goal: {goal}", "function")
+        create_event(f"Added goal: {goal}", "action")
         return True
 
 def remove_goal_handler(arguments):
     """
-    Handler function for removing an existing goal from the 'goals' collection.
+    Handler action for removing an existing goal from the 'goals' collection.
     """
     goal = arguments.get("goal")
     print("**** GOAL")
@@ -36,33 +35,33 @@ def remove_goal_handler(arguments):
             goal_id = goal_data["metadatas"][0].get("id")
             if goal_id:
                 collection.delete(ids=[goal_id])
-                create_event(f"Removed goal: {goal}", "function")
+                create_event(f"Removed goal: {goal}", "action")
                 return True
-        create_event(f"Goal not found: {goal}", "function")
+        create_event(f"Goal not found: {goal}", "action")
         return False
     else:
-        create_event("Failed to remove goal. Missing 'goal' argument.", "function")
+        create_event("Failed to remove goal. Missing 'goal' argument.", "action")
         return False
 
 def view_goals_handler(arguments):
     """
-    Handler function for retrieving all current goals from the 'goals' collection.
+    Handler action for retrieving all current goals from the 'goals' collection.
     """
     collection = memory_client.get_or_create_collection("goals")
     goals = collection.get(include=["metadatas", "documents"])
     goal_list = [doc for doc in goals["documents"]]
     goal_list = "\n".join(goal_list)
     if goal_list:
-        create_event("I have these goals:\n" + goal_list, "function")
+        create_event("I have these goals:\n" + goal_list, "action")
     return goal_list
 
-def get_functions():
+def get_actions():
     """
-    Returns a dictionary of functions associated with the goal-related operations.
+    Returns a dictionary of actions associated with the goal-related operations.
     """
     return {
         "add_goal": {
-            "payload": {
+            "function": {
                 "name": "add_goal",
                 "description": "Add a new goal.",
                 "parameters": {
@@ -79,7 +78,7 @@ def get_functions():
             "handler": add_goal_handler
         },
         "remove_goal": {
-            "payload": {
+            "function": {
                 "name": "remove_goal",
                 "description": "Remove an existing goal.",
                 "parameters": {
@@ -96,7 +95,7 @@ def get_functions():
             "handler": remove_goal_handler
         },
         "view_goals": {
-            "payload": {
+            "function": {
                 "name": "view_goals",
                 "description": "View all current goals.",
                 "parameters": {
@@ -122,11 +121,11 @@ if __name__ == "__main__":
     # Test view_goals_handler
     assert isinstance(view_goals_handler({}), list)
 
-    # Test get_functions
-    functions = get_functions()
-    assert isinstance(functions, dict)
-    assert "add_goal" in functions
-    assert "remove_goal" in functions
-    assert "view_goals" in functions
+    # Test get_actions
+    actions = get_actions()
+    assert isinstance(actions, dict)
+    assert "add_goal" in actions
+    assert "remove_goal" in actions
+    assert "view_goals" in actions
 
     print("All tests passed!")

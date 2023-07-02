@@ -3,4 +3,4 @@ __pycache__
 .chroma/
 .vscode/
 logs/
-functions_to_implement/
+scripts/

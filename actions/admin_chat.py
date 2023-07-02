@@ -1,4 +1,4 @@
-# functions/admin_chat.py
+# actions/admin_chat.py
 
 import os
 import sys
@@ -62,11 +62,11 @@ def send_message(arguments):
 
 
 # respond to user input
-def get_functions():
+def get_actions():
     # return an empty dict
     return {
         "message_user": {
-            "payload": {
+            "function": {
                 "name": "message_user",
                 "description": "Send a message to the user's connected terminal window, either as a response to an incoming message in the event stream or to let them know that things are okay, or ask for help if you get stuck. ",
                 "parameters": {

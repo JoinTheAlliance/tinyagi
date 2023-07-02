@@ -1,11 +1,9 @@
-# core is at cwd/core
-# this file is in cwd/functions_to_implement
 from core.memory import create_event, memory_client, get_formatted_collection_data
 import uuid
 
 def create_event_handler(arguments):
     """
-    Handler function for creating a new event in the 'events' collection.
+    Handler action for creating a new event in the 'events' collection.
     """
     text = arguments.get("text")
     event_creator = arguments.get("event_creator", "assistant")
@@ -22,12 +20,12 @@ def create_event_handler(arguments):
             "event_creator": event_creator
         }]
     )
-    create_event("I created a new event!", "assistant", "function_call")
+    create_event("I created a new event!", "assistant", "action_call")
     return True
 
 def list_events_handler(arguments):
     """
-    Handler function for listing the recent events from the 'events' collection.
+    Handler action for listing the recent events from the 'events' collection.
     """
     limit = arguments.get("limit", 10)
     
@@ -40,12 +38,12 @@ def list_events_handler(arguments):
         f'{msg_meta["event_creator"]}: {msg_doc}'
         for msg_meta, msg_doc in zip(events["metadatas"], events["documents"])
     )
-    create_event("I got a list of recent events:\n" + formatted_events, "assistant", "function_call")
+    create_event("I got a list of recent events:\n" + formatted_events, "assistant", "action_call")
     return formatted_events
 
 def search_events_handler(arguments):
     """
-    Handler function for searching events in the 'events' collection.
+    Handler action for searching events in the 'events' collection.
     """
     query_text = arguments.get("query_text")
     n_results = arguments.get("n_results", 5)
@@ -57,12 +55,12 @@ def search_events_handler(arguments):
         n_results=n_results
     )
 
-    create_event("I searched for events with the query text '" + query_text + "' and got the following results:\n" + formatted_collection_data, "assistant", "function_call")
+    create_event("I searched for events with the query text '" + query_text + "' and got the following results:\n" + formatted_collection_data, "assistant", "action_call")
     return formatted_collection_data
 
 def delete_event_handler(arguments):
     """
-    Handler function for deleting an event from the 'events' collection based on its ID.
+    Handler action for deleting an event from the 'events' collection based on its ID.
     """
     event_id = arguments.get("event_id")
     
@@ -77,12 +75,12 @@ def delete_event_handler(arguments):
             return False
         return True
     else:
-        print("I called the delete event function but didn't provide an event ID")
+        print("I called the delete event action but didn't provide an event ID")
         return False
 
 def update_event_handler(arguments):
     """
-    Handler function for updating an event in the 'events' collection based on its ID.
+    Handler action for updating an event in the 'events' collection based on its ID.
     """
     event_id = arguments.get("event_id")
     new_text = arguments.get("new_text")
@@ -106,13 +104,13 @@ def update_event_handler(arguments):
         return False
 
 
-def get_functions():
+def get_actions():
     """
-    Returns a dictionary of functions associated with event-related operations.
+    Returns a dictionary of actions associated with event-related operations.
     """
     return {
         "create_event": {
-            "payload": {
+            "function": {
                 "name": "create_event",
                 "description": "Create a new event.",
                 "parameters": {
@@ -141,7 +139,7 @@ def get_functions():
             "handler": create_event_handler
         },
         "list_events": {
-            "payload": {
+            "function": {
                 "name": "list_events",
                 "description": "List recent events.",
                 "parameters": {
@@ -161,7 +159,7 @@ def get_functions():
             "handler": list_events_handler
         },
         "search_events": {
-            "payload": {
+            "function": {
                 "name": "search_events",
                 "description": "Search events based on a query text.",
                 "parameters": {
@@ -182,7 +180,7 @@ def get_functions():
             "handler": search_events_handler
         },
         "delete_event": {
-            "payload": {
+            "function": {
                 "name": "delete_event",
                 "description": "Delete an event based on its ID.",
                 "parameters": {
@@ -199,7 +197,7 @@ def get_functions():
             "handler": delete_event_handler
         },
         "update_event": {
-            "payload": {
+            "function": {
                 "name": "update_event",
                 "description": "Update an event based on its ID.",
                 "parameters": {

@@ -1,4 +1,4 @@
-# functions/terminal.py
+# actions/terminal.py
 
 import subprocess
 import uuid
@@ -64,7 +64,7 @@ def get_tabs(arguments):
         "I got a list of tabs from the terminal:\n"
         + str(terminal.get_sessions())
         + "\n"
-        + "Next I can run a command in the terminal (run_command function).",
+        + "Next I can run a command in the terminal (run_command action).",
         type="terminal_command",
     )
 
@@ -83,7 +83,7 @@ def get_tabs_formatted_as_string(arguments):
         "I got a list of tabs from the terminal:\n"
         + formatted_string
         + "\n"
-        + "Next I can run a command in the terminal (run_command function).",
+        + "Next I can run a command in the terminal (run_command action).",
         type="terminal_command",
     )
     return formatted_string
@@ -222,12 +222,12 @@ def pip_install(arguments):
         )
 
 
-def get_functions():
+def get_actions():
     return {
         "terminal_create_tab": {
-            "payload": {
+            "function": {
                 "name": "terminal_create_tab",
-                "description": "This function creates a new tab in your terminal so you can switch to it.",
+                "description": "This action creates a new tab in your terminal so you can switch to it.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -242,7 +242,7 @@ def get_functions():
             "handler": create_tab,
         },
         "terminal_switch_to": {
-            "payload": {
+            "function": {
                 "name": "terminal_switch_to",
                 "description": "Switch to an existing tab in your terminal.",
                 "parameters": {
@@ -259,7 +259,7 @@ def get_functions():
             "handler": switch_to,
         },
         "terminal_close_tab": {
-            "payload": {
+            "function": {
                 "name": "terminal_close_tab",
                 "description": "Close an existing tab in your terminal.",
                 "parameters": {
@@ -276,7 +276,7 @@ def get_functions():
             "handler": close_tab,
         },
         "terminal_get_tabs": {
-            "payload": {
+            "function": {
                 "name": "terminal_get_tabs",
                 "description": "Get all tabs in a dictionary format from the terminal.",
                 "parameters": {
@@ -293,7 +293,7 @@ def get_functions():
             "handler": get_tabs,
         },
         "terminal_get_tabs_formatted_as_string": {
-            "payload": {
+            "function": {
                 "name": "terminal_get_tabs_formatted_as_string",
                 "description": "Get all tabs in a human-readable string format from the terminal.",
                 "parameters": {
@@ -310,7 +310,7 @@ def get_functions():
             "handler": get_tabs_formatted_as_string,
         },
         "terminal_run_command": {
-            "payload": {
+            "function": {
                 "name": "terminal_run_command",
                 "description": "Run a shell command in the current tab of your terminal. Use this to access your operating system. You can always come back to it!",
                 "parameters": {
@@ -327,7 +327,7 @@ def get_functions():
             "handler": run_command,
         },
         "get_current_working_directory": {
-            "payload": {
+            "function": {
                 "name": "get_current_working_directory",
                 "description": "Write the current working directory into the event stream. This is useful for knowing where I am currently when I'm running and want to execute shell commands.",
                 "parameters": {
@@ -344,7 +344,7 @@ def get_functions():
             "handler": get_current_working_directory,
         },
         "pip_install": {
-            "payload": {
+            "function": {
                 "name": "pip_install",
                 "description": "Install a Python package using pip. This is useful for installing packages that I don't have yet.",
                 "parameters": {
@@ -361,7 +361,7 @@ def get_functions():
             "handler": pip_install,
         },
         "curl": {
-            "payload": {
+            "function": {
                 "name": "curl",
                 "description": "Execute a curl command. This is useful for downloading files from the internet.",
                 "parameters": {
@@ -382,9 +382,9 @@ def get_functions():
             "handler": curl,
         },
         "write_python_file": {
-            "payload": {
+            "function": {
                 "name": "write_python_file",
-                "description": "Write a Python file to disk. This is useful for creating new functions.",
+                "description": "Write a Python file to disk. This is useful for creating new actions.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -406,34 +406,34 @@ def get_functions():
 
 
 if __name__ == "__main__":
-    # Test get_current_working_directory function
+    # Test get_current_working_directory action
     try:
         get_current_working_directory(
-            {"description": "Testing get_current_working_directory function"}
+            {"description": "Testing get_current_working_directory action"}
         )
     except Exception as e:
-        print(f"get_current_working_directory function failed with exception: {e}")
+        print(f"get_current_working_directory action failed with exception: {e}")
 
-    # Test pip_install function
+    # Test pip_install action
     try:
         pip_install(
             {"package": "pytest"}
         )  # We're using pytest for an example, you can replace it with any safe package
     except Exception as e:
-        print(f"pip_install function failed with exception: {e}")
+        print(f"pip_install action failed with exception: {e}")
 
-    # Test curl function
+    # Test curl action
     try:
         curl({"url": "https://www.google.com", "arguments": ""})
     except Exception as e:
-        print(f"curl function failed with exception: {e}")
+        print(f"curl action failed with exception: {e}")
 
-    # Test write_python_file function
+    # Test write_python_file action
     try:
         write_python_file(
             {"file_name": "test.py", "file_contents": "print('Hello World')"}
         )
     except Exception as e:
-        print(f"write_python_file function failed with exception: {e}")
+        print(f"write_python_file action failed with exception: {e}")
 
     print("All tests complete")

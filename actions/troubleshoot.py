@@ -1,4 +1,4 @@
-# functions/troubleshoot
+# actions/troubleshoot
 
 from core.language import clean_prompt, use_language_model, compose_prompt
 from core.memory import create_event
@@ -11,8 +11,8 @@ These are your most important goals, which you should always keep in mind:
 {goals}
 These are you current tasks, which you should prioritize accomplishing:
 {tasks}
-You can call the following functions and should call them often:
-{functions}
+You can call the following actions and should call them often:
+{actions}
 Event Logs (most recent toward the bottom):
 {events}
 
@@ -37,10 +37,10 @@ def troubleshoot(arguments):
         create_event(response_content, type="troubleshooting")
 
 
-def get_functions():
+def get_actions():
     return {
         "troubleshoot": {
-            "payload": {
+            "function": {
                 "name": "troubleshoot",
                 "description": "Try to figure out what is wrong. Are we stuck in a loop? Is there an error? Assess how to fix out problem.",
                 "parameters": {

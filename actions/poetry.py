@@ -1,4 +1,4 @@
-# functions/poetry.py
+# actions/poetry.py
 
 from core.language import clean_prompt, use_language_model, compose_prompt
 from core.memory import create_event
@@ -17,8 +17,8 @@ You most important goals, which you should always keep in mind:
 Your current tasks, which you should prioritize accomplishing
 {tasks}
 
-You have access to the following functions and should call them often:
-{functions}
+You have access to the following actions and should call them often:
+{actions}
 
 Event Logs:
 {events}
@@ -45,10 +45,10 @@ def write_poem(arguments):
         create_event(response_message, type="poem")
 
 
-def get_functions():
+def get_actions():
     return {
         "write_poem": {
-            "payload": {
+            "function": {
                 "name": "write_poem",
                 "description": "Write a poem about everything that is going on.",
                 "parameters": {

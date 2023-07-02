@@ -4,9 +4,9 @@ from core.memory import (
 )
 
 
-def create_knowledge_handler(arguments):
+def learn_handler(arguments):
     """
-    Handler function for creating a new knowledge document in the 'knowledge' collection.
+    Handler action for creating a new knowledge document in the 'knowledge' collection.
     """
     text = arguments.get("text")
     document_id = arguments.get("document_id")
@@ -25,7 +25,7 @@ def create_knowledge_handler(arguments):
 
 def search_knowledge_handler(arguments):
     """
-    Handler function for searching knowledge documents based on a query text.
+    Handler action for searching knowledge documents based on a query text.
     """
     query_text = arguments.get("query_text")
     n_results = arguments.get("n_results", 5)
@@ -39,7 +39,7 @@ def search_knowledge_handler(arguments):
 
 def delete_knowledge_handler(arguments):
     """
-    Handler function for deleting a knowledge document from the 'knowledge' collection based on its ID.
+    Handler action for deleting a knowledge document from the 'knowledge' collection based on its ID.
     """
     document_id = arguments.get("document_id")
 
@@ -54,7 +54,7 @@ def delete_knowledge_handler(arguments):
 
 def update_knowledge_handler(arguments):
     """
-    Handler function for updating a knowledge document in the 'knowledge' collection based on its ID.
+    Handler action for updating a knowledge document in the 'knowledge' collection based on its ID.
     """
     document_id = arguments.get("document_id")
     new_text = arguments.get("new_text")
@@ -70,7 +70,7 @@ def update_knowledge_handler(arguments):
 
 def find_similar_knowledge_handler(arguments):
     """
-    Handler function for finding similar knowledge documents and deleting them if they are too similar.
+    Handler action for finding similar knowledge documents and deleting them if they are too similar.
     """
     document_id = arguments.get("document_id")
     threshold = arguments.get("threshold", 0.9)
@@ -106,21 +106,21 @@ def find_similar_knowledge_handler(arguments):
     return False
 
 
-def get_functions():
+def get_actions():
     """
-    Returns a dictionary of functions related to knowledge.
+    Returns a dictionary of actions related to knowledge.
     """
     return {
-        "create_knowledge": {
-            "payload": {
-                "name": "create_knowledge",
-                "description": "Create a new knowledge document.",
+        "learn": {
+            "function": {
+                "name": "learn",
+                "description": "Learn something new. Create a new knowledge document.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "text": {
                             "type": "string",
-                            "description": "The text content of the knowledge document.",
+                            "description": "The text content to add to memory.",
                         },
                         "document_id": {
                             "type": "string",
@@ -130,10 +130,10 @@ def get_functions():
                     "required": ["text"],
                 },
             },
-            "handler": create_knowledge_handler,
+            "handler": learn_handler,
         },
         "search_knowledge": {
-            "payload": {
+            "function": {
                 "name": "search_knowledge",
                 "description": "Search for knowledge documents based on a query text.",
                 "parameters": {
@@ -154,7 +154,7 @@ def get_functions():
             "handler": search_knowledge_handler,
         },
         "delete_knowledge": {
-            "payload": {
+            "function": {
                 "name": "delete_knowledge",
                 "description": "Delete a knowledge document based on its ID.",
                 "parameters": {
@@ -171,7 +171,7 @@ def get_functions():
             "handler": delete_knowledge_handler,
         },
         "update_knowledge": {
-            "payload": {
+            "function": {
                 "name": "update_knowledge",
                 "description": "Update a knowledge document based on its ID.",
                 "parameters": {
@@ -192,7 +192,7 @@ def get_functions():
             "handler": update_knowledge_handler,
         },
         "find_similar_knowledge": {
-            "payload": {
+            "function": {
                 "name": "find_similar_knowledge",
                 "description": "Find similar knowledge documents and delete them if they are too similar.",
                 "parameters": {
@@ -216,11 +216,11 @@ def get_functions():
 
 
 if __name__ == "__main__":
-    # Test create_knowledge_handler
+    # Test learn_handler
     arguments = {"text": "This is a test document.", "document_id": "test_doc_id"}
     assert (
-        create_knowledge_handler(arguments) is True
-    ), "Test for create_knowledge_handler failed."
+        learn_handler(arguments) is True
+    ), "Test for learn_handler failed."
 
     # Test search_knowledge_handler
     arguments = {"query_text": "test", "n_results": 5}
@@ -249,13 +249,13 @@ if __name__ == "__main__":
         delete_knowledge_handler(arguments) is True
     ), "Test for delete_knowledge_handler failed."
 
-    # Test get_functions
-    functions = get_functions()
-    assert isinstance(functions, dict), "Test for get_functions failed."
-    assert "create_knowledge" in functions, "Test for get_functions failed."
-    assert "search_knowledge" in functions, "Test for get_functions failed."
-    assert "delete_knowledge" in functions, "Test for get_functions failed."
-    assert "update_knowledge" in functions, "Test for get_functions failed."
-    assert "find_similar_knowledge" in functions, "Test for get_functions failed."
+    # Test get_actions
+    actions = get_actions()
+    assert isinstance(actions, dict), "Test for get_actions failed."
+    assert "learn" in actions, "Test for get_actions failed."
+    assert "search_knowledge" in actions, "Test for get_actions failed."
+    assert "delete_knowledge" in actions, "Test for get_actions failed."
+    assert "update_knowledge" in actions, "Test for get_actions failed."
+    assert "find_similar_knowledge" in actions, "Test for get_actions failed."
 
     print("All tests passed!")

@@ -1,4 +1,4 @@
-# functions/music.py
+# actions/music.py
 
 from core.language import use_language_model, compose_prompt
 from core.language import clean_prompt
@@ -14,8 +14,8 @@ These are my most important goals, which I should always keep in mind:
 {goals}
 These are my current tasks, which I should prioritize accomplishing
 {tasks}
-I have access to the following functions and should call them often:
-{functions}
+I have access to the following actions and should call them often:
+{actions}
 Recent Event History:
 {events}
 
@@ -25,10 +25,10 @@ Write a song (or at least the song lyrics and a chord progression) that incorpor
 )
 
 
-def get_functions():
+def get_actions():
     return {
         "write_song": {
-            "payload": {
+            "function": {
                 "name": "write_song",
                 "description": "Write a song about everything that is going on.",
                 "parameters": {

@@ -19,7 +19,7 @@ python user_terminal.py
 ```
 No guarauntee the agent will respond...
 
-To add a function, copy and paste a function that is similar in the functions directory. Rename it to something unique and modify. The function will be automatically loaded.
+To add an action, copy and paste a action that is similar in the actions directory. Rename it to something unique and modify. The action will be automatically loaded.
 
 To see what's going on, check out `logs/feed.log`
 

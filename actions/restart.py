@@ -1,13 +1,13 @@
-# functions/restart.py
+# actions/restart.py
 
 import os
 import sys
 from core.memory import create_event
 
-def get_functions():
+def get_actions():
     return {
         "restart": {
-            "payload": {
+            "function": {
                 "name": "restart",
                 "description": "Restart yourself. Completely shut down and start back up.",
                 "parameters": {

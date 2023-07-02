@@ -1,4 +1,4 @@
-# functions/browser.py
+# actions/browser.py
 
 import uuid
 
@@ -191,10 +191,10 @@ def fill_form_and_submit(arguments):
     )
 
 
-def get_functions():
+def get_actions():
     return {
         "browser_create_tab": {
-            "payload": {
+            "function": {
                 "name": "browser_create_tab",
                 "description": "Create a new tab in the virtual browser and switch to it.",
                 "parameters": {
@@ -211,7 +211,7 @@ def get_functions():
             "handler": create_tab,
         },
         "browser_switch_to": {
-            "payload": {
+            "function": {
                 "name": "browser_switch_to",
                 "description": "Switch to an existing tab in the virtual browser.",
                 "parameters": {
@@ -228,7 +228,7 @@ def get_functions():
             "handler": switch_to,
         },
         "execute_pyppeteer_code": {
-            "payload": {
+            "function": {
                 "name": "execute_pyppeteer_code",
                 "description": "Execute arbitrary Pyppeteer code in the virtual browser.",
                 "parameters": {
@@ -245,7 +245,7 @@ def get_functions():
             "handler": execute_pyppeteer_code,
         },
         "browser_close_tab": {
-            "payload": {
+            "function": {
                 "name": "browser_close_tab",
                 "description": "Close an existing tab in the virtual browser.",
                 "parameters": {
@@ -262,7 +262,7 @@ def get_functions():
             "handler": close_tab,
         },
         "browser_navigate_to": {
-            "payload": {
+            "function": {
                 "name": "browser_navigate_to",
                 "description": "Navigate to a URL in the current tab of the virtual browser.",
                 "parameters": {
@@ -279,7 +279,7 @@ def get_functions():
             "handler": navigate_to,
         },
         "browser_get_html": {
-            "payload": {
+            "function": {
                 "name": "browser_get_html",
                 "description": "Get the HTML content of the current page in the virtual browser.",
                 "parameters": {
@@ -296,7 +296,7 @@ def get_functions():
             "handler": get_html,
         },
         "browser_get_body_text": {
-            "payload": {
+            "function": {
                 "name": "browser_get_body_text",
                 "description": "Get all text from the body of the current page in the virtual browser.",
                 "parameters": {
@@ -313,7 +313,7 @@ def get_functions():
             "handler": get_body_text,
         },
         "browser_search_google": {
-            "payload": {
+            "function": {
                 "name": "browser_search_google",
                 "description": "Search google with the provided query.",
                 "parameters": {
@@ -330,7 +330,7 @@ def get_functions():
             "handler": search_google,
         },
         "browser_get_form_data": {
-            "payload": {
+            "function": {
                 "name": "browser_get_form_data",
                 "description": "Get all data from the first form on the current page in the virtual browser.",
                 "parameters": {
@@ -347,7 +347,7 @@ def get_functions():
             "handler": get_form_data,
         },
         "browser_fill_form_and_submit": {
-            "payload": {
+            "function": {
                 "name": "browser_fill_form_and_submit",
                 "description": "Fill out and submit the first form on the current page in the virtual browser.",
                 "parameters": {

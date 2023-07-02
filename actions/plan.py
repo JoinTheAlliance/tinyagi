@@ -1,4 +1,4 @@
-# functions/plan.py
+# actions/plan.py
 
 # plan about things that are going on
 from core.language import clean_prompt, use_language_model, compose_prompt
@@ -11,8 +11,8 @@ The current time is {current_time} on {current_date}.
 Relevant things you know:
 {knowledge}
 
-You can call the following functions and should call them often:
-{functions}
+You can call the following actions and should call them often:
+{actions}
 
 These are your most important goals, which you should always keep in mind:
 {goals}
@@ -23,17 +23,17 @@ These are your current tasks, which you should prioritize accomplishing
 Recent Event History:
 {events}
 
-Prompt: You should write a detailed plan that you can execute on. You should make sure to include what function or task the plan is related to, and what functions or knowledge you will use. Your goal is to call a function once you have a rough plan.
+Prompt: You should write a detailed plan that you can execute on. You should make sure to include what action or task the plan is related to, and what actions or knowledge you will use. Your goal is to call a action once you have a rough plan.
 Sometimes you get caught in loops, especially with planning, thinking and learning. If you've been planning and thinking for a while, you should try figure out what else you should do, especially exploring, coding or playing with the browser or terminal.
-Always try to advance your goals and complete your tasks. Always try to call the most appropriate function for the immediate context -- or just start working toward your goals.
+Always try to advance your goals and complete your tasks. Always try to call the most appropriate action for the immediate context -- or just start working toward your goals.
 """
 )
 
 
-def get_functions():
+def get_actions():
     return {
         "create_plan": {
-            "payload": {
+            "function": {
                 "name": "create_plan",
                 "description": "Create a new plan for what you're going to do to achieve your goals or tasks. Good when you're just getting started.",
                 "parameters": {
@@ -50,7 +50,7 @@ def get_functions():
             "handler": plan,
         },
         "remember_plan": {
-            "payload": {
+            "function": {
                 "name": "remember_plan",
                 "description": "Did you forget what the plan was? Get the last plan.",
                 "parameters": {
@@ -115,13 +115,13 @@ def plan(arguments):
 
 
 if __name__ == "__main__":
-    # Test `plan` function
+    # Test `plan` action
     try:
-        plan({"plan": "My plan is to test the function"})
+        plan({"plan": "My plan is to test the action"})
     except Exception as e:
-        print(f"The `plan` function failed with exception: {e}")
+        print(f"The `plan` action failed with exception: {e}")
 
-    # Test `remember_plan` function
+    # Test `remember_plan` action
     try:
         remember_plan(None)
         # Assume get_documents from core.memory returns dictionary as required by remember_plan
@@ -131,8 +131,8 @@ if __name__ == "__main__":
         # Assert that the result is a dictionary (a basic check)
         assert isinstance(
             result, dict
-        ), "`remember_plan` function did not return a dictionary as expected"
+        ), "`remember_plan` action did not return a dictionary as expected"
     except Exception as e:
-        print(f"The `remember_plan` function failed with exception: {e}")
+        print(f"The `remember_plan` action failed with exception: {e}")
 
     print("All tests passed!")

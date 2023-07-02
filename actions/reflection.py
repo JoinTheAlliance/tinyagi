@@ -1,4 +1,4 @@
-# functions/reflect.py
+# actions/reflect.py
 
 # reflect on things that are going on
 from core.language import clean_prompt, use_language_model, compose_prompt
@@ -16,8 +16,8 @@ These are your most important goals, which you should always keep in mind:
 {goals}
 These are your current tasks, which you should prioritize accomplishing
 {tasks}
-You can call the following functions and should call them often:
-{functions}
+You can call the following actions and should call them often:
+{actions}
 Recent Event History:
 {events}
 
@@ -32,10 +32,10 @@ Your respond should be a single paragraph. Be concise and to the point.
 )
 
 
-def get_functions():
+def get_actions():
     return {
         "reflect": {
-            "payload": {
+            "function": {
                 "name": "reflect",
                 "description": "Reflect on a topic and how things have been going in the event stream.",
                 "parameters": {

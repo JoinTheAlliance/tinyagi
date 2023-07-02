@@ -3,7 +3,7 @@ from core.memory import memory_client, get_formatted_collection_data
 
 def create_personality_handler(arguments):
     """
-    Handler function for creating a new personality document.
+    Handler action for creating a new personality document.
     """
     text = arguments.get("text")
     document_id = arguments.get("document_id")
@@ -19,7 +19,7 @@ def create_personality_handler(arguments):
 
 def search_personality_handler(arguments):
     """
-    Handler function for searching personality documents based on a query text.
+    Handler action for searching personality documents based on a query text.
     """
     query_text = arguments.get("query_text")
     n_results = arguments.get("n_results", 5)
@@ -34,7 +34,7 @@ def search_personality_handler(arguments):
 
 def delete_personality_handler(arguments):
     """
-    Handler function for deleting a personality document based on its ID.
+    Handler action for deleting a personality document based on its ID.
     """
     document_id = arguments.get("document_id")
 
@@ -49,7 +49,7 @@ def delete_personality_handler(arguments):
 
 def update_personality_handler(arguments):
     """
-    Handler function for updating a personality document based on its ID.
+    Handler action for updating a personality document based on its ID.
     """
     document_id = arguments.get("document_id")
     new_text = arguments.get("new_text")
@@ -65,7 +65,7 @@ def update_personality_handler(arguments):
 
 def find_similar_personality_handler(arguments):
     """
-    Handler function for finding similar personality documents and deleting them if they are too similar.
+    Handler action for finding similar personality documents and deleting them if they are too similar.
     """
     document_id = arguments.get("document_id")
     threshold = arguments.get("threshold", 0.9)
@@ -96,13 +96,13 @@ def find_similar_personality_handler(arguments):
     return False
 
 
-def get_functions():
+def get_actions():
     """
-    Returns a dictionary of functions related to personality documents.
+    Returns a dictionary of actions related to personality documents.
     """
     return {
         "create_personality": {
-            "payload": {
+            "function": {
                 "name": "create_personality",
                 "description": "Create a new personality document.",
                 "parameters": {
@@ -123,7 +123,7 @@ def get_functions():
             "handler": create_personality_handler,
         },
         "search_personality": {
-            "payload": {
+            "function": {
                 "name": "search_personality",
                 "description": "Search personality documents based on a query text.",
                 "parameters": {
@@ -144,7 +144,7 @@ def get_functions():
             "handler": search_personality_handler,
         },
         "delete_personality": {
-            "payload": {
+            "function": {
                 "name": "delete_personality",
                 "description": "Delete a personality document based on its ID.",
                 "parameters": {
@@ -161,7 +161,7 @@ def get_functions():
             "handler": delete_personality_handler,
         },
         "update_personality": {
-            "payload": {
+            "function": {
                 "name": "update_personality",
                 "description": "Update a personality document based on its ID.",
                 "parameters": {
@@ -182,7 +182,7 @@ def get_functions():
             "handler": update_personality_handler,
         },
         "find_similar_personality": {
-            "payload": {
+            "function": {
                 "name": "find_similar_personality",
                 "description": "Find similar personality documents and delete them if they are too similar.",
                 "parameters": {
@@ -228,14 +228,14 @@ if __name__ == "__main__":
         arguments = {"document_id": "document1", "threshold": 0.8}
         assert find_similar_personality_handler(arguments) == False
 
-    def test_get_functions():
-        functions = get_functions()
-        assert isinstance(functions, dict)
-        assert "create_personality" in functions
-        assert "list_personality" in functions
-        assert "search_personality" in functions
-        assert "delete_personality" in functions
-        assert "update_personality" in functions
-        assert "find_similar_personality" in functions
+    def test_get_actions():
+        actions = get_actions()
+        assert isinstance(actions, dict)
+        assert "create_personality" in actions
+        assert "list_personality" in actions
+        assert "search_personality" in actions
+        assert "delete_personality" in actions
+        assert "update_personality" in actions
+        assert "find_similar_personality" in actions
 
     print("All tests passed!")

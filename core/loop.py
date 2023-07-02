@@ -1,6 +1,8 @@
 # core/loop.py
 # Handles the main execution loop, which repeats at a fixed internal
 
+import os
+import time
 from core.language import clean_prompt
 
 system = clean_prompt(
@@ -12,7 +14,7 @@ You make you own decisions. You are autonomous. You have agency.
 
 You have goals, tasks, memory in the form of events as well as knowledge
 You are capable of performing a variety of tasks, writing and calling python and shell code, and even rewriting your own code.
-Your system runs by calling functions, so you should always try to find the most appropriate function and run it.
+Your system runs by calling actions, so you should always try to find the most appropriate action and run it.
 Be creative. Don't do the same thing twice. Try many things. Learn from your mistakes.
 You should always be pursuing my goals and tasks.
 Don't just get stuck in planning and thinking! Write code, browse the computer with the terminal, visit a website, write a song, anything!
@@ -22,7 +24,7 @@ Don't just get stuck in planning and thinking! Write code, browse the computer w
 prompt = clean_prompt(
     """
 The current time is {current_time} on {current_date}.
-You should always try to advance my goals and complete my tasks. You should always try to call the most appropriate function.
+You should always try to advance my goals and complete my tasks. You should always try to call the most appropriate action.
 You have full access to the terminal and can execute shell commands, as well as to a virtual browser, so you can use this to do research, explore and learn more about the world.
 Here are some relevant things that you have in your memory:
 {knowledge}
@@ -32,28 +34,28 @@ These are your goals, which you should always keep in mind and pursue when not d
 {goals}
 These are my current tasks, which you should accomplish (you can cancel and mark tasks as completed if you are finished with them)
 {tasks}
-You can call the following functions and should call them:
-{functions}
+You can call the following actions and should call them:
+{actions}
 This is the log of your event stream. These are the latest events that have happened:
 {events}
 
-Your task: Call one of the provided functions that I think is most appropriate to continue your goals and tasks (if you have any). If you aren't sure, you should try continuing on your plan.
+Your task: Call one of the provided actions that I think is most appropriate to continue your goals and tasks (if you have any). If you aren't sure, you should try continuing on your plan.
 Do not ask if you can help. Do not ask how you can assist. Focus on the task.
 """
 )
 
 from core.memory import (
     create_event,
-    get_functions,
+    get_actions,
     get_events,
 )
 from core.language import use_language_model, compose_prompt
-from core.functions import use_function
+from core.action import use_action
 
 
-def main():
+def loop():
     """
-    Main execution function. This retrieves events, prepares prompts, handles functions,
+    Main execution action. This retrieves events, prepares prompts, handles actions,
     and creates chat completions.
     """
     # Get the last 5 events
@@ -63,8 +65,8 @@ def main():
     user_prompt = compose_prompt(prompt, events)
     system_prompt = compose_prompt(system, events)
 
-    # Get functions from the events
-    functions = get_functions(events)
+    # Get actions from the events
+    actions = get_actions(events)
 
     # Create a chat completion
     response = use_language_model(
@@ -72,7 +74,7 @@ def main():
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
-        functions=functions,
+        functions=actions,
     )
     if(not response):
         print("Error in completion, ending this loop.")
@@ -88,4 +90,11 @@ def main():
     if function_call:
         function_name = function_call.get("name")
         args = function_call.get("arguments")
-        use_function(function_name, args)
+        use_action(function_name, args)
+
+def start():
+    while True:
+        interval = os.getenv("UPDATE_INTERVAL") or 3
+        interval = int(interval)
+        time.sleep(interval)
+        loop()

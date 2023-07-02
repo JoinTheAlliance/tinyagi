@@ -54,7 +54,7 @@ def get_formatted_collection_data(
     collection_name, query_text, n_results=5, deduplicate=True
 ):
     """
-    This function returns a formatted string of the data from the specified collection.
+    This action returns a formatted string of the data from the specified collection.
     It removes duplicate entries if the deduplicate flag is set to True.
     """
     # Search the collection with the query text
@@ -113,7 +113,7 @@ def get_formatted_collection_data(
                 if isinstance(function_call, str):
                     function_call = json.loads(function_call)
                 name = function_call.get("name", None)
-                new_string += f"[function called: {name}] "
+                new_string += f"[action called: {name}] "
 
             if event_creator is not None:
                 new_string += f"{event_creator}: "
@@ -124,14 +124,14 @@ def get_formatted_collection_data(
     return formatted_collection_data
 
 
-def get_functions(query_text, n_results=5):
+def get_actions(query_text, n_results=5):
     """
-    This function fetches the functions associated with a particular query text from the 'functions' collection.
+    This action fetches the actions associated with a particular query text from the 'actions' collection.
     """
-    collection_data = get_collection_data("functions", query_text, n_results)
-    functions = []
+    collection_data = get_collection_data("actions", query_text, n_results)
+    actions = []
 
-    # Extract the function calls from the metadata
+    # Extract the action calls from the metadata
     for i in range(len(collection_data["metadatas"][0])):
         metadata = collection_data["metadatas"][0][i]
 
@@ -143,9 +143,9 @@ def get_functions(query_text, n_results=5):
             function_call = metadata["function_call"]
             if isinstance(function_call, str):
                 function_call = json.loads(function_call)
-            functions.append(function_call)
+            actions.append(function_call)
 
-    return functions
+    return actions
 
 
 def get_events(limit=10, max_tokens=1200):
@@ -203,21 +203,21 @@ def create_event(
 
 
 if __name__ == "__main__":
-    # test the query_collection function
-    query_result = query_collection("functions", ["test_query"])
+    # test the query_collection action
+    query_result = query_collection("actions", ["test_query"])
     assert "documents" in query_result
     assert "metadatas" in query_result
 
-    # test the get_documents function
-    documents_result = get_documents("functions")
+    # test the get_documents action
+    documents_result = get_documents("actions")
     assert "documents" in documents_result
     assert "metadatas" in documents_result
 
-    # test the get_collection_data function
-    collection_data_result = get_collection_data("functions", "test_query")
+    # test the get_collection_data action
+    collection_data_result = get_collection_data("actions", "test_query")
     assert "documents" in collection_data_result
     assert "metadatas" in collection_data_result
 
-    # test the get_formatted_collection_data function
-    formatted_data_result = get_formatted_collection_data("functions", "test_query")
+    # test the get_formatted_collection_data action
+    formatted_data_result = get_formatted_collection_data("actions", "test_query")
     assert isinstance(formatted_data_result, str)

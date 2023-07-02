@@ -48,7 +48,7 @@ def use_language_model(messages, functions=None, long=False, function_call="auto
 
     Parameters:
     messages: List of message objects to be sent to the chat model.
-    functions: List of function calls to be sent to the chat model (Optional).
+    actions: List of action calls to be sent to the chat model (Optional).
     long: If true, uses the long text model. Default is the default text model (Optional).
 
     Returns:
@@ -82,7 +82,7 @@ def use_language_model(messages, functions=None, long=False, function_call="auto
             break
 
     # Log model, functions, messages, and response to a text file
-    file_content = f"*** MODEL: {model}\n*** FUNCTIONS: {functions}\n*** MESSAGES: {messages}\n*** RESPONSE: {response}"
+    file_content = f"*** MODEL: {model}\n*** action functions: {functions}\n*** MESSAGES: {messages}\n*** RESPONSE: {response}"
 
     # Create directory if not exists
     os.makedirs("logs/completions", exist_ok=True)
@@ -96,11 +96,10 @@ def use_language_model(messages, functions=None, long=False, function_call="auto
     ) as f:
         f.write(file_content)
 
-    print(response)
-
     if response is None or response["choices"] is None or response["choices"][0] is None:
         print('*** OPENAI RESPONSE CHOICES IS NONE')
-        return None
+        print(response)
+        return {}
 
     # Extract response content and function call from response
     response_data = response["choices"][0]["message"]
@@ -108,10 +107,7 @@ def use_language_model(messages, functions=None, long=False, function_call="auto
     content = response_data["content"]
     function_call_response = response_data.get("function_call", None)
 
-    print("OPENAI RESPONSE DATA")
-    r = {"content": content, "function_call": function_call_response, "response_data": response_data}
-    print(r)
-    return r
+    return {"content": content, "function_call": function_call_response, "response_data": response_data}
 
 
 def trim_messages(messages, max_tokens):
@@ -262,11 +258,11 @@ def compose_prompt(prompt_template, topic):
 
     current_time = time.strftime("%I:%M:%S %p", time.localtime(time.time()))
     current_date = time.strftime("%Y-%m-%d", time.localtime(time.time()))
-
+    print("topic", topic)
     values_to_replace = {
         "current_time": current_time,
         "current_date": current_date,
-        "functions": get_formatted_collection_data("functions", query_text=topic),
+        "actions": get_formatted_collection_data("actions", query_text=topic),
         "goals": get_formatted_collection_data("goals", query_text=topic),
         "tasks": get_formatted_collection_data("tasks", query_text=topic),
         "knowledge": get_formatted_collection_data("knowledge", query_text=topic),
@@ -306,7 +302,7 @@ def messages_to_dialogue(messages):
 
 
 if __name__ == "__main__":
-    # Tests for trimmed_messages function
+    # Tests for trimmed_messages action
     test_messages = [
         {"role": "system", "content": "This is a test of the system."},
         {"role": "user", "content": "Hi, how are you?"},
@@ -322,7 +318,7 @@ if __name__ == "__main__":
     assert trimmed_messages[0]["role"] == "user"
     assert trimmed_messages[0]["content"].endswith("456")
 
-    # Tests for count_tokens_from_chat_messages function
+    # Tests for count_tokens_from_chat_messages action
     test_messages = [
         {"role": "system", "content": "This is a test of the system."},
         {"role": "user", "content": "Hi, how are you?"},
@@ -332,12 +328,12 @@ if __name__ == "__main__":
         and count_tokens_from_chat_messages(test_messages) < 26
     )
 
-    # Tests for replace_all_in_string function
+    # Tests for replace_all_in_string action
     string = "Hello {name}, how are you?"
     replacements = {"name": "John"}
     assert replace_all_in_string(string, replacements) == "Hello John, how are you?"
 
-    # Tests for messages_to_dialogue function
+    # Tests for messages_to_dialogue action
     messages = {
         "metadatas": [{"event_creator": "User"}],
         "documents": ["Hi, how are you?"],
