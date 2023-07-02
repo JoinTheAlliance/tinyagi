@@ -50,7 +50,8 @@ def view_goals_handler(arguments):
     """
     collection = memory_client.get_or_create_collection("goals")
     goals = collection.get(include=["metadatas", "documents"])
-    goal_list = [doc for doc in goals["documents"] if doc["type"] == "goal"]
+    goal_list = [doc for doc in goals["documents"]]
+    create_event("Viewed goals", "function")
     return goal_list
 
 def get_functions():
