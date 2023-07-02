@@ -42,7 +42,7 @@ openai.api_key = openai_api_key
 encoding = tiktoken.encoding_for_model(default_text_model)
 
 
-def use_language_model(messages, functions=None, long=False):
+def use_language_model(messages, functions=None, long=False, function_call="auto"):
     """
     Creates a chat completion using OpenAI API and writes the completion to a log file.
 
@@ -64,7 +64,7 @@ def use_language_model(messages, functions=None, long=False):
         try:
             if functions:
                 response = openai.ChatCompletion.create(
-                    model=model, messages=messages, functions=functions
+                    model=model, messages=messages, functions=functions, function_call=function_call
                 )
             else:
                 response = openai.ChatCompletion.create(model=model, messages=messages)
@@ -96,12 +96,22 @@ def use_language_model(messages, functions=None, long=False):
     ) as f:
         f.write(file_content)
 
+    print(response)
+
+    if response is None or response["choices"] is None or response["choices"][0] is None:
+        print('*** OPENAI RESPONSE CHOICES IS NONE')
+        return None
+
     # Extract response content and function call from response
     response_data = response["choices"][0]["message"]
-    message = response_data["content"]
-    function_call = response_data.get("function_call")
+    # include the role, function call and message
+    content = response_data["content"]
+    function_call_response = response_data.get("function_call", None)
 
-    return {"message": message, "function_call": function_call}
+    print("OPENAI RESPONSE DATA")
+    r = {"content": content, "function_call": function_call_response, "response_data": response_data}
+    print(r)
+    return r
 
 
 def trim_messages(messages, max_tokens):
@@ -123,6 +133,7 @@ def trim_messages(messages, max_tokens):
     original_num_tokens = count_tokens_from_chat_messages(messages)
 
     if original_num_tokens <= max_tokens:
+        print("*** TOKEN COUNT original_num_tokens <= max_tokens")
         return messages
 
     # quick shortcut - remove the system message, then check if it fits
@@ -146,7 +157,26 @@ def trim_messages(messages, max_tokens):
             break
 
         num_tokens_temp = num_tokens + tokens_per_message
+        print("message: " + str(message))
+        # if the content key is null, remove it
+        if message.get("content") == None and message.get("function_call") != None:
+            function_call = message.get("function_call")
+            # if function_call is not a string, convert it to a string
+            if not isinstance(function_call, str):
+                function_call = str(function_call)
+            message["content"] = function_call
+            # remove function_call from message
+            message.pop("function_call")
+        if message.get("content") == None:
+            messages.pop("message")
+            continue
+
         for key, value in message.items():
+            # if value is an object, convert it to a string
+            if isinstance(value, dict):
+                value = str(value)
+            if(key == None or value == None):
+                continue
             num_tokens_temp += (
                 tokens_per_name if key == "name" else len(encoding.encode(value))
             )
@@ -163,7 +193,8 @@ def trim_messages(messages, max_tokens):
         # If no messages are included, include the last message of messages.
         # Ensure that it does not exceed max_tokens by trimming it.
         new_messages.append(trim_last_message(messages, max_tokens))
-
+    print("*** TOKENS: NEW MESSAGES ARE")
+    print(new_messages)
     return new_messages
 
 
@@ -202,18 +233,19 @@ def count_tokens_from_chat_messages(messages):
     The total number of tokens in the messages.
     """
 
-    tokens_per_message = 3
-    tokens_per_name = 1
-    num_tokens = 0
-
+    tokens_per_name = 3
+    total_tokens = 0
     for message in messages:
-        num_tokens += tokens_per_message
         for key, value in message.items():
-            num_tokens += (
-                tokens_per_name if key == "name" else len(encoding.encode(value))
-            )
-
-    return num_tokens
+            # if value is an object, convert it to a string
+            if not isinstance(value, str):
+                value = str(value)
+            try:
+                token_count = 0 if value == None else tokens_per_name if key == "name" else len(encoding.encode(value))
+                total_tokens += token_count
+            except TypeError:
+                print(f"TypeError occurred when trying to encode value: {value}")
+    return total_tokens
 
 
 def clean_prompt(prompt):

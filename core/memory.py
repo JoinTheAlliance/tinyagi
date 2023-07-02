@@ -8,33 +8,9 @@ import uuid
 
 import chromadb
 
-# Create a ChromaDB client
-client = chromadb.Client()
+# Create a ChromaDB memory_client
+memory_client = chromadb.Client()
 
-# Define collection names
-collection_names = [
-    "functions",
-    "personality",
-    "goals",
-    "events",
-    "tasks",
-    "knowledge",
-    "connectors",  # 'people' could be added here as well
-]
-
-
-def wipe_memory():
-    client.reset()
-
-
-def get_client():
-    """Returns the ChromaDB client."""
-    return client
-
-
-def get_collections():
-    """Returns all collections."""
-    return client.list_collections()
 
 def query_collection(
     collection_name,
@@ -47,7 +23,7 @@ def query_collection(
     """
     Search a collection with given query texts.
     """
-    collection = client.get_or_create_collection(collection_name)
+    collection = memory_client.get_or_create_collection(collection_name)
     return collection.query(
         query_texts=query_texts,
         where=where,
@@ -59,7 +35,7 @@ def query_collection(
 
 def get_documents(collection_name, where=None, include=["metadatas", "documents"]):
     """Returns documents from a specified collection."""
-    collection = client.get_or_create_collection(collection_name)
+    collection = memory_client.get_or_create_collection(collection_name)
     return collection.get(where=where, include=include)
 
 
@@ -176,7 +152,7 @@ def get_events(limit=10, max_tokens=1200):
     """
     Returns a stream of events from the 'events' collection.
     """
-    collection = client.get_or_create_collection("events")
+    collection = memory_client.get_or_create_collection("events")
     collection_data = collection.peek(limit=limit)
     # make sure that event_collection_data is less than max_tokens
     return "\n".join(
@@ -199,7 +175,7 @@ def create_event(
 
     if document_id is None:
         document_id = str(uuid.uuid4())
-    collection = client.get_or_create_collection("events")
+    collection = memory_client.get_or_create_collection("events")
     collection.add(
         ids=[str(document_id)],
         documents=[text],
@@ -227,9 +203,6 @@ def create_event(
 
 
 if __name__ == "__main__":
-    # test the get_collections function
-    assert isinstance(get_collections(), dict)
-
     # test the query_collection function
     query_result = query_collection("functions", ["test_query"])
     assert "documents" in query_result

@@ -108,7 +108,7 @@ def plan(arguments):
         },
     ]
     response = use_language_model(messages=messages)
-    response_message = response.get("message", None)
+    response_message = response["content"]
     if response_message != None:
         response_message = "(planning) " + response_message
         create_event(response_message, type="plan")

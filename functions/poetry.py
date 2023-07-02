@@ -40,7 +40,7 @@ def write_poem(arguments):
         },
     ]
     response = use_language_model(messages=messages)
-    response_message = response.get("message", None)
+    response_message = response["content"]
     if response_message != None:
         create_event(response_message, type="poem")
 

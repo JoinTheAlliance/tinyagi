@@ -32,9 +32,9 @@ def troubleshoot(arguments):
         },
     ]
     response = use_language_model(messages=messages)
-    response_message = response.get("message", None)
-    if response_message != None:
-        create_event(response_message, type="troubleshooting")
+    response_content = response["content"]
+    if response_content != None:
+        create_event(response_content, type="troubleshooting")
 
 
 def get_functions():

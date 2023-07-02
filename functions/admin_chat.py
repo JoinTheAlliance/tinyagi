@@ -5,7 +5,7 @@ import sys
 import requests
 import logging
 import threading
-from core.memory import create_event, wipe_memory
+from core.memory import create_event, memory_client
 
 
 from flask import Flask, request
@@ -33,7 +33,7 @@ flask_thread.start()
 def receive_message(msg):
     # if the user calls "reset database", reset the database (wipe_memory)
     if msg == "reset database":
-        wipe_memory()
+        memory_client.reset()
     if msg == "restart":
         python = sys.executable
         os.execl(python, python, *sys.argv)

@@ -8,7 +8,7 @@ import sys
 import importlib
 import json
 
-from core.memory import create_event, get_client
+from core.memory import create_event, memory_client
 
 # Create an empty dictionary to hold the functions
 functions = {}
@@ -56,7 +56,7 @@ def add_function(name, function):
     """
     # Add the function to the 'functions' dictionary
     functions[name] = function["handler"]
-    collection = get_client().get_or_create_collection("functions")
+    collection = memory_client.get_or_create_collection("functions")
     # Check if the function is already present in the 'functions' collection
     if not collection.get(ids=[name])["ids"]:
         # If not, add the new function to the 'functions' collection
@@ -67,7 +67,7 @@ def add_function(name, function):
         )
 
 
-def get_function(name):
+def get_function_handler(name):
     """
     Fetches a function based on its name.
 
@@ -85,7 +85,7 @@ def remove_function(name):
     if name in functions:
         # Remove the function from the 'functions' dictionary
         del functions[name]
-        collection = get_client().get_or_create_collection("functions")
+        collection = memory_client.get_or_create_collection("functions")
         # Remove the function from the 'functions' collection
         if collection.get(ids=[name]):
             collection.delete(ids=[name])
@@ -164,8 +164,8 @@ if __name__ == "__main__":
     # Test for use_function
     assert use_function("test", {"input": "test"}) == "test"
 
-    # Test for get_function
-    assert get_function("test") == test_function_handler
+    # Test for get_function_handler
+    assert get_function_handler("test") == test_function_handler
 
     # Test for remove_function
     remove_function("test")
