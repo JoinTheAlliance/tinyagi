@@ -69,13 +69,13 @@ def delete_event_handler(arguments):
         collection = memory_client.get_or_create_collection("events")
         try:
             collection.delete(ids=[event_id])
-            print("I deleted the event with ID ", str(event_id))
+            create_event("I deleted the event with ID ", str(event_id), "assistant", "action_call")
         except:
-            print("I couldn't delete the event, the ID wasn't in the collection")
+            create_event("I couldn't delete the event, the ID wasn't in the collection", "assistant", "action_call")
             return False
         return True
     else:
-        print("I called the delete event action but didn't provide an event ID")
+        create_event("I called the delete event action but didn't provide an event ID", "assistant", "action_call")
         return False
 
 def update_event_handler(arguments):
@@ -98,7 +98,7 @@ def update_event_handler(arguments):
         
         # If the event exists, update it
         collection.update(ids=[event_id], documents=[new_text])
-        print("I updated the event for ID " + str(event_id))
+        create_event("I updated the event for ID " + str(event_id), "assistant", "action_call")
         return True
     else:
         return False
@@ -136,6 +136,8 @@ def get_actions():
                     "required": ["text"]
                 }
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": create_event_handler
         },
         "list_events": {
@@ -156,6 +158,8 @@ def get_actions():
                     }
                 }
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": list_events_handler
         },
         "search_events": {
@@ -177,6 +181,8 @@ def get_actions():
                     "required": ["query_text"]
                 }
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": search_events_handler
         },
         "delete_event": {
@@ -194,6 +200,8 @@ def get_actions():
                     "required": ["event_id"]
                 }
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": delete_event_handler
         },
         "update_event": {
@@ -215,6 +223,8 @@ def get_actions():
                     "required": ["event_id", "new_text"]
                 }
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": update_event_handler
         }
     }

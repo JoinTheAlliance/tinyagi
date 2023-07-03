@@ -7,9 +7,6 @@ def add_goal_handler(arguments):
     Handler action for adding a new goal to the 'goals' collection.
     """
     goal = arguments.get("goal")
-    print("**** GOAL")
-    print(arguments)
-    print(goal)
     if goal:
         goal_id = str(uuid.uuid4())
         collection = memory_client.get_or_create_collection("goals")
@@ -17,7 +14,6 @@ def add_goal_handler(arguments):
             ids=[goal_id],
             documents=[goal],
         )
-        print(f"Added goal with ID {goal_id}: {goal}")  # Debug print
         create_event(f"Added goal: {goal}", "action")
         return True
 
@@ -26,8 +22,6 @@ def remove_goal_handler(arguments):
     Handler action for removing an existing goal from the 'goals' collection.
     """
     goal = arguments.get("goal")
-    print("**** GOAL")
-    print(arguments)
     if goal:
         collection = memory_client.get_or_create_collection("goals")
         goal_data = collection.get(where_document={"$contains": goal}, include=["metadatas"])
@@ -75,6 +69,8 @@ def get_actions():
                     "required": ["goal"]
                 }
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": add_goal_handler
         },
         "remove_goal": {
@@ -92,6 +88,8 @@ def get_actions():
                     "required": ["goal"]
                 }
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": remove_goal_handler
         },
         "view_goals": {
@@ -104,6 +102,8 @@ def get_actions():
                     "required": [""]
                 }
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": view_goals_handler
         }
     }

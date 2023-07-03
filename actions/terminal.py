@@ -239,6 +239,8 @@ def get_actions():
                     "required": ["description"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": create_tab,
         },
         "terminal_switch_to": {
@@ -256,6 +258,8 @@ def get_actions():
                     "required": ["session_id"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": switch_to,
         },
         "terminal_close_tab": {
@@ -273,6 +277,8 @@ def get_actions():
                     "required": ["session_id"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": close_tab,
         },
         "terminal_get_tabs": {
@@ -290,6 +296,8 @@ def get_actions():
                     "required": ["description"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": get_tabs,
         },
         "terminal_get_tabs_formatted_as_string": {
@@ -307,6 +315,8 @@ def get_actions():
                     "required": ["description"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": get_tabs_formatted_as_string,
         },
         "terminal_run_command": {
@@ -324,6 +334,8 @@ def get_actions():
                     "required": ["command"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": run_command,
         },
         "get_current_working_directory": {
@@ -341,6 +353,8 @@ def get_actions():
                     "required": ["description"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": get_current_working_directory,
         },
         "pip_install": {
@@ -358,6 +372,8 @@ def get_actions():
                     "required": ["package"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": pip_install,
         },
         "curl": {
@@ -379,6 +395,8 @@ def get_actions():
                     "required": ["url", "arguments"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": curl,
         },
         "write_python_file": {
@@ -400,6 +418,8 @@ def get_actions():
                     "required": ["file_name", "file_contents"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": write_python_file,
         },
     }

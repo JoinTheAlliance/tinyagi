@@ -21,6 +21,8 @@ def get_actions():
                     "required": ["explanation"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": restart,
         },
     }

@@ -208,6 +208,8 @@ def get_actions():
                     "required": [],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": create_tab,
         },
         "browser_switch_to": {
@@ -225,6 +227,8 @@ def get_actions():
                     "required": ["page_id"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": switch_to,
         },
         "execute_pyppeteer_code": {
@@ -242,6 +246,8 @@ def get_actions():
                     "required": ["code"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": execute_pyppeteer_code,
         },
         "browser_close_tab": {
@@ -259,6 +265,8 @@ def get_actions():
                     "required": ["page_id"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": close_tab,
         },
         "browser_navigate_to": {
@@ -276,6 +284,8 @@ def get_actions():
                     "required": ["url"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": navigate_to,
         },
         "browser_get_html": {
@@ -293,6 +303,8 @@ def get_actions():
                     "required": ["description"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": get_html,
         },
         "browser_get_body_text": {
@@ -310,6 +322,8 @@ def get_actions():
                     "required": ["description"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": get_body_text,
         },
         "browser_search_google": {
@@ -327,6 +341,8 @@ def get_actions():
                     "required": ["query"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": search_google,
         },
         "browser_get_form_data": {
@@ -344,6 +360,8 @@ def get_actions():
                     "required": ["description"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": get_form_data,
         },
         "browser_fill_form_and_submit": {
@@ -361,6 +379,8 @@ def get_actions():
                     "required": ["data"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": fill_form_and_submit,
         },
     }

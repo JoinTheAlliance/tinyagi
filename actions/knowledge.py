@@ -130,6 +130,8 @@ def get_actions():
                     "required": ["text"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": learn_handler,
         },
         "search_knowledge": {
@@ -151,6 +153,8 @@ def get_actions():
                     "required": ["query_text"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": search_knowledge_handler,
         },
         "delete_knowledge": {
@@ -168,6 +172,8 @@ def get_actions():
                     "required": ["document_id"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": delete_knowledge_handler,
         },
         "update_knowledge": {
@@ -189,6 +195,8 @@ def get_actions():
                     "required": ["document_id", "new_text"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": update_knowledge_handler,
         },
         "find_similar_knowledge": {
@@ -210,6 +218,8 @@ def get_actions():
                     "required": ["document_id"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": find_similar_knowledge_handler,
         },
     }

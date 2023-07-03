@@ -5,6 +5,7 @@ import os
 import time
 import json
 import uuid
+import datetime
 
 import chromadb
 
@@ -54,7 +55,7 @@ def get_formatted_collection_data(
     collection_name, query_text, n_results=5, deduplicate=True
 ):
     """
-    This action returns a formatted string of the data from the specified collection.
+    This function returns a formatted string of the data from the specified collection.
     It removes duplicate entries if the deduplicate flag is set to True.
     """
     # Search the collection with the query text
@@ -113,7 +114,7 @@ def get_formatted_collection_data(
                 if isinstance(function_call, str):
                     function_call = json.loads(function_call)
                 name = function_call.get("name", None)
-                new_string += f"[action called: {name}] "
+                new_string += f"[function called: {name}] "
 
             if event_creator is not None:
                 new_string += f"{event_creator}: "
@@ -124,14 +125,14 @@ def get_formatted_collection_data(
     return formatted_collection_data
 
 
-def get_actions(query_text, n_results=5):
+def get_action_functions(query_text, n_results=5):
     """
-    This action fetches the actions associated with a particular query text from the 'actions' collection.
+    This function fetches the actions associated with a particular query text from the 'actions' collection.
     """
     collection_data = get_collection_data("actions", query_text, n_results)
     actions = []
 
-    # Extract the action calls from the metadata
+    # Extract the function calls from the metadata
     for i in range(len(collection_data["metadatas"][0])):
         metadata = collection_data["metadatas"][0][i]
 
@@ -148,19 +149,52 @@ def get_actions(query_text, n_results=5):
     return actions
 
 
-def get_events(limit=10, max_tokens=1200):
+def get_events():
     """
     Returns a stream of events from the 'events' collection.
     """
     collection = memory_client.get_or_create_collection("events")
-    collection_data = collection.peek(limit=limit)
+    timetamp_10_minutes_ago = datetime.datetime.now() - datetime.timedelta(minutes=10)
+    # make sure it's an int
+    timetamp_10_minutes_ago = int(timetamp_10_minutes_ago.timestamp())
+    
+    # instead of peek, use query
+    collection_data = collection.get(
+        include=["metadatas", "documents"],
+        # we want to sort by timestamp and only get those that are less than 10 minutes old
+        where={
+            "timestamp": {
+                "$gt": timetamp_10_minutes_ago
+            }
+        }
+    )
+
+    # we want to format the data for a chat log viewed on screen
+    # so that means we want to get the event_creator and the document
+    # and then we want to join them together with a colon
+    # we should only show the last 10 events, even show we filtered by timestamp
+    # so 10 events or timestamp filter, whichever is smaller
+
+    collection_data = {
+        "metadatas": collection_data["metadatas"][-10:],
+        "documents": collection_data["documents"][-10:],
+    }
+
+    # we need to flip them
+    collection_data["metadatas"].reverse()
+    collection_data["documents"].reverse()
+
     # make sure that event_collection_data is less than max_tokens
-    return "\n".join(
+    value = "\n".join(
         f'{msg_meta["event_creator"]}: {msg_doc}'
         for msg_meta, msg_doc in zip(
             collection_data["metadatas"], collection_data["documents"]
         )
     )
+
+    print ('*** value')
+    print (value)
+    return value
 
 
 def create_event(
@@ -169,9 +203,6 @@ def create_event(
     """
     Adds an event to the 'events' collection, prints it to console and writes it to the log file.
     """
-
-    # Log the event and print the user text
-    print(text)
 
     if document_id is None:
         document_id = str(uuid.uuid4())
@@ -203,21 +234,21 @@ def create_event(
 
 
 if __name__ == "__main__":
-    # test the query_collection action
+    # test the query_collection function
     query_result = query_collection("actions", ["test_query"])
     assert "documents" in query_result
     assert "metadatas" in query_result
 
-    # test the get_documents action
+    # test the get_documents function
     documents_result = get_documents("actions")
     assert "documents" in documents_result
     assert "metadatas" in documents_result
 
-    # test the get_collection_data action
+    # test the get_collection_data function
     collection_data_result = get_collection_data("actions", "test_query")
     assert "documents" in collection_data_result
     assert "metadatas" in collection_data_result
 
-    # test the get_formatted_collection_data action
+    # test the get_formatted_collection_data function
     formatted_data_result = get_formatted_collection_data("actions", "test_query")
     assert isinstance(formatted_data_result, str)

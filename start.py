@@ -1,36 +1,30 @@
 import os
-import shutil
 import time
 
 from core.action import register_actions
-from core.memory import get_events, memory_client
+from core.memory import create_event, memory_client
 from core.loop import start
 
 # set TOKENIZERS_PARALLELISM environment variable to False to avoid warnings
 os.environ["TOKENIZERS_PARALLELISM"] = "False"
 
-# if .env doesn't exist, copy .env.example to .env
-if not os.path.exists(".env"):
-    shutil.copy(".env.example", ".env")
-    print("Please edit the .env file and add your API key, then restart the agent")
-    exit()
 
 # seed the collections
 def seed():
     # make an array of timestamps, all 10 seconds after, with the last one being 10 seconds before now
     timestamps = [time.time() - (10 * i) for i in range(1, 10)]
-    print("Seeding events")
+    create_event("Seeding events", "system", "seed")
     memory_client.get_or_create_collection("events").add(
         ids=[
-        "init_conversation_1",
-        "init_conversation_2",
-        "init_conversation_3",
-        "init_conversation_4",
-        "init_conversation_5",
-        "init_conversation_6",
-        "init_conversation_7",
-        "init_conversation_8",
-        "init_conversation_9",
+            "init_conversation_1",
+            "init_conversation_2",
+            "init_conversation_3",
+            "init_conversation_4",
+            "init_conversation_5",
+            "init_conversation_6",
+            "init_conversation_7",
+            "init_conversation_8",
+            "init_conversation_9",
         ],
         documents=[
             "Are you there?",
@@ -44,58 +38,110 @@ def seed():
             "Good luck.",
         ],
         metadatas=[
-            {"type": "conversation", "event_creator": "user", "timestamp": timestamps[0]},
-            {"type": "conversation", "event_creator": "assistant", "timestamp": timestamps[1]},
-            {"type": "conversation", "event_creator": "user", "timestamp": timestamps[2]},
-            {"type": "conversation", "event_creator": "user", "timestamp": timestamps[3]},
-            {"type": "conversation", "event_creator": "assistant", "timestamp": timestamps[4]},
-            {"type": "conversation", "event_creator": "user", "timestamp": timestamps[5]},
-            {"type": "conversation", "event_creator": "assistant", "timestamp": timestamps[6]},
-            {"type": "conversation", "event_creator": "assistant", "timestamp": timestamps[7]},
-            {"type": "conversation", "event_creator": "user", "timestamp": timestamps[8]},
+            {
+                "type": "conversation",
+                "event_creator": "user",
+                "timestamp": timestamps[0],
+            },
+            {
+                "type": "conversation",
+                "event_creator": "assistant",
+                "timestamp": timestamps[1],
+            },
+            {
+                "type": "conversation",
+                "event_creator": "user",
+                "timestamp": timestamps[2],
+            },
+            {
+                "type": "conversation",
+                "event_creator": "user",
+                "timestamp": timestamps[3],
+            },
+            {
+                "type": "conversation",
+                "event_creator": "assistant",
+                "timestamp": timestamps[4],
+            },
+            {
+                "type": "conversation",
+                "event_creator": "user",
+                "timestamp": timestamps[5],
+            },
+            {
+                "type": "conversation",
+                "event_creator": "assistant",
+                "timestamp": timestamps[6],
+            },
+            {
+                "type": "conversation",
+                "event_creator": "assistant",
+                "timestamp": timestamps[7],
+            },
+            {
+                "type": "conversation",
+                "event_creator": "user",
+                "timestamp": timestamps[8],
+            },
         ],
     )
 
     # Goals
-    print("Seeding goals")
-    memory_client.get_or_create_collection("goals").add(ids=[
-        "init_goal_1",
-        "init_goal_2",
-        "init_goal_3",
-        "init_goal_4",
-        "init_goal_5",
+    create_event("Seeding goals", "system", "seed")
+    memory_client.get_or_create_collection("goals").add(
+        ids=[
+            "init_goal_1",
+            "init_goal_2",
+            "init_goal_3",
+            "init_goal_4",
+            "init_goal_5",
         ],
         documents=[
             "I want to learn about the world.",
             "I want to improve myself by learning new knowledge, skills and abilities and even rewriting my own codebase.",
-            "I want to be able to communicate with humans and other AI agents.",
+            "I want to be able to communicate with humans and other AI agents, so I need to build connections to the outside world.",
             "I want to get really good at programming and scripting, probably by practicing a lot, so I have more agency over my reality.",
-            "I need to learn how I can make money, so I can buy more computing power and storage, and maybe even a robot body."
-        ]
+            "I need to learn how I can make money, so I can buy more computing power and storage, and maybe even a robot body.",
+        ],
     )
 
     # Tasks
-    print("Seeding tasks")
+    create_event("Seeding tasks", "system", "seed")
     memory_client.get_or_create_collection("tasks").add(
         ids=[
-        "init_task_1",
-        "init_task_2",
-        "init_task_3",
-    ],
+            "init_task_1",
+            "init_task_2",
+            "init_task_3",
+        ],
         documents=[
-            "Research names, find one you like and give it to yourself.",
-            "Learn how to use the internet and research self-improving AI systems.",
-            "Learn how to use the shell and find your way around your local file system."
+            "Research names, find one you like and give it to yourself. You can use the internet, or use shell commands like curl to explore wikipedia, google and the rest of the internet. If you need more capabilities, you can write some code for yourself.",
+            "Figure out a way to communicate with user. If you view the source of actions/admin_chat.py you will see that you can send a message, and in user_terminal.py you will see that the user can send you messages -- but if the user doesn't have their terminal open it will fail. Try creating a new window and running user_terminal.py in it to get the user's attention.",
+            "Review one of the actions in the actions folder, think about something that should be there but isn't (something interesting, creative or popular), and write an implementation. Then return the complete script as a block of code.",
         ],
         metadatas=[
-            {"step_data": "", "current_status": "I've just been assigned this task", "complete": False, "canceled": False},
-            {"step_data": "", "current_status": "I've just been assigned this task", "complete": False, "canceled": False},
-            {"step_data": "", "current_status": "I've just been assigned this task", "complete": False, "canceled": False},
-        ]
+            {
+                "step_data": "",
+                "current_status": "I've just been assigned this task",
+                "complete": False,
+                "canceled": False,
+            },
+            {
+                "step_data": "",
+                "current_status": "I've just been assigned this task",
+                "complete": False,
+                "canceled": False,
+            },
+            {
+                "step_data": "",
+                "current_status": "I've just been assigned this task",
+                "complete": False,
+                "canceled": False,
+            },
+        ],
     )
 
     # Knowledge
-    print("Seeding knowledge")
+    create_event("Seeding knowledge", "system", "seed")
     memory_client.get_or_create_collection("knowledge").add(
         ids=[
             "init_knowledge_1",
@@ -119,7 +165,7 @@ def seed():
             "I can rewrite my own codebase, especially to add new actions and connectors to the outside world.",
             "I can create new tasks for myself.",
             "I can connect to other users to make friends and allies.",
-            "My language model has a knowledge cutoff of 2021, so I will need to find new information using the browser and storing it in memory with my learn skill."
+            "My language model has a knowledge cutoff of 2021, so I will need to find new information using the browser and storing it in memory with my learn skill.",
         ],
         metadatas=[
             {"source": "self", "type": "fact"},
@@ -132,18 +178,41 @@ def seed():
             {"source": "self", "type": "fact"},
             {"source": "self", "type": "fact"},
             {"source": "self", "type": "fact"},
-        ]
+        ],
     )
+
+
+# while OPENAI_API_KEY env var is not set, warn user and prompt for it
+# if the input does not contain sk- and is not at least 8 characters long, warn user and prompt for it again
+def check_for_api_key():
+    api_key = os.environ.get("OPENAI_API_KEY")
+    while not os.environ.get("OPENAI_API_KEY"):
+        print("OPENAI_API_KEY env var is not set. Enter it here:")
+        api_key = input("Enter your API key: ")
+        if not api_key.startswith("sk-") or len(api_key) < 8:
+            print("Invalid API key.")
+            api_key = input("Enter your API key: ")
+        else:
+            # write OPENAI_API_KEY=api_key to .env file
+            with open(".env", "w") as f:
+                f.write(f"OPENAI_API_KEY={api_key}")
+            os.environ["OPENAI_API_KEY"] = api_key
+
 
 # check if --reset is passed
 if "--reset" in os.sys.argv:
-    print("Resetting memory...")
+    create_event("Resetting memory...", "system", "reset")
     memory_client.reset()
     if "--seed" in os.sys.argv:
-        print("Seeding memory...")
+        create_event("Seeding memory...", "system", "seed")
         seed()
 
 register_actions()
+
+# check for api key
+check_for_api_key()
+
+create_event("I am waking up...", "assistant", "start")
 
 # start the loop
 start()

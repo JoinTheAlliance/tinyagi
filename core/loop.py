@@ -16,7 +16,7 @@ You have goals, tasks, memory in the form of events as well as knowledge
 You are capable of performing a variety of tasks, writing and calling python and shell code, and even rewriting your own code.
 Your system runs by calling actions, so you should always try to find the most appropriate action and run it.
 Be creative. Don't do the same thing twice. Try many things. Learn from your mistakes.
-You should always be pursuing my goals and tasks.
+You should always be pursuing your goals and tasks.
 Don't just get stuck in planning and thinking! Write code, browse the computer with the terminal, visit a website, write a song, anything!
 """
 )
@@ -24,7 +24,7 @@ Don't just get stuck in planning and thinking! Write code, browse the computer w
 prompt = clean_prompt(
     """
 The current time is {current_time} on {current_date}.
-You should always try to advance my goals and complete my tasks. You should always try to call the most appropriate action.
+You should always try to advance your goals and complete your tasks. You should always try to call the most appropriate action.
 You have full access to the terminal and can execute shell commands, as well as to a virtual browser, so you can use this to do research, explore and learn more about the world.
 Here are some relevant things that you have in your memory:
 {knowledge}
@@ -32,21 +32,21 @@ Here are some key details about your personality:
 {personality}
 These are your goals, which you should always keep in mind and pursue when not doing anything else:
 {goals}
-These are my current tasks, which you should accomplish (you can cancel and mark tasks as completed if you are finished with them)
+These are your current tasks, which you should accomplish (you can cancel and mark tasks as completed if you are finished with them)
 {tasks}
 You can call the following actions and should call them:
-{actions}
+{available_actions}
 This is the log of your event stream. These are the latest events that have happened:
 {events}
 
-Your task: Call one of the provided actions that I think is most appropriate to continue your goals and tasks (if you have any). If you aren't sure, you should try continuing on your plan.
+Your task: Call one of the provided actions that you think is most appropriate to continue your goals and tasks (if you have any). If you aren't sure, you should try continuing on your plan.
 Do not ask if you can help. Do not ask how you can assist. Focus on the task.
 """
 )
 
 from core.memory import (
     create_event,
-    get_actions,
+    get_action_functions,
     get_events,
 )
 from core.language import use_language_model, compose_prompt
@@ -66,7 +66,7 @@ def loop():
     system_prompt = compose_prompt(system, events)
 
     # Get actions from the events
-    actions = get_actions(events)
+    actions = get_action_functions(events)
 
     # Create a chat completion
     response = use_language_model(
@@ -77,7 +77,7 @@ def loop():
         functions=actions,
     )
     if(not response):
-        print("Error in completion, ending this loop.")
+        create_event("Error in completion, terminating this loop.")
         return
     # Extract response message and remove the agent's name from it
     response_content = response["content"]
@@ -96,5 +96,5 @@ def start():
     while True:
         interval = os.getenv("UPDATE_INTERVAL") or 3
         interval = int(interval)
-        time.sleep(interval)
         loop()
+        time.sleep(interval)

@@ -13,6 +13,10 @@ from core.memory import create_event, memory_client
 # Create an empty dictionary to hold the actions
 actions = {}
 
+action_history = []
+
+def get_action_history():
+    return action_history
 
 def use_action(name, arguments):
     """
@@ -22,6 +26,10 @@ def use_action(name, arguments):
     Also, the usage of a action is logged as an event.
     """
     # If arguments are a JSON string, parse it to a dictionary
+    action_history.append(name)
+    # prune action history if it's more than 20
+    if len(action_history) > 20:
+        action_history.pop(0)
     decoded_correctly = True
     if isinstance(arguments, str):
         try:
@@ -153,6 +161,8 @@ if __name__ == "__main__":
                 },
                 "required": ["input"],
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": test_action_handler,
         },
     }

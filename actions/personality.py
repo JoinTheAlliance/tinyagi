@@ -120,6 +120,8 @@ def get_actions():
                     "required": ["text"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": create_personality_handler,
         },
         "search_personality": {
@@ -141,6 +143,8 @@ def get_actions():
                     "required": ["query_text"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": search_personality_handler,
         },
         "delete_personality": {
@@ -158,6 +162,8 @@ def get_actions():
                     "required": ["document_id"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": delete_personality_handler,
         },
         "update_personality": {
@@ -179,6 +185,8 @@ def get_actions():
                     "required": ["document_id", "new_text"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": update_personality_handler,
         },
         "find_similar_personality": {
@@ -200,6 +208,8 @@ def get_actions():
                     "required": ["document_id"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": find_similar_personality_handler,
         },
     }

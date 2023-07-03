@@ -12,7 +12,7 @@ These are your most important goals, which you should always keep in mind:
 These are you current tasks, which you should prioritize accomplishing:
 {tasks}
 You can call the following actions and should call them often:
-{actions}
+{avaiable_actions}
 Event Logs (most recent toward the bottom):
 {events}
 
@@ -54,6 +54,8 @@ def get_actions():
                     "required": ["assessment"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": troubleshoot,
         },
     }

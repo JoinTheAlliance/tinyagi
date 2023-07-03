@@ -3,7 +3,7 @@
 import os
 import json
 
-from core.memory import memory_client, create_event, get_collection_data
+from core.memory import create_event, get_collection_data
 from core.action import (
     add_action as core_add_action,
     remove_action as core_remove_action,
@@ -19,6 +19,7 @@ def search_actions(arguments):
 
     create_event("I searched for actions and got the following:\n" + function_documents)
     return function_documents
+
 
 def get_actions():
     return {
@@ -37,6 +38,8 @@ def get_actions():
                     "required": ["query"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": search_actions,
         }
     }
@@ -44,6 +47,7 @@ def get_actions():
 
 # Test your actions
 if __name__ == "__main__":
+
     def add_action(arguments):
         name = arguments.get("name")
         function_action = arguments.get("function_action")
@@ -75,7 +79,6 @@ if __name__ == "__main__":
         function_info = {"function": function_action, "handler": function_handler}
         core_add_action(name, function_info)
 
-
     def remove_action(arguments):
         name = arguments.get("name")
         # Remove python script for action
@@ -85,12 +88,16 @@ if __name__ == "__main__":
         core_remove_action(name)
 
     # Test add_action
-    add_action({"name": "test_action", "function_action": {"description": "This is a test action."}, "function_handler": add_action})
+    add_action(
+        {
+            "name": "test_action",
+            "function_action": {"description": "This is a test action."},
+            "function_handler": add_action,
+        }
+    )
 
     # Test search_actions
     search_actions_results = search_actions({"query": "test_action"})
-    print("search_actions_results")
-    print(search_actions_results)
 
     # Test remove_action
     remove_action({"name": "test_action"})

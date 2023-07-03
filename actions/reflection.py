@@ -17,7 +17,7 @@ These are your most important goals, which you should always keep in mind:
 These are your current tasks, which you should prioritize accomplishing
 {tasks}
 You can call the following actions and should call them often:
-{actions}
+{avaiable_actions}
 Recent Event History:
 {events}
 
@@ -49,6 +49,8 @@ def get_actions():
                     "required": ["topic"],
                 },
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": reflect,
         },
     }

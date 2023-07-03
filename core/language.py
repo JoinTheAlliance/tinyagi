@@ -9,7 +9,8 @@ import tiktoken
 from datetime import datetime
 from dotenv import load_dotenv
 
-from core.memory import get_events, get_formatted_collection_data
+from core.memory import create_event, get_events, get_formatted_collection_data
+from core.action import get_action_history
 
 load_dotenv()  # take environment variables from .env.
 
@@ -29,11 +30,6 @@ if default_max_tokens == None or default_max_tokens == "":
 default_max_tokens = int(default_max_tokens)
 
 openai_api_key = os.getenv("OPENAI_API_KEY")
-
-if openai_api_key == None or openai_api_key == "":
-    raise Exception(
-        "OPENAI_API_KEY environment variable not set. Please set it in a .env file."
-    )
 
 # Set OpenAI API key
 openai.api_key = openai_api_key
@@ -59,6 +55,10 @@ def use_language_model(messages, functions=None, long=False, function_call="auto
     model = long_text_model if long else default_text_model
     messages = trim_messages(messages, default_max_tokens)
 
+    # get the last message
+    last_message = messages[-1]["content"]
+    create_event(last_message, "system", "prompt")
+
     # Make API request and get response
     def try_request():
         try:
@@ -70,7 +70,7 @@ def use_language_model(messages, functions=None, long=False, function_call="auto
                 response = openai.ChatCompletion.create(model=model, messages=messages)
             return response
         except Exception as e:
-            print(f"OpenAI Error: {e}")
+            create_event(f"OpenAI Error: {e}")
             return None
 
     # try three times
@@ -97,8 +97,6 @@ def use_language_model(messages, functions=None, long=False, function_call="auto
         f.write(file_content)
 
     if response is None or response["choices"] is None or response["choices"][0] is None:
-        print('*** OPENAI RESPONSE CHOICES IS NONE')
-        print(response)
         return {}
 
     # Extract response content and function call from response
@@ -129,7 +127,6 @@ def trim_messages(messages, max_tokens):
     original_num_tokens = count_tokens_from_chat_messages(messages)
 
     if original_num_tokens <= max_tokens:
-        print("*** TOKEN COUNT original_num_tokens <= max_tokens")
         return messages
 
     # quick shortcut - remove the system message, then check if it fits
@@ -153,7 +150,6 @@ def trim_messages(messages, max_tokens):
             break
 
         num_tokens_temp = num_tokens + tokens_per_message
-        print("message: " + str(message))
         # if the content key is null, remove it
         if message.get("content") == None and message.get("function_call") != None:
             function_call = message.get("function_call")
@@ -189,8 +185,6 @@ def trim_messages(messages, max_tokens):
         # If no messages are included, include the last message of messages.
         # Ensure that it does not exceed max_tokens by trimming it.
         new_messages.append(trim_last_message(messages, max_tokens))
-    print("*** TOKENS: NEW MESSAGES ARE")
-    print(new_messages)
     return new_messages
 
 
@@ -240,7 +234,7 @@ def count_tokens_from_chat_messages(messages):
                 token_count = 0 if value == None else tokens_per_name if key == "name" else len(encoding.encode(value))
                 total_tokens += token_count
             except TypeError:
-                print(f"TypeError occurred when trying to encode value: {value}")
+                create_event(f"Error in my code -- TypeError occurred when trying to encode value: {value}")
     return total_tokens
 
 
@@ -258,11 +252,18 @@ def compose_prompt(prompt_template, topic):
 
     current_time = time.strftime("%I:%M:%S %p", time.localtime(time.time()))
     current_date = time.strftime("%Y-%m-%d", time.localtime(time.time()))
-    print("topic", topic)
+
+        # action history is a list of names
+    formatted_action_history = ""
+    action_history = get_action_history()
+    if action_history:
+        formatted_action_history = ", ".join(action_history)
+
     values_to_replace = {
         "current_time": current_time,
         "current_date": current_date,
-        "actions": get_formatted_collection_data("actions", query_text=topic),
+        "action_history": formatted_action_history,
+        "available_actions": get_formatted_collection_data("actions", query_text=topic),
         "goals": get_formatted_collection_data("goals", query_text=topic),
         "tasks": get_formatted_collection_data("tasks", query_text=topic),
         "knowledge": get_formatted_collection_data("knowledge", query_text=topic),

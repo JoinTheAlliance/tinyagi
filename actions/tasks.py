@@ -90,6 +90,8 @@ def get_actions():
                     "required": ["text"]
                 }
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": create_task_handler
         },
         "list_tasks": {
@@ -106,6 +108,8 @@ def get_actions():
                     }
                 }
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": list_tasks_handler
         },
         "search_tasks": {
@@ -127,6 +131,8 @@ def get_actions():
                     "required": ["query_text"]
                 }
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": search_tasks_handler
         },
         "delete_task": {
@@ -144,6 +150,8 @@ def get_actions():
                     "required": ["task_id"]
                 }
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": delete_task_handler
         },
         "update_task": {
@@ -165,6 +173,8 @@ def get_actions():
                     "required": ["task_id", "new_text"]
                 }
             },
+            "chain_from": [],
+            "dont_chain_from": [],
             "handler": update_task_handler
         },
     }
