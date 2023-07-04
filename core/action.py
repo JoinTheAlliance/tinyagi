@@ -10,6 +10,8 @@ import json
 
 from core.memory import create_event, memory_client
 
+# TODO: Add a way to reload actions without restarting the bot
+
 # Create an empty dictionary to hold the actions
 actions = {}
 
@@ -18,42 +20,57 @@ action_history = []
 def get_action_history():
     return action_history
 
-def use_action(name, arguments):
+def use_action(function_call):
+    if function_call is None:
+        return {"success": False, "response": "No action"}
+    function_name = function_call.get("name")
+    args = function_call.get("arguments")
+    if function_name is None:
+        return {"success": False, "response": "No action name"}
+    max_action_retries = 3
+    action_retries = 0
+    response = None
+    while action_retries < max_action_retries:
+        action_retries += 1
+        response = try_use_action(function_name, args)
+        if response["success"] == True:
+            return response
+        
+    if response["success"] == True:
+        return response
+
+    if action_retries == max_action_retries:
+        return {"success": False, "response": "Action failed to execute after multiple retries."}
+        
+    
+def try_use_action(name, arguments):
     """
     Executes a action based on its name and arguments.
 
     If the action is present in the 'actions' dictionary, it calls the action with its arguments.
     Also, the usage of a action is logged as an event.
     """
+
+    # if prompts invalid, return False
+
+    # TODO: Store action history in a collection
     # If arguments are a JSON string, parse it to a dictionary
     action_history.append(name)
     # prune action history if it's more than 20
     if len(action_history) > 20:
         action_history.pop(0)
-    decoded_correctly = True
     if isinstance(arguments, str):
         try:
             arguments = json.loads(arguments)
+            # TODO: validate that the arguments are correct and match the required arguments of the action
         except:
-            decoded_correctly = False
-
-    # Convert the arguments dictionary to a string representation
-    argument_string = ", ".join(f"{key}: {str(val)}" for key, val in arguments.items())
+            return {"success": False, "response": "Invalid JSON arguments"}
 
     # Call the action with its arguments if it exists in the 'actions' dictionary
     if name in actions:
-        if decoded_correctly:
-            # Log the usage of a action as an event
-            create_event(
-                f"I called the action (action call) `{name}` with the arguments: {argument_string}",
-                "action",
-            )
-            return actions[name](arguments)
-    create_event(
-        f"I tried to call the action (action call) `{name}` with the arguments `{argument_string}` but it was not available. I should try again with one of the actions in my memory.",
-        "action",
-    )
-    return None
+        return {"success": True, "response": actions[name](arguments)}
+
+    return {"success": False, "response": "Action not found"}
 
 
 def add_action(name, action):

@@ -1,24 +1,22 @@
 # actions/troubleshoot
 
-from core.language import clean_prompt, use_language_model, compose_prompt
+from core.language import  use_language_model, compose_prompt
 from core.memory import create_event
 
-prompt = clean_prompt(
-    """
-The current time is {current_time} on {current_date}.
+prompt = """\
+The current time is {{current_time}} on {{current_date}}.
 
 These are your most important goals, which you should always keep in mind:
-{goals}
+{{goals}}
 These are you current tasks, which you should prioritize accomplishing:
-{tasks}
+{{goals}}
 You can call the following actions and should call them often:
 {avaiable_actions}
 Event Logs (most recent toward the bottom):
-{events}
+{{goals}}
 
 Read the most recent events in the event stream. What do you think is wrong? Can you fix it?
 """
-)
 
 
 def troubleshoot(arguments):

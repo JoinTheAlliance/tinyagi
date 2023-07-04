@@ -55,10 +55,6 @@ def use_language_model(messages, functions=None, long=False, function_call="auto
     model = long_text_model if long else default_text_model
     messages = trim_messages(messages, default_max_tokens)
 
-    # get the last message
-    last_message = messages[-1]["content"]
-    create_event(last_message, "system", "prompt")
-
     # Make API request and get response
     def try_request():
         try:
@@ -121,6 +117,21 @@ def trim_messages(messages, max_tokens):
     A list of trimmed message objects.
     """
 
+    def count_tokens_from_chat_messages(messages):
+        tokens_per_name = 3
+        total_tokens = 0
+        for message in messages:
+            for key, value in message.items():
+                # if value is an object, convert it to a string
+                if not isinstance(value, str):
+                    value = str(value)
+                try:
+                    token_count = 0 if value == None else tokens_per_name if key == "name" else len(encoding.encode(value))
+                    total_tokens += token_count
+                except TypeError:
+                    create_event(f"Error in my code -- TypeError occurred when trying to encode value: {value}")
+        return total_tokens
+
     new_messages = []
     tokens_per_message = 3
     tokens_per_name = 1
@@ -181,66 +192,23 @@ def trim_messages(messages, max_tokens):
             new_messages.append(message)
             num_tokens = num_tokens_temp
 
+    def trim_last_message(messages, max_tokens):
+        message = messages[-1]
+        new_num_tokens = count_tokens_from_chat_messages([message])
+
+        while new_num_tokens > max_tokens:
+            message["content"] = message["content"][
+                10:
+            ]  # remove the first 10 characters from the message
+            new_num_tokens = count_tokens_from_chat_messages([message])
+
+        return message
+
     if not new_messages:
         # If no messages are included, include the last message of messages.
         # Ensure that it does not exceed max_tokens by trimming it.
         new_messages.append(trim_last_message(messages, max_tokens))
     return new_messages
-
-
-def trim_last_message(messages, max_tokens):
-    """
-    Trim the last message to fit within the max token limit.
-
-    Parameters:
-    messages: List of message objects, where the last message will be trimmed.
-    max_tokens: Maximum token limit.
-
-    Returns:
-    A trimmed message object.
-    """
-
-    message = messages[-1]
-    new_num_tokens = count_tokens_from_chat_messages([message])
-
-    while new_num_tokens > max_tokens:
-        message["content"] = message["content"][
-            10:
-        ]  # remove the first 10 characters from the message
-        new_num_tokens = count_tokens_from_chat_messages([message])
-
-    return message
-
-
-def count_tokens_from_chat_messages(messages):
-    """
-    Counts the number of tokens in a list of chat messages.
-
-    Parameters:
-    messages: List of message objects.
-
-    Returns:
-    The total number of tokens in the messages.
-    """
-
-    tokens_per_name = 3
-    total_tokens = 0
-    for message in messages:
-        for key, value in message.items():
-            # if value is an object, convert it to a string
-            if not isinstance(value, str):
-                value = str(value)
-            try:
-                token_count = 0 if value == None else tokens_per_name if key == "name" else len(encoding.encode(value))
-                total_tokens += token_count
-            except TypeError:
-                create_event(f"Error in my code -- TypeError occurred when trying to encode value: {value}")
-    return total_tokens
-
-
-def clean_prompt(prompt):
-    return textwrap.dedent(prompt.strip())
-
 
 def compose_prompt(prompt_template, topic):
     """
@@ -249,6 +217,8 @@ def compose_prompt(prompt_template, topic):
     prompt_template: a template prompt which we will be replacing placeholders in
     values_to_replace: a dictionary where keys are placeholders in the template and values are the substitutions
     """
+
+    prompt_template = textwrap.dedent(prompt_template.strip())
 
     current_time = time.strftime("%I:%M:%S %p", time.localtime(time.time()))
     current_date = time.strftime("%Y-%m-%d", time.localtime(time.time()))
@@ -271,35 +241,16 @@ def compose_prompt(prompt_template, topic):
         "events": get_events(),
         "topic": topic,
     }
+
+    def replace_all_in_string(string, replacements):
+        for key, value in replacements.items():
+            string = string.replace("{{" + key + "}}", value)
+        return string
+
     # Substitute placeholders in the template with the corresponding values
     prompt_template = replace_all_in_string(prompt_template, values_to_replace)
 
     return prompt_template
-
-
-def replace_all_in_string(string, replacements):
-    """
-    Replace all placeholders in the string with corresponding values.
-
-    string: the string that contains placeholders
-    replacements: a dictionary where keys are placeholders and values are the replacements
-    """
-    for key, value in replacements.items():
-        string = string.replace("{" + key + "}", value)
-    return string
-
-
-def messages_to_dialogue(messages):
-    """
-    Converts a list of messages into a string dialogue.
-
-    messages: a dictionary that contains message ids, metadatas and documents
-    """
-    dialogue = "\n".join(
-        f'{msg_meta["event_creator"]}: {msg_doc}'
-        for msg_meta, msg_doc in zip(messages["metadatas"], messages["documents"])
-    )
-    return dialogue
 
 
 if __name__ == "__main__":
@@ -318,27 +269,5 @@ if __name__ == "__main__":
     assert len(trimmed_messages) == 1
     assert trimmed_messages[0]["role"] == "user"
     assert trimmed_messages[0]["content"].endswith("456")
-
-    # Tests for count_tokens_from_chat_messages action
-    test_messages = [
-        {"role": "system", "content": "This is a test of the system."},
-        {"role": "user", "content": "Hi, how are you?"},
-    ]
-    assert count_tokens_from_chat_messages(test_messages) == 22 or (
-        count_tokens_from_chat_messages(test_messages) > 18
-        and count_tokens_from_chat_messages(test_messages) < 26
-    )
-
-    # Tests for replace_all_in_string action
-    string = "Hello {name}, how are you?"
-    replacements = {"name": "John"}
-    assert replace_all_in_string(string, replacements) == "Hello John, how are you?"
-
-    # Tests for messages_to_dialogue action
-    messages = {
-        "metadatas": [{"event_creator": "User"}],
-        "documents": ["Hi, how are you?"],
-    }
-    assert messages_to_dialogue(messages) == "User: Hi, how are you?"
 
     print("All tests passed!")

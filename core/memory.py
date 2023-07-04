@@ -1,6 +1,8 @@
 # core/memory.py
 # Handles the operations on ChromaDB collections like search, retrieval, and seeding.
 
+# TODO: The chromadb interface is weird -- we want a list of unified objects, not separate metadatas, documents and indices
+
 import os
 import time
 import json
@@ -192,8 +194,6 @@ def get_events():
         )
     )
 
-    print ('*** value')
-    print (value)
     return value
 
 
