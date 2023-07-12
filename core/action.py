@@ -1,76 +1,50 @@
 # core/action.py
 
 # Dynamically load actions and use them
-# actions are executed by the "action calling" feature of the OpenAI API.
+# actions are executed by the "function calling" feature of the OpenAI API.
 
 import os
 import sys
 import importlib
 import json
 
-from core.memory import create_event, memory_client
-
-# TODO: Add a way to reload actions without restarting the bot
+from agentmemory import create_memory, delete_memory, get_memories
+from events import create_event
 
 # Create an empty dictionary to hold the actions
 actions = {}
 
-action_history = []
 
-def get_action_history():
-    return action_history
+def add_to_action_history(action_name, action_arguments={}, success=True):
+    action_arguments["success"] = success
+    create_memory("action_history", action_name, action_arguments)
 
-def use_action(function_call):
-    if function_call is None:
-        return {"success": False, "response": "No action"}
-    function_name = function_call.get("name")
-    args = function_call.get("arguments")
-    if function_name is None:
-        return {"success": False, "response": "No action name"}
-    max_action_retries = 3
-    action_retries = 0
-    response = None
-    while action_retries < max_action_retries:
-        action_retries += 1
-        response = try_use_action(function_name, args)
-        if response["success"] == True:
-            return response
-        
-    if response["success"] == True:
-        return response
 
-    if action_retries == max_action_retries:
-        return {"success": False, "response": "Action failed to execute after multiple retries."}
-        
-    
-def try_use_action(name, arguments):
+def get_action_history(n_limit=20):
+    return get_memories("action_history", n_limit)
+
+
+def search_actions(search_text, n_results=5):
     """
-    Executes a action based on its name and arguments.
+    Searches for actions based on a query text.
 
-    If the action is present in the 'actions' dictionary, it calls the action with its arguments.
-    Also, the usage of a action is logged as an event.
+    Returns a list of actions.
     """
+    # Search for actions in the 'actions' collection
+    search_results = get_memories(
+        "actions", search_text=search_text, n_results=n_results
+    )
 
-    # if prompts invalid, return False
+    return search_results
 
-    # TODO: Store action history in a collection
-    # If arguments are a JSON string, parse it to a dictionary
-    action_history.append(name)
-    # prune action history if it's more than 20
-    if len(action_history) > 20:
-        action_history.pop(0)
-    if isinstance(arguments, str):
-        try:
-            arguments = json.loads(arguments)
-            # TODO: validate that the arguments are correct and match the required arguments of the action
-        except:
-            return {"success": False, "response": "Invalid JSON arguments"}
 
-    # Call the action with its arguments if it exists in the 'actions' dictionary
-    if name in actions:
-        return {"success": True, "response": actions[name](arguments)}
+def use_action(function_name, arguments):
+    if function_name not in actions:
+        add_to_action_history(function_name, arguments, success=False)
+        return {"success": False, "response": "Action not found"}
 
-    return {"success": False, "response": "Action not found"}
+    add_to_action_history(function_name, arguments)
+    return {"success": True, "response": actions[function_name](arguments)}
 
 
 def add_action(name, action):
@@ -81,24 +55,36 @@ def add_action(name, action):
     """
     # Add the action to the 'actions' dictionary
     actions[name] = action["handler"]
-    collection = memory_client.get_or_create_collection("actions")
-    # Check if the action is already present in the 'actions' collection
-    if not collection.get(ids=[name])["ids"]:
-        # If not, add the new action to the 'actions' collection
-        collection.add(
-            ids=[name],
-            documents=[f"{name} - {action['function']['description']}"],
-            metadatas=[{"action_call": json.dumps(action["function"])}],
-        )
+    create_memory(
+        "actions",
+        f"{name} - {action['function']['description']}",
+        {"name": name, "function": json.dumps(action["function"])},
+        id=name,
+    )
 
 
-def get_action_handler(name):
+def get_action(name):
     """
-    Fetches a action based on its name.
-
-    Returns the action if it is present in the 'actions' dictionary.
+    Returns a action based on its name from the 'actions' dictionary.
     """
-    return actions.get(name, None)
+    if name in actions:
+        return actions[name]
+    else:
+        return None
+
+
+def get_recommended_actions(name):
+    """
+    Returns a list of recommended actions
+    """
+    return actions[name]["suggest_next_actions"]
+
+
+def get_ignored_actions(name):
+    """
+    Returns a list of ignored actions
+    """
+    return actions[name]["ignore_next_actions"]
 
 
 def remove_action(name):
@@ -110,10 +96,7 @@ def remove_action(name):
     if name in actions:
         # Remove the action from the 'actions' dictionary
         del actions[name]
-        collection = memory_client.get_or_create_collection("actions")
-        # Remove the action from the 'actions' collection
-        if collection.get(ids=[name]):
-            collection.delete(ids=[name])
+        delete_memory("actions", name)
 
         # Log the removal of a action as an event
         create_event(f"I removed the action {name}", "action")
@@ -178,8 +161,8 @@ if __name__ == "__main__":
                 },
                 "required": ["input"],
             },
-            "chain_from": [],
-            "dont_chain_from": [],
+            "suggest_next_actions": [],
+            "ignore_next_actions": [],
             "handler": test_action_handler,
         },
     }
@@ -190,9 +173,6 @@ if __name__ == "__main__":
 
     # Test for use_action
     assert use_action("test", {"input": "test"}) == "test"
-
-    # Test for get_action_handler
-    assert get_action_handler("test") == test_action_handler
 
     # Test for remove_action
     remove_action("test")

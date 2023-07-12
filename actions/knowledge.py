@@ -1,8 +1,9 @@
-from core.memory import (
-    memory_client,
-    get_formatted_collection_data,
+from agentmemory import (
+    create_memory,
+    delete_memory,
+    search_memory,
+    update_memory,
 )
-
 
 def learn_handler(arguments):
     """
@@ -12,12 +13,7 @@ def learn_handler(arguments):
     document_id = arguments.get("document_id")
 
     if text:
-        # Create a new knowledge document
-        collection = memory_client.get_or_create_collection("knowledge")
-        collection.add(
-            ids=[document_id] if document_id else None,
-            documents=[text],
-        )
+        create_memory("knowledge", text, id=document_id)
         return True
     else:
         return False
@@ -27,14 +23,14 @@ def search_knowledge_handler(arguments):
     """
     Handler action for searching knowledge documents based on a query text.
     """
-    query_text = arguments.get("query_text")
+    search_text = arguments.get("search_text")
     n_results = arguments.get("n_results", 5)
 
-    # Search for knowledge documents in the 'knowledge' collection based on the query text
-    formatted_collection_data = get_formatted_collection_data(
-        "knowledge", query_text=query_text, n_results=n_results
+    search_results = search_memory(
+        "knowledge", search_text=search_text, n_results=n_results
     )
-    return formatted_collection_data
+
+    return search_results
 
 
 def delete_knowledge_handler(arguments):
@@ -45,8 +41,7 @@ def delete_knowledge_handler(arguments):
 
     if document_id:
         # Delete the knowledge document from the 'knowledge' collection
-        collection = memory_client.get_or_create_collection("knowledge")
-        collection.delete(ids=[document_id])
+        delete_memory("knowledge", document_id)
         return True
     else:
         return False
@@ -61,49 +56,10 @@ def update_knowledge_handler(arguments):
 
     if document_id and new_text:
         # Update the knowledge document in the 'knowledge' collection
-        collection = memory_client.get_or_create_collection("knowledge")
-        collection.update(ids=[document_id], documents=[new_text])
+        update_memory("knowledge", document_id, new_text)
         return True
     else:
         return False
-
-
-def find_similar_knowledge_handler(arguments):
-    """
-    Handler action for finding similar knowledge documents and deleting them if they are too similar.
-    """
-    document_id = arguments.get("document_id")
-    threshold = arguments.get("threshold", 0.9)
-
-    if document_id:
-        # Retrieve the specified knowledge document
-        collection = memory_client.get_or_create_collection("knowledge")
-        document_data = collection.get(ids=[document_id])
-
-        if document_data and len(document_data["documents"]) > 0:
-            # Calculate the distances with other knowledge documents
-            documents = document_data["documents"]
-            n_results = len(documents)
-            if n_results < 2:
-                return False
-
-            distances = collection.query(
-                query_texts=documents, n_results=n_results, include=["distances"]
-            )["distances"][0]
-
-            # Delete the knowledge documents that are too similar
-            delete_indices = []
-            indices = document_data.get("indices", [])
-            for i, distance in enumerate(distances):
-                if i != indices[0] and distance <= threshold:
-                    delete_indices.append(i)
-
-            if len(delete_indices) > 0:
-                collection.delete(indices=delete_indices)
-
-            return True
-
-    return False
 
 
 def get_actions():
@@ -130,8 +86,8 @@ def get_actions():
                     "required": ["text"],
                 },
             },
-            "chain_from": [],
-            "dont_chain_from": [],
+            "suggest_next_actions": [],
+            "ignore_next_actions": [],
             "handler": learn_handler,
         },
         "search_knowledge": {
@@ -141,7 +97,7 @@ def get_actions():
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "query_text": {
+                        "search_text": {
                             "type": "string",
                             "description": "The query text to search knowledge documents.",
                         },
@@ -150,11 +106,11 @@ def get_actions():
                             "description": "The number of search results to retrieve. Defaults to 5.",
                         },
                     },
-                    "required": ["query_text"],
+                    "required": ["search_text"],
                 },
             },
-            "chain_from": [],
-            "dont_chain_from": [],
+            "suggest_next_actions": [],
+            "ignore_next_actions": [],
             "handler": search_knowledge_handler,
         },
         "delete_knowledge": {
@@ -172,8 +128,8 @@ def get_actions():
                     "required": ["document_id"],
                 },
             },
-            "chain_from": [],
-            "dont_chain_from": [],
+            "suggest_next_actions": [],
+            "ignore_next_actions": [],
             "handler": delete_knowledge_handler,
         },
         "update_knowledge": {
@@ -195,32 +151,9 @@ def get_actions():
                     "required": ["document_id", "new_text"],
                 },
             },
-            "chain_from": [],
-            "dont_chain_from": [],
+            "suggest_next_actions": [],
+            "ignore_next_actions": [],
             "handler": update_knowledge_handler,
-        },
-        "find_similar_knowledge": {
-            "function": {
-                "name": "find_similar_knowledge",
-                "description": "Find similar knowledge documents and delete them if they are too similar.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "document_id": {
-                            "type": "string",
-                            "description": "The ID of the knowledge document to find similarities.",
-                        },
-                        "threshold": {
-                            "type": "number",
-                            "description": "The distance threshold. Documents with distances below this threshold will be deleted. Defaults to 0.9.",
-                        },
-                    },
-                    "required": ["document_id"],
-                },
-            },
-            "chain_from": [],
-            "dont_chain_from": [],
-            "handler": find_similar_knowledge_handler,
         },
     }
 
@@ -228,12 +161,10 @@ def get_actions():
 if __name__ == "__main__":
     # Test learn_handler
     arguments = {"text": "This is a test document.", "document_id": "test_doc_id"}
-    assert (
-        learn_handler(arguments) is True
-    ), "Test for learn_handler failed."
+    assert learn_handler(arguments) is True, "Test for learn_handler failed."
 
     # Test search_knowledge_handler
-    arguments = {"query_text": "test", "n_results": 5}
+    arguments = {"search_text": "test", "n_results": 5}
     search_results = search_knowledge_handler(arguments)
     assert isinstance(search_results, str), "Test for search_knowledge_handler failed."
     assert len(search_results) > 0, "Test for search_knowledge_handler failed."
@@ -246,12 +177,6 @@ if __name__ == "__main__":
     assert (
         update_knowledge_handler(arguments) is True
     ), "Test for update_knowledge_handler failed."
-
-    # Test find_similar_knowledge_handler
-    arguments = {"document_id": "test_doc_id", "threshold": 0.9}
-    assert (
-        find_similar_knowledge_handler(arguments) is False
-    ), "Test for find_similar_knowledge_handler failed."
 
     # Test delete_knowledge_handler
     arguments = {"document_id": "test_doc_id"}

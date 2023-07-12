@@ -2,16 +2,16 @@
 
 import uuid
 
-from core.memory import create_event
-from connectors import browser
+from core.events import create_event
+from agentbrowser import browser
 
 
-def create_tab(arguments):
+def create_page(arguments):
     site = arguments.get("site")
     page = browser.loop.run_until_complete(browser.browser.newPage())
     page_id = str(uuid.uuid4())
     create_event(
-        "I created a new tab in the virtual browser for page ID " + page_id,
+        "I created a new page in the virtual browser for page ID " + page_id,
         type="virtual_browser",
     )
     # if site is not null
@@ -25,24 +25,7 @@ def create_tab(arguments):
     return page_id
 
 
-def switch_to(arguments):
-    page_id = arguments.get("page_id")
-    if page_id in browser.pages:
-        browser.current_page_id = page_id
-        create_event(
-            "I switched to the virtual browser for page ID " + page_id,
-            type="virtual_browser",
-        )
-    else:
-        create_event(
-            "I tried to switch to the virtual browser, but it didn't exist. The page ID was "
-            + page_id,
-            type="virtual_browser",
-        )
-        raise ValueError(f"Page ID {page_id} does not exist.")
-
-
-def close_tab(arguments):
+def close_page(arguments):
     page_id = arguments.get("page_id")
     if page_id in browser.pages:
         page = browser.pages[page_id]
@@ -51,12 +34,12 @@ def close_tab(arguments):
         if browser.current_page_id == page_id:
             browser.current_page_id = None
         create_event(
-            "I closed a tab in the virtual browser for page ID " + page_id,
+            "I closed a page in the virtual browser for page ID " + page_id,
             type="virtual_browser",
         )
     else:
         create_event(
-            "I tried to close a tab in the virtual browser, but it didn't exist. The page ID was "
+            "I tried to close a page in the virtual browser, but it didn't exist. The page ID was "
             + page_id,
             type="virtual_browser",
         )
@@ -196,39 +179,39 @@ def get_actions():
         "browser_create_tab": {
             "function": {
                 "name": "browser_create_tab",
-                "description": "Create a new tab in the virtual browser and switch to it.",
+                "description": "Create a new page in the virtual browser and switch to it.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "site": {
                             "type": "string",
-                            "description": "The site to go to in the new tab.",
+                            "description": "The site to go to in the new page.",
                         },
                     },
                     "required": [],
                 },
             },
-            "chain_from": [],
-            "dont_chain_from": [],
+            "suggest_next_actions": [],
+            "ignore_next_actions": [],
             "handler": create_tab,
         },
         "browser_switch_to": {
             "function": {
                 "name": "browser_switch_to",
-                "description": "Switch to an existing tab in the virtual browser.",
+                "description": "Switch to an existing page in the virtual browser.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "page_id": {
                             "type": "string",
-                            "description": "The id of the page/tab to switch to.",
+                            "description": "The id of the page/page to switch to.",
                         },
                     },
                     "required": ["page_id"],
                 },
             },
-            "chain_from": [],
-            "dont_chain_from": [],
+            "suggest_next_actions": [],
+            "ignore_next_actions": [],
             "handler": switch_to,
         },
         "execute_pyppeteer_code": {
@@ -246,33 +229,33 @@ def get_actions():
                     "required": ["code"],
                 },
             },
-            "chain_from": [],
-            "dont_chain_from": [],
+            "suggest_next_actions": [],
+            "ignore_next_actions": [],
             "handler": execute_pyppeteer_code,
         },
         "browser_close_tab": {
             "function": {
                 "name": "browser_close_tab",
-                "description": "Close an existing tab in the virtual browser.",
+                "description": "Close an existing page in the virtual browser.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "page_id": {
                             "type": "string",
-                            "description": "The id of the page/tab to close.",
+                            "description": "The id of the page/page to close.",
                         },
                     },
                     "required": ["page_id"],
                 },
             },
-            "chain_from": [],
-            "dont_chain_from": [],
+            "suggest_next_actions": [],
+            "ignore_next_actions": [],
             "handler": close_tab,
         },
         "browser_navigate_to": {
             "function": {
                 "name": "browser_navigate_to",
-                "description": "Navigate to a URL in the current tab of the virtual browser.",
+                "description": "Navigate to a URL in the current page of the virtual browser.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -284,8 +267,8 @@ def get_actions():
                     "required": ["url"],
                 },
             },
-            "chain_from": [],
-            "dont_chain_from": [],
+            "suggest_next_actions": [],
+            "ignore_next_actions": [],
             "handler": navigate_to,
         },
         "browser_get_html": {
@@ -303,8 +286,8 @@ def get_actions():
                     "required": ["description"],
                 },
             },
-            "chain_from": [],
-            "dont_chain_from": [],
+            "suggest_next_actions": [],
+            "ignore_next_actions": [],
             "handler": get_html,
         },
         "browser_get_body_text": {
@@ -322,8 +305,8 @@ def get_actions():
                     "required": ["description"],
                 },
             },
-            "chain_from": [],
-            "dont_chain_from": [],
+            "suggest_next_actions": [],
+            "ignore_next_actions": [],
             "handler": get_body_text,
         },
         "browser_search_google": {
@@ -341,8 +324,8 @@ def get_actions():
                     "required": ["query"],
                 },
             },
-            "chain_from": [],
-            "dont_chain_from": [],
+            "suggest_next_actions": [],
+            "ignore_next_actions": [],
             "handler": search_google,
         },
         "browser_get_form_data": {
@@ -360,8 +343,8 @@ def get_actions():
                     "required": ["description"],
                 },
             },
-            "chain_from": [],
-            "dont_chain_from": [],
+            "suggest_next_actions": [],
+            "ignore_next_actions": [],
             "handler": get_form_data,
         },
         "browser_fill_form_and_submit": {
@@ -379,8 +362,8 @@ def get_actions():
                     "required": ["data"],
                 },
             },
-            "chain_from": [],
-            "dont_chain_from": [],
+            "suggest_next_actions": [],
+            "ignore_next_actions": [],
             "handler": fill_form_and_submit,
         },
     }
