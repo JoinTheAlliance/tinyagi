@@ -9,7 +9,7 @@ from easycompletion import (
     compose_prompt,
 )
 
-from .system import increment_epoch, get_epoch
+from .system import debug_log, increment_epoch, get_epoch
 
 from .actions import (
     get_action,
@@ -27,6 +27,14 @@ from .prompts import (
     decision_function,
     compose_observation,
 )
+
+def function_call(text, functions):
+    # Wraps openai_function_call in debug logging
+    response = openai_function_call(
+        text=text, functions=functions
+    )
+    debug_log(f"openai_function_call\nprompt:\n{text}\nfunctions:\n{functions}\nresponse:\n{response}")
+    return response
 
 
 def loop():
@@ -58,9 +66,10 @@ def loop():
     ### ORIENT ###
     # Summarize the last epoch and think about what to do next
     composed_orient_prompt = compose_prompt(orient_prompt, observation)
-    response = openai_function_call(
+    response = function_call(
         text=composed_orient_prompt, functions=orient_function
     )
+    
 
     # Create new knowledge and add to the knowledge base
     knowledge = response["arguments"].get("knowledge", [])
@@ -78,7 +87,6 @@ def loop():
     # Get the summary and add to the observation object
     summary = response["arguments"]["summary_as_user"]
     observation["summary"] = summary
-    create_event(summary, type="loop", subtype="observation_summary")
 
     # Search for knowledge based on the summary and add to the observation object
     knowledge = search_knowledge(search_text=summary, n_results=10)
@@ -95,7 +103,7 @@ def loop():
     ### DECIDE ###
     # Based on the orientation, decide which relevant action to take
     composed_decision_prompt = compose_prompt(decision_prompt, observation)
-    response = openai_function_call(
+    response = function_call(
         text=composed_decision_prompt, functions=decision_function
     )
 
@@ -111,7 +119,7 @@ def loop():
 
     composed_action_prompt = compose_prompt(action["prompt"], observation)
 
-    response = openai_function_call(
+    response = function_call(
         text=composed_action_prompt, functions=action["function"]
     )
 
