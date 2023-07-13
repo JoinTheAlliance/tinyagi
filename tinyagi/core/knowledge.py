@@ -5,34 +5,31 @@ from agentmemory import (
     update_memory,
 )
 
-from .events import get_event_epoch
+from .events import get_epoch
 
 
-def add_new_knowledge(content, metadata={}, min_distance=0.05):
+def add_knowledge(content, metadata={}, max_distance=0.04):
     """
     Search for similar knowledge. If there is none, create it.
     """
     similar_knowledge = search_knowledge(
-        content, min_distance=min_distance, n_results=1
+        content, max_distance=max_distance, n_results=1
     )
+
     if len(similar_knowledge) == 0:
-        create_knowledge(content, metadata=metadata)
+        # Create a new knowledge item
+        metadata = {
+            "epoch": get_epoch(),
+            "added_count": 1
+        }
+        create_memory("knowledge", content, metadata=metadata)
         return
 
+    # we already have a similar knowledge item, so strengthen existing knowledge items
     # iterate through similar knowledge and increment the added_count
     for knowledge in similar_knowledge:
         knowledge["metadata"]["added_count"] += 1
-        update_memory("knowledge", knowledge["id"], metadata=knowledge)
-
-
-def create_knowledge(content, metadata={}):
-    """
-    Create event, then save it to the event log file and print it
-    """
-    metadata["epoch"] = (get_event_epoch())
-    metadata["added_count"] = 1
-
-    create_memory("knowledge", content, metadata=metadata)
+        update_memory("knowledge", knowledge["id"], metadata=knowledge["metadata"])
 
 
 def remove_knowledge(content, similarity_threshold=0.9):
@@ -54,7 +51,7 @@ def delete_knowledge_by_id(id):
     delete_memory("knowledge", id)
 
 
-def search_knowledge(search_text, min_distance=None, max_distance=None, n_results=None):
+def search_knowledge(search_text, min_distance=None, max_distance=None, n_results=5):
     """
     Search the 'knowledge' collection by search text
     """

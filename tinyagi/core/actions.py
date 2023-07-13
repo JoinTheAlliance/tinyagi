@@ -8,25 +8,39 @@ import sys
 import importlib
 import json
 
-from agentmemory import create_memory, delete_memory, get_memories, search_memory
-from .events import create_event, get_event_epoch
+from agentmemory import (
+    create_memory,
+    delete_memory,
+    get_memories,
+    search_memory,
+    wipe_category,
+)
+from .events import create_event, get_epoch
 
 # Create an empty dictionary to hold the actions
 actions = {}
 
 
+def get_actions():
+    global actions
+    return actions
+
+
 def add_to_action_history(action_name, action_arguments={}, success=True):
     action_arguments["success"] = success
-    current_epoch = get_event_epoch()
+    current_epoch = get_epoch()
     action_arguments["epoch"] = current_epoch
     create_memory("action_history", action_name, action_arguments)
 
 
 def get_action_history(n_results=20):
     # get the current epoch
-    current_epoch = get_event_epoch()
+    current_epoch = get_epoch()
     # now search for actions that occured within the last n epochs
-    return get_memories(category="action_history", filter_metadata={"epoch": { "$gte": max(0, current_epoch - n_results)}})
+    return get_memories(
+        category="action_history",
+        filter_metadata={"epoch": {"$gte": max(0, current_epoch - n_results)}},
+    )
 
 
 def get_last_action():
@@ -47,6 +61,7 @@ def get_available_actions(summary):
         ignored_actions = actions[last_action]["never_after_actions"]
     merged_actions = []
     for action in available_actions:
+        # check if the available action is in the actions dictionary
         if action["id"] in recommended_actions:
             merged_actions.append(f"(recommended) {action['document']}")
         elif action["id"] in ignored_actions:
@@ -127,6 +142,12 @@ def register_actions():
     For each Python file in the 'actions' directory, it imports the file and calls the get_actions action if it exists.
     Then, it adds the returned actions to the 'actions' dictionary.
     """
+
+    # Wipe any existing actions to prevent split sources of truth
+    wipe_category("actions")
+    global actions
+    actions = {}
+
     # Get the absolute path to the parent directory of the current file
     parent_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -155,45 +176,3 @@ def register_actions():
 
     # Remove the added path from the Python system path
     sys.path.pop(0)
-
-
-if __name__ == "__main__":
-    register_actions()
-
-    def test_action_handler(arguments):
-        input = arguments["input"]
-        return input
-
-    # Test for add_action
-    test_action = {
-        "test": {
-            "function": {
-                "name": "test",
-                "description": "A test action",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "input": {
-                            "type": "string",
-                            "description": "Some test input",
-                        },
-                    },
-                },
-                "required": ["input"],
-            },
-            "suggestion_after_actions": [],
-            "never_after_actions": [],
-            "handler": test_action_handler,
-        },
-    }
-    # for each in test_action:
-    for each in test_action:
-        add_action(each, test_action[each])
-    assert each in actions
-
-    # Test for use_action
-    assert use_action("test", {"input": "test"}) == "test"
-
-    # Test for remove_action
-    remove_action("test")
-    assert "test" not in actions

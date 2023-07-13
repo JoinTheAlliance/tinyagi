@@ -5,15 +5,15 @@ from agentmemory import count_memories, create_memory, search_memory, get_memori
 
 
 # Get the current event epoch
-def get_event_epoch():
+def get_epoch():
     # returns current event epoch
     # or initializes event epoch to 0
     return count_memories("epoch")
 
 
 # Each loop is an epoch
-def increment_event_epoch():
-    new_epoch_index = get_event_epoch() + 1
+def increment_epoch():
+    new_epoch_index = get_epoch() + 1
 
     # if length of current_epoch is 0, then epoch is not set
     document = f"Epoch {new_epoch_index} started at {str(datetime.utcnow())}"
@@ -38,14 +38,14 @@ def write_to_log(content, filename="logs/events.txt"):
         f.write(f"{content}\n")
 
 
-def create_event(content, type="conversation", subtype=None, event_creator="Me", metadata={}):
+def create_event(content, type=None, subtype=None, event_creator="Me", metadata={}):
     """
     Create event, then save it to the event log file and print it
     """
     metadata["type"] = type
     metadata["subtype"] = subtype
     metadata["event_creator"] = event_creator
-    metadata["epoch"] = get_event_epoch()
+    metadata["epoch"] = get_epoch()
 
     # if any keys are None, delete them
     metadata = {k: v for k, v in metadata.items() if v is not None}

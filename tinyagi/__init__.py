@@ -1,12 +1,12 @@
 """
-easycompletion
+tinyagi
 
-Leveraging conversational AI for bicameral decision making.
+A really simple approach to a self-learning, open-ended system.
 """
 
-__version__ = "0.1.8"
-__author__ = "Moon (https://github.com/lalalune)"
-__credits__ = "https://github.com/lalalune/tinyagi"
+__version__ = "0.1.0"
+__author__ = "Autonomous Research Group"
+__credits__ = "https://github.com/AutonomousResarchGroup/tinyagi"
 
 from .core.actions import (
     add_to_action_history,
@@ -19,11 +19,12 @@ from .core.actions import (
     get_action,
     remove_action,
     register_actions,
+    get_actions,
 )
 
 from .core.events import (
-    get_event_epoch,
-    increment_event_epoch,
+    get_epoch,
+    increment_epoch,
     write_to_log,
     create_event,
     get_events,
@@ -31,8 +32,7 @@ from .core.events import (
 )
 
 from .core.knowledge import (
-    add_new_knowledge,
-    create_knowledge,
+    add_knowledge,
     remove_knowledge,
     delete_knowledge_by_id,
     search_knowledge,
@@ -53,14 +53,14 @@ __all__ = [
     "get_action",
     "remove_action",
     "register_actions",
-    "get_event_epoch",
-    "increment_event_epoch",
+    "get_actions",
+    "get_epoch",
+    "increment_epoch",
     "write_to_log",
     "create_event",
     "get_events",
     "search_events",
-    "add_new_knowledge",
-    "create_knowledge",
+    "add_knowledge",
     "remove_knowledge",
     "delete_knowledge_by_id",
     "search_knowledge",
