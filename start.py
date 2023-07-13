@@ -3,8 +3,8 @@ import json
 import time
 
 from agentmemory import wipe_all_memories, create_memory
-from core.actions import register_actions
-from core.loop import start
+from tinyagi.core.actions import register_actions
+from tinyagi.core.loop import start
 
 # set TOKENIZERS_PARALLELISM environment variable to False to avoid warnings
 os.environ["TOKENIZERS_PARALLELISM"] = "False"

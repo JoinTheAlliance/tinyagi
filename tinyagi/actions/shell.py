@@ -2,7 +2,7 @@
 
 import subprocess
 
-from core.events import create_event
+from tinyagi.core.events import create_event
 
 run_command_prompt_template = """
 I know these relevant things:
@@ -18,7 +18,7 @@ Action Reasoning:
 {{action_reasoning}}
 
 Based on the action reasoning, what command should I run in my terminal? Please include all arguments, etc. on one line.
-Also include what outcome I should epxect, in plan English. I will be writing down the "expected_output" field in my notes so please write it from my perspective.
+Also include what outcome I should expect, in plan English. I will be writing down the "expected_output" field in my notes so please write it from my perspective.
 """
 
 

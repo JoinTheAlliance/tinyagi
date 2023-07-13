@@ -9,7 +9,7 @@ import importlib
 import json
 
 from agentmemory import create_memory, delete_memory, get_memories, search_memory
-from core.events import create_event
+from .events import create_event, get_event_epoch
 
 # Create an empty dictionary to hold the actions
 actions = {}
@@ -17,15 +17,20 @@ actions = {}
 
 def add_to_action_history(action_name, action_arguments={}, success=True):
     action_arguments["success"] = success
+    current_epoch = get_event_epoch()
+    action_arguments["epoch"] = current_epoch
     create_memory("action_history", action_name, action_arguments)
 
 
 def get_action_history(n_results=20):
-    return get_memories("action_history", n_results)
+    # get the current epoch
+    current_epoch = get_event_epoch()
+    # now search for actions that occured within the last n epochs
+    return get_memories(category="action_history", filter_metadata={"epoch": { "$gte": max(0, current_epoch - n_results)}})
 
 
 def get_last_action():
-    history = get_memories("action_history", n_results=1)
+    history = get_action_history(n_results=1)
     if len(history) == 0:
         return None
     return history[0]["document"]
@@ -38,8 +43,8 @@ def get_available_actions(summary):
 
     last_action = get_last_action()
     if last_action is not None:
-        recommended_actions = get_recommended_actions(last_action)
-        ignored_actions = get_ignored_actions(last_action)
+        recommended_actions = actions[last_action]["suggestion_after_actions"]
+        ignored_actions = actions[last_action]["never_after_actions"]
     merged_actions = []
     for action in available_actions:
         if action["id"] in recommended_actions:
@@ -49,10 +54,6 @@ def get_available_actions(summary):
         else:
             merged_actions.append(action["document"])
     return merged_actions
-
-
-def get_formatted_available_actions(summary):
-    return "\n".join(get_available_actions(summary))
 
 
 def search_actions(search_text, n_results=5):
@@ -102,20 +103,6 @@ def get_action(name):
         return actions[name]
     else:
         return None
-
-
-def get_recommended_actions(name):
-    """
-    Returns a list of recommended actions
-    """
-    return actions[name]["suggestion_after_actions"]
-
-
-def get_ignored_actions(name):
-    """
-    Returns a list of ignored actions
-    """
-    return actions[name]["never_after_actions"]
 
 
 def remove_action(name):

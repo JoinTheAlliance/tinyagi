@@ -2,11 +2,10 @@ from agentmemory import (
     create_memory,
     delete_memory,
     search_memory,
-    get_memories,
     update_memory,
 )
 
-from core.events import get_event_epoch
+from .events import get_event_epoch
 
 
 def add_new_knowledge(content, metadata={}, min_distance=0.05):
@@ -34,13 +33,6 @@ def create_knowledge(content, metadata={}):
     metadata["added_count"] = 1
 
     create_memory("knowledge", content, metadata=metadata)
-
-
-def get_knowledge(n_results=None):
-    """
-    Get the most recent knowledge from the 'knowledge' collection.
-    """
-    return get_memories("knowledge", n_results=n_results)
 
 
 def remove_knowledge(content, similarity_threshold=0.9):

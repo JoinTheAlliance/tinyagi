@@ -13,20 +13,19 @@ from easycompletion import (
     compose_prompt,
     count_tokens,
 )
-from core.actions import (
+from .actions import (
     get_action,
-    get_formatted_available_actions,
+    get_available_actions,
     use_action,
 )
-from core.events import (
+from .events import (
     get_event_epoch,
     get_events,
     create_event,
-    get_events_from_epochs_before_last,
-    get_events_from_last_epoch,
+    get_events,
     increment_event_epoch,
 )
-from core.knowledge import create_knowledge, search_knowledge
+from .knowledge import create_knowledge, search_knowledge
 
 
 orient_prompt = """\
@@ -148,11 +147,14 @@ def compose_observation(token_limit=1536, short=False):
         }
 
     events = get_events(n_results=limits["events"])
-    events_from_last_epoch = get_events_from_last_epoch(
-        n_results=limits["events_from_last_epoch"]
+    
+    events_from_last_epoch = get_events(
+        n_results=limits["events_from_last_epoch"],
+        filter_metadata={"epoch": get_event_epoch() - 1}
     )
-    events_from_previous_epochs = get_events_from_epochs_before_last(
-        n_results=limits["events_from_previous_epochs"]
+    events_from_previous_epochs = get_events(
+        n_results=limits["events_from_previous_epochs"],
+        filter_metadata={"epoch": {"$gte": get_event_epoch() - 2}},
     )
 
     # each event is a dictionary with keys: id, document, metadata
@@ -250,9 +252,9 @@ def loop():
     formatted_knowledge = "\n".join([k["document"] for k in knowledge])
     observation["knowledge"] = formatted_knowledge
 
-    # Search for actions based on the summary and add to the observation object
-    formatted_actions = get_formatted_available_actions(summary)
-    observation["available_actions"] = formatted_actions
+    available_actions = get_available_actions(summary)
+    formatted_available_actions = "\n".join(available_actions)
+    observation["available_actions"] = formatted_available_actions
 
     # Add observation summary to event stream
     create_event(summary, type="loop", subtype="observation")
