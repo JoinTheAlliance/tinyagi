@@ -7,7 +7,12 @@ import sys
 import time
 from datetime import datetime
 
-from easycompletion import compose_function, openai_function_call, compose_prompt, count_tokens
+from easycompletion import (
+    compose_function,
+    openai_function_call,
+    compose_prompt,
+    count_tokens,
+)
 from core.actions import (
     get_action,
     get_formatted_available_actions,
@@ -143,8 +148,12 @@ def compose_observation(token_limit=1536, short=False):
         }
 
     events = get_events(n_results=limits["events"])
-    events_from_last_epoch = get_events_from_last_epoch(n_results=limits["events_from_last_epoch"])
-    events_from_previous_epochs = get_events_from_epochs_before_last(n_results=limits["events_from_previous_epochs"])
+    events_from_last_epoch = get_events_from_last_epoch(
+        n_results=limits["events_from_last_epoch"]
+    )
+    events_from_previous_epochs = get_events_from_epochs_before_last(
+        n_results=limits["events_from_previous_epochs"]
+    )
 
     # each event is a dictionary with keys: id, document, metadata
     # Inside the metadata is the epoch number
@@ -172,15 +181,15 @@ def compose_observation(token_limit=1536, short=False):
         "events_from_previous_epochs": formatted_events_from_previous_epochs,
         "events_from_last_epoch": formatted_events_from_last_epoch,
         "previous_summaries": formatted_summaries,
-        "knowledge": None, # populated in loop
-        "summary": None, # populated in loop from orient function
-        "available_actions": None, # populated in the loop by the orient function
-        "action_reasoning": None, # populated in the loop by the decision function
+        "knowledge": None,  # populated in loop
+        "summary": None,  # populated in loop from orient function
+        "available_actions": None,  # populated in the loop by the orient function
+        "action_reasoning": None,  # populated in the loop by the decision function
     }
 
     if short is True:
         return observation_data
-    
+
     prompt_string = json.dumps(observation_data, indent=None)
     token_count = count_tokens(prompt_string)
     # if the observation is too big, shorten it
@@ -188,7 +197,6 @@ def compose_observation(token_limit=1536, short=False):
         return compose_observation(short=True)
     return observation_data
 
-    
 
 def loop():
     """
@@ -198,7 +206,9 @@ def loop():
     # Each run of the loop is an epoch
     increment_event_epoch()
     epoch = get_event_epoch()
-    create_event("Epoch #" + str(epoch) + " started.", type="loop", subtype="epoch_start")
+    create_event(
+        "Epoch #" + str(epoch) + " started.", type="loop", subtype="epoch_start"
+    )
 
     if epoch == 1:
         create_event("I have just woken up.", type="loop", subtype="init")
@@ -253,7 +263,7 @@ def loop():
     response = openai_function_call(
         text=composed_decision_prompt, functions=decision_function
     )
-    
+
     # Add the action reasoning to the observation object
     action_reasoning = response["arguments"]["user_reasoning"]
     observation["action_reasoning"] = action_reasoning
@@ -264,24 +274,17 @@ def loop():
     # parse the name and arguments from the response object to call an action
     action = get_action(response["arguments"]["action_name"])
 
-    print("response")
-    print(response)
-
-    print("action")
-    print(action)
-
     composed_action_prompt = compose_prompt(action["prompt"], observation)
 
     response = openai_function_call(
         text=composed_action_prompt, functions=action["function"]
     )
 
-    print("response")
-    print(response)
-
     use_action(response["function_name"], response["arguments"])
 
-    create_event("Epoch #" + str(epoch) + " finished.", type="loop", subtype="epoch_end")
+    create_event(
+        "Epoch #" + str(epoch) + " finished.", type="loop", subtype="epoch_end"
+    )
 
 
 def start():

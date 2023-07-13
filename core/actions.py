@@ -159,8 +159,7 @@ def register_actions():
             if hasattr(module, "get_actions"):
                 # If yes, call the action and retrieve the actions
                 action_funcs = module.get_actions()
-                print("action_funcs")
-                print(action_funcs)
+
                 # Actions are an array of objects
                 # Iterate through the array
                 for i in range(len(action_funcs)):
