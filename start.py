@@ -47,7 +47,7 @@ def seed(filename="seeds.json"):
         
         # Create the memory
         create_memory(
-            entry["collection"], entry["message"], entry["metadata"], id=entry["id"]
+            entry["collection"], entry["message"], entry["metadata"]
         )
 
 
