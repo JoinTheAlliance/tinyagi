@@ -14,7 +14,7 @@ def get_event_epoch():
         increment_event_epoch()
         current_epoch = get_memories("epoch", n_results=1)
 
-    return current_epoch[0]["id"]
+    return int(current_epoch[0]["id"])
 
 
 # Each loop is an epoch
@@ -25,15 +25,11 @@ def increment_event_epoch():
     if len(current) > 0:
         current_epoch_index = current[0]["id"]
 
-    current_epoch_index = current_epoch_index + 1
+    current_epoch_index = int(current_epoch_index) + 1
 
     # if length of current_epoch is 0, then epoch is not set
-    timestamp = datetime.utcnow()
-    document = f"Epoch {current_epoch_index} started at {timestamp}"
-    # set epoch document to "Epoch {epoch_number} started at {timestamp}"
-    create_memory(
-        "epoch", document, id=current_epoch_index, metadata={"timestamp": timestamp}
-    )
+    document = f"Epoch {current_epoch_index} started at {str(datetime.utcnow())}"
+    create_memory("epoch", document, id=current_epoch_index)
     return current_epoch_index
 
 
@@ -44,9 +40,9 @@ def write_to_log(content, filename="logs/events.txt"):
     # first, check that all directories in filename exist
     # if not, create them
 
-    for i in range(len(filename.split("/"))):
+    for i in range(len(filename.split("/"))-1):
         # if the current directory doesn't exist, create it
-        if not os.path.isdir("/".join(filename.split("/")[: i + 1])):
+        if not os.path.exists("/".join(filename.split("/")[: i + 1])):
             os.mkdir("/".join(filename.split("/")[: i + 1]))
 
     # then, write to the file
@@ -58,12 +54,10 @@ def create_event(content, type="conversation", subtype=None, event_creator="Me")
     """
     TODO: Create event, then save it to the event log file and print it
     """
-    timestamp = datetime.utcnow()
     metadata = {
         "type": type,
         "subtype": subtype,
         "event_creator": event_creator,
-        "timestamp": timestamp,
         "epoch": get_event_epoch(),
     }
 
@@ -75,14 +69,37 @@ def create_event(content, type="conversation", subtype=None, event_creator="Me")
     write_to_log(f"{content}")
 
 
-def get_events(n_results=20):
+def get_events(type=None, n_results=None):
     """
-    Get the last 20 events from the 'events' collection.
+    Get the last n events from the 'events' collection.
     """
-    return get_memories("events", n_results=n_results)
+    filter_metadata = None
+    if type is not None:
+        filter_metadata = {"type": type}
+    return get_memories("events", filter_metadata=filter_metadata, n_results=n_results)
 
 
-def search_events(search_text, n_results=20):
+def get_events_from_last_epoch(n_results=None):
+    """
+    Get the events from the last epoch.
+    """
+    return get_memories(
+        "events", filter_metadata={"epoch": get_event_epoch() - 1}, n_results=n_results
+    )
+
+
+def get_events_from_epochs_before_last(n_results=None):
+    """
+    Get the events from the epochs before the last epoch.
+    """
+    return get_memories(
+        "events",
+        filter_metadata={"epoch": {"$gte": get_event_epoch() - 2}},
+        n_results=n_results,
+    )
+
+
+def search_events(search_text, n_results=None):
     """
     Search the 'events' collection by search text
     """

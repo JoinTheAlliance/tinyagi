@@ -3,7 +3,7 @@ import json
 import time
 
 from agentmemory import wipe_all_memories, create_memory
-from core.action import register_actions
+from core.actions import register_actions
 from core.loop import start
 
 # set TOKENIZERS_PARALLELISM environment variable to False to avoid warnings
@@ -43,8 +43,8 @@ def seed(filename="seeds.json"):
         timestamp = timestamps[i]
 
         # Add the timestamp to the metadata
-        entry["metadata"]["timestamp"] = timestamp
-
+        entry["metadata"]["created_at"] = str(timestamp)
+        
         # Create the memory
         create_memory(
             entry["collection"], entry["message"], entry["metadata"], id=entry["id"]

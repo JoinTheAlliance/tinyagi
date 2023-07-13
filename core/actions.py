@@ -1,4 +1,4 @@
-# core/action.py
+# core/actions.py
 
 # Dynamically load actions and use them
 # actions are executed by the "function calling" feature of the OpenAI API.
@@ -8,8 +8,8 @@ import sys
 import importlib
 import json
 
-from agentmemory import create_memory, delete_memory, get_memories
-from events import create_event
+from agentmemory import create_memory, delete_memory, get_memories, search_memory
+from core.events import create_event
 
 # Create an empty dictionary to hold the actions
 actions = {}
@@ -20,9 +20,41 @@ def add_to_action_history(action_name, action_arguments={}, success=True):
     create_memory("action_history", action_name, action_arguments)
 
 
-def get_action_history(n_limit=20):
-    return get_memories("action_history", n_limit)
+def get_action_history(n_results=20):
+    return get_memories("action_history", n_results)
 
+
+def get_last_action():
+    history = get_memories("action_history", n_results=1)
+    if(len(history) == 0):
+        return None
+    return history[0]["document"]
+
+
+def get_available_actions(summary):
+    available_actions = search_actions(search_text=summary, n_results=10)
+    recommended_actions = []
+    ignored_actions = []
+    
+    last_action = get_last_action()
+    if last_action is not None:
+        recommended_actions = get_recommended_actions(last_action)
+        ignored_actions = get_ignored_actions(last_action)
+    merged_actions = []
+    for action in available_actions:
+        if action["id"] in recommended_actions:
+            merged_actions.append(f"(recommended) {action['document']}")
+        elif action["id"] in ignored_actions:
+            continue
+        else:
+            merged_actions.append(action["document"])
+    return merged_actions
+
+
+def get_formatted_available_actions(summary):
+    return "\n".join(get_available_actions(summary))
+
+    
 
 def search_actions(search_text, n_results=5):
     """
@@ -31,7 +63,7 @@ def search_actions(search_text, n_results=5):
     Returns a list of actions.
     """
     # Search for actions in the 'actions' collection
-    search_results = get_memories(
+    search_results = search_memory(
         "actions", search_text=search_text, n_results=n_results
     )
 
@@ -44,7 +76,7 @@ def use_action(function_name, arguments):
         return {"success": False, "response": "Action not found"}
 
     add_to_action_history(function_name, arguments)
-    return {"success": True, "response": actions[function_name](arguments)}
+    return {"success": True, "response": actions[function_name]["handler"](arguments)}
 
 
 def add_action(name, action):
@@ -54,7 +86,7 @@ def add_action(name, action):
     If the action is not present in the 'actions' collection, it is added.
     """
     # Add the action to the 'actions' dictionary
-    actions[name] = action["handler"]
+    actions[name] = action
     create_memory(
         "actions",
         f"{name} - {action['function']['description']}",
@@ -77,14 +109,14 @@ def get_recommended_actions(name):
     """
     Returns a list of recommended actions
     """
-    return actions[name]["suggest_next_actions"]
+    return actions[name]["suggestion_after_actions"]
 
 
 def get_ignored_actions(name):
     """
     Returns a list of ignored actions
     """
-    return actions[name]["ignore_next_actions"]
+    return actions[name]["never_after_actions"]
 
 
 def remove_action(name):
@@ -128,10 +160,13 @@ def register_actions():
             if hasattr(module, "get_actions"):
                 # If yes, call the action and retrieve the actions
                 action_funcs = module.get_actions()
-
-                # Add the actions to the 'actions' dictionary
-                for name in action_funcs:
-                    add_action(name, action_funcs[name])
+                print("action_funcs")
+                print(action_funcs)
+                # Actions are an array of objects
+                # Iterate through the array
+                for i in range(len(action_funcs)):
+                    name = action_funcs[i]["function"]["name"]
+                    add_action(name, action_funcs[i])
 
     # Remove the added path from the Python system path
     sys.path.pop(0)
@@ -161,8 +196,8 @@ if __name__ == "__main__":
                 },
                 "required": ["input"],
             },
-            "suggest_next_actions": [],
-            "ignore_next_actions": [],
+            "suggestion_after_actions": [],
+            "never_after_actions": [],
             "handler": test_action_handler,
         },
     }
