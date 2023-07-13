@@ -8,6 +8,11 @@ __version__ = "0.1.0"
 __author__ = "Autonomous Research Group"
 __credits__ = "https://github.com/AutonomousResarchGroup/tinyagi"
 
+from .core.system import (
+    get_epoch,
+    increment_epoch,
+)
+
 from .core.actions import (
     add_to_action_history,
     get_action_history,
@@ -23,8 +28,6 @@ from .core.actions import (
 )
 
 from .core.events import (
-    get_epoch,
-    increment_epoch,
     write_to_log,
     create_event,
     get_events,

@@ -8,16 +8,16 @@ from easycompletion import (
     openai_function_call,
     compose_prompt,
 )
+
+from .system import increment_epoch, get_epoch
+
 from .actions import (
     get_action,
     get_available_actions,
     use_action,
 )
-from .events import (
-    get_epoch,
-    create_event,
-    increment_epoch,
-)
+from .events import create_event
+
 from .knowledge import add_knowledge, search_knowledge
 
 from .prompts import (

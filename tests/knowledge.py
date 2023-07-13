@@ -1,4 +1,4 @@
-from tinyagi.core.knowledge import (
+from tinyagi import (
     add_knowledge,
     remove_knowledge,
     delete_knowledge_by_id,

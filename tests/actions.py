@@ -1,4 +1,4 @@
-from tinyagi.core.actions import (
+from tinyagi import (
     add_to_action_history,
     get_action_history,
     get_last_action,
@@ -10,9 +10,9 @@ from tinyagi.core.actions import (
     remove_action,
     register_actions,
     get_actions,
+    increment_epoch
 )
 from agentmemory import wipe_all_memories
-from tinyagi.core.events import increment_epoch
 
 
 def setup_test_action():
@@ -45,6 +45,8 @@ def test_add_to_action_history():
     cleanup()  # Ensure clean state before test
     add_to_action_history("test 0", {"input": "test 0"})
     history = get_action_history(n_results=1)
+    print("history")
+    print(history)
     assert len(history) == 1 and history[0]["document"] == "test 0"
 
     # add 30 history items
@@ -73,7 +75,7 @@ def test_add_and_use_action():
     add_action("test", test_action)
     assert get_action("test") is not None  # Action should now exist
     result = use_action("test", {"input": "test"})
-    assert result["success"] and result["response"] == "test"
+    assert result["success"] and result["result"] == "test"
     cleanup()  # Cleanup after the test
 
 

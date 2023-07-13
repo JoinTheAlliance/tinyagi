@@ -15,7 +15,7 @@ from agentmemory import (
     search_memory,
     wipe_category,
 )
-from .events import create_event, get_epoch
+from .events import create_event, debug_log, get_epoch
 
 # Create an empty dictionary to hold the actions
 actions = {}
@@ -27,6 +27,7 @@ def get_actions():
 
 
 def add_to_action_history(action_name, action_arguments={}, success=True):
+    debug_log(f"Adding action to history: {action_name}")
     action_arguments["success"] = success
     current_epoch = get_epoch()
     action_arguments["epoch"] = current_epoch
@@ -37,17 +38,21 @@ def get_action_history(n_results=20):
     # get the current epoch
     current_epoch = get_epoch()
     # now search for actions that occured within the last n epochs
-    return get_memories(
+    memories = get_memories(
         category="action_history",
         filter_metadata={"epoch": {"$gte": max(0, current_epoch - n_results)}},
     )
+    debug_log(f"Getting action history: {memories}")
+    return memories
 
 
 def get_last_action():
     history = get_action_history(n_results=1)
     if len(history) == 0:
         return None
-    return history[0]["document"]
+    last = history[0]["document"]
+    debug_log(f"Getting last action: {last}")
+    return last
 
 
 def get_available_actions(summary):
@@ -68,6 +73,7 @@ def get_available_actions(summary):
             continue
         else:
             merged_actions.append(action["document"])
+    debug_log(f"Getting available actions: {merged_actions}")
     return merged_actions
 
 
@@ -81,7 +87,7 @@ def search_actions(search_text, n_results=5):
     search_results = search_memory(
         "actions", search_text=search_text, n_results=n_results
     )
-
+    debug_log(f"Searching actions: {search_results}")
     return search_results
 
 
@@ -91,7 +97,12 @@ def use_action(function_name, arguments):
         return {"success": False, "response": "Action not found"}
 
     add_to_action_history(function_name, arguments)
-    return {"success": True, "response": actions[function_name]["handler"](arguments)}
+    result = actions[function_name]["handler"](arguments)
+
+    debug_log(f"Using action: {function_name} with arguments: {arguments}")
+    debug_log(f"Use action result: {result}")
+
+    return {"success": True, "result": result}
 
 
 def add_action(name, action):
@@ -108,12 +119,14 @@ def add_action(name, action):
         {"name": name, "function": json.dumps(action["function"])},
         id=name,
     )
+    debug_log(f"Adding action: {name} with function: {action['function']}")
 
 
 def get_action(name):
     """
     Returns a action based on its name from the 'actions' dictionary.
     """
+    debug_log(f"Getting action: {name}")
     if name in actions:
         return actions[name]
     else:
@@ -126,6 +139,7 @@ def remove_action(name):
 
     Also, logs the removal of a action as an event.
     """
+    debug_log(f"Removing action: {name}")
     if name in actions:
         # Remove the action from the 'actions' dictionary
         del actions[name]
@@ -142,7 +156,7 @@ def register_actions():
     For each Python file in the 'actions' directory, it imports the file and calls the get_actions action if it exists.
     Then, it adds the returned actions to the 'actions' dictionary.
     """
-
+    debug_log("Registering actions")
     # Wipe any existing actions to prevent split sources of truth
     wipe_category("actions")
     global actions
@@ -176,3 +190,4 @@ def register_actions():
 
     # Remove the added path from the Python system path
     sys.path.pop(0)
+    debug_log("Registered actions")
