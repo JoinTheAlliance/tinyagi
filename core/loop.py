@@ -38,6 +38,9 @@ These are the most recent events from last epoch:
 
 Please summarize, from the most recent events, how it's going, what I learned this epoch and what I should do next.
 First, summarize as yourself (the assistant), then summarize as if you were me, the user, in the first person from my perspective.
+Lastly, include any new knowledge that I learned this epoch as an array of knowledge items.
+Each knowledge item should be a factual statement that I learned, and should include the source, the content and the relationship.
+If there is no new knowledge, use an empty array [].
 """
 
 

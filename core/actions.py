@@ -26,7 +26,7 @@ def get_action_history(n_results=20):
 
 def get_last_action():
     history = get_memories("action_history", n_results=1)
-    if(len(history) == 0):
+    if len(history) == 0:
         return None
     return history[0]["document"]
 
@@ -35,7 +35,7 @@ def get_available_actions(summary):
     available_actions = search_actions(search_text=summary, n_results=10)
     recommended_actions = []
     ignored_actions = []
-    
+
     last_action = get_last_action()
     if last_action is not None:
         recommended_actions = get_recommended_actions(last_action)
@@ -54,7 +54,6 @@ def get_available_actions(summary):
 def get_formatted_available_actions(summary):
     return "\n".join(get_available_actions(summary))
 
-    
 
 def search_actions(search_text, n_results=5):
     """

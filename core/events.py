@@ -40,7 +40,7 @@ def write_to_log(content, filename="logs/events.txt"):
     # first, check that all directories in filename exist
     # if not, create them
 
-    for i in range(len(filename.split("/"))-1):
+    for i in range(len(filename.split("/")) - 1):
         # if the current directory doesn't exist, create it
         if not os.path.exists("/".join(filename.split("/")[: i + 1])):
             os.mkdir("/".join(filename.split("/")[: i + 1]))
@@ -52,7 +52,7 @@ def write_to_log(content, filename="logs/events.txt"):
 
 def create_event(content, type="conversation", subtype=None, event_creator="Me"):
     """
-    TODO: Create event, then save it to the event log file and print it
+    Create event, then save it to the event log file and print it
     """
     metadata = {
         "type": type,
