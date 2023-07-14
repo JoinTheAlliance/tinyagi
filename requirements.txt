@@ -1,6 +1,5 @@
-openai
 python-dotenv
 flask
-tiktoken
-chromadb
-pyppeteer
+agentmemory
+agentbrowser
+easycompletion
