@@ -5,6 +5,12 @@ import time
 import os
 import sys
 from datetime import datetime
+import time
+import threading
+from pynput import keyboard
+
+event = threading.Event()
+input_listener = None
 
 from easycompletion import (
     compose_prompt,
@@ -40,56 +46,61 @@ from .knowledge import (
 )
 
 
-### START ###
-
-
-def start():
-    while True:
-        loop()
-
 ### MAIN LOOP ###
 
 
-def loop():
+def start(stepped=False):
+    global listener
+    thread = threading.Thread(target=loop, args=(stepped,))
+    thread.start()
+    if stepped:
+        listener = keyboard.Listener(on_press=on_press)
+        listener.start()
+    return thread, event
+
+
+def next_step(event):
+    event.set()
+
+
+def on_press(key):
+    if key == keyboard.Key.space:
+        next_step(event)
+
+def loop(stepped):
+    global listener
     """
     Main execution loop. This is modeled on the OODA loop -- https://en.wikipedia.org/wiki/OODA_loop
-    # The steps are observe, oriented, decide, act
+    # The steps are prepare, observe, oriented, decide, act, end
     # Observe - Collect inputs and summarize the create an initial observation of the world state
     # Orient - Summarize the last epoch and reason about what to do next, then augment the observation
     # Decide - Decide which action to take
     # Act - Execute the action that was decided on
     """
+    steps = [observe, orient, decide, act]
+    last_output = None
+    while True:
+        for step in steps:
+            last_output = step(last_output)
+            if stepped:
+                print("Waiting for next step...")
+                event.wait()  # Wait here until event is set
+                event.clear()  # Clear the event
 
-    # Each run of the loop is an epoch
+
+
+### OBSERVE FUNCTIONS ###
+
+
+def observe(last_observation=None):
+    if last_observation is not None:
+        write_dict_to_log(last_observation, "observation_end")
     increment_epoch()
     epoch = get_epoch()
 
     if epoch == 1:
         create_event("I have just woken up.", type="system", subtype="intialized")
 
-    ### OBSERVE ###
-    # Collect inputs and summarize the create an initial observation of the world state
-    observation = observe()
-
-    ### ORIENT ###
-    # Summarize the last epoch and reason about what to do next
-    observation = orient(observation)
-
-    ### DECIDE ###
-    # Based on the orientation, decide which action to take
-    observation = decide(observation)
-
-    ### ACT ###
-    # Execute the action that was decided on
-    observation = act(observation)
-
-    write_dict_to_log(observation, "observation_loop_end")
-
-
-### OBSERVE ###
-
-
-def observe():
     events = get_events(n_results=MAX_PROMPT_LIST_ITEMS)
 
     # reverse events
@@ -146,11 +157,11 @@ def observe():
         "available_actions": None,  # populated in the loop by the orient function
         "reasoning": None,  # populated in the loop by the decision function
     }
-    write_dict_to_log(observation, "observation_observe")
+    write_dict_to_log(observation, "observation_start")
     return observation
 
 
-### ORIENT ###
+### ORIENT FUNCTIONS ###
 
 
 orient_prompt = """Current Epoch: {{epoch}}
@@ -256,7 +267,7 @@ def orient(observation):
     return observation
 
 
-### DECIDE ###
+### DECIDE FUNCTIONS ###
 
 
 decision_prompt = """Current Epoch: {{epoch}}
@@ -324,7 +335,7 @@ def decide(observation):
     return observation
 
 
-### ACT ###
+### ACT FUNCTIONS ###
 
 
 def act(observation):
@@ -337,7 +348,7 @@ def act(observation):
             type="error",
             subtype="action_not_found",
         )
-        return
+        return { "error": f"Action {action_name} not found" }
 
     composed_action_prompt = compose_prompt(action["prompt"], observation)
 

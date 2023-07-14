@@ -1,5 +1,6 @@
 python-dotenv
 flask
+keyboard
 agentmemory
 agentbrowser
 easycompletion
