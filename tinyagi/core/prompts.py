@@ -131,7 +131,7 @@ decision_function = compose_function(
         },
         "user_reasoning": {
             "type": "string",
-            "description": "The reasoning behind the decision, from the perspective of the user. Why did I, the user choose this action? Should be written as if you were the user, in the first person.",
+            "description": "Rewrite the assistant_reasoning from the perspective of the user. Rewrite your reasoning from my perspective, using 'I' instead of 'You'.",
         },
     },
     required_properties=["action_name", "assistant_reasoning", "user_reasoning"],
