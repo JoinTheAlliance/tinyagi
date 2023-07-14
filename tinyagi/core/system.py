@@ -4,6 +4,13 @@ import os
 from agentmemory import count_memories, create_memory
 
 
+def check_log_dirs():
+        # check if /logs and /logs/loop exists and create them if they don't
+    if not os.path.isdir("./logs"):
+        os.mkdir("./logs")
+    if not os.path.isdir("./logs/loop"):
+        os.mkdir("./logs/loop")
+
 # Get the current event epoch
 def get_epoch():
     # returns current event epoch

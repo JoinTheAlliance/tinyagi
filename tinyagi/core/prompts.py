@@ -5,11 +5,14 @@ import json
 import os
 import sys
 from datetime import datetime
+import time
 
 from easycompletion import (
     compose_function,
     count_tokens,
 )
+
+from tinyagi.core.system import check_log_dirs, debug_log
 
 from .events import (
     get_events,
@@ -114,6 +117,21 @@ decision_function = compose_function(
     required_properties=["action_name", "assistant_reasoning", "user_reasoning"],
 )
 
+def write_observation_to_log(observation_data):
+    check_log_dirs()
+    # if debug is not true, skip this
+    if os.environ.get("TINYAGI_DEBUG") not in ["1", "true", "True"]:
+        return
+    
+    text = ""
+    # observation is a key value store
+    for key, value in observation_data.items():
+        text += f"{key}: {value}\n"
+    debug_log(f"observation:{text}")
+    # write the prompt, functions and response to a file
+    with open(f"./logs/loop/observation_{time.time()}.txt", "w") as f:
+        f.write(text)
+            
 
 def compose_observation(token_limit=1536, short=False):
     limits = {
@@ -135,14 +153,16 @@ def compose_observation(token_limit=1536, short=False):
     # reverse events
     events = events[::-1]
 
-    # each event is a dictionary with keys: id, document, metadata
-    # Inside the metadata is the epoch number
-    # Join the documents together into a single string
-
     formatted_events = "\n".join([event["document"] for event in events])
 
     summaries = get_events(type="summary", n_results=limits["summaries"])
     formatted_summaries = "\n".join([s["document"] for s in summaries])
+
+    print('************************************************')
+    print('****** SUMMARIES')
+    print(formatted_summaries)
+    if formatted_summaries == "":
+        formatted_summaries = "(No summaries yet.)"
 
     observation_data = {
         "current_time": datetime.now().strftime("%H:%M"),
@@ -162,7 +182,11 @@ def compose_observation(token_limit=1536, short=False):
 
     prompt_string = json.dumps(observation_data, indent=None)
     token_count = count_tokens(prompt_string)
+    
+
+
     # if the observation is too big, shorten it
     if token_count > token_limit:
         return compose_observation(short=True)
+    write_observation_to_log(observation_data)
     return observation_data

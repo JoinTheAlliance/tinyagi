@@ -9,7 +9,7 @@ from easycompletion import (
     compose_prompt,
 )
 
-from .system import debug_log, increment_epoch, get_epoch
+from .system import check_log_dirs, debug_log, increment_epoch, get_epoch
 
 from .actions import (
     get_action,
@@ -36,14 +36,9 @@ def function_call(text, functions, name="prompt"):
         debug_log(
             f"openai_function_call\nprompt:\n{text}\nfunctions:\n{functions}\nresponse:\n{response}"
         )
-        # check if /logs and /logs/prompts exists and create them if they don't
-        if not os.path.isdir("./logs"):
-            os.mkdir("./logs")
-        if not os.path.isdir("./logs/prompts"):
-            os.mkdir("./logs/prompts")
-        timestamp = time.time()
+        check_log_dirs()
         # write the prompt, functions and response to a file
-        with open(f"./logs/prompts/{name}_{timestamp}.txt", "w") as f:
+        with open(f"./logs/loop/{name}_{time.time()}.txt", "w") as f:
             f.write(text)
 
     return response
@@ -71,8 +66,6 @@ def loop():
     ### OBSERVE ###
     # Collect inputs and summarize the current world state - what is currently going on and what actions might we take next?
     observation = compose_observation()
-
-    debug_log(f"observation:\n{observation}")
 
     ### ORIENT ###
     # Summarize the last epoch and think about what to do next
@@ -112,7 +105,7 @@ def loop():
     observation["available_actions"] = formatted_available_actions
 
     # Add observation summary to event stream
-    create_event(summary, type="loop", subtype="observation")
+    create_event(summary, type="summary")
 
     ### DECIDE ###
     # Based on the orientation, decide which relevant action to take
@@ -127,11 +120,12 @@ def loop():
     ### ACT ###
     # Execute the action that was decided on
     # parse the name and arguments from the response object to call an action
-    action = get_action(response["arguments"]["action_name"])
+    action_name = response["arguments"]["action_name"]
+    action = get_action(action_name)
 
     composed_action_prompt = compose_prompt(action["prompt"], observation)
 
-    response = function_call(text=composed_action_prompt, functions=action["function"], name="action")
+    response = function_call(text=composed_action_prompt, functions=action["function"], name=f"action_{action_name}")
 
     use_action(response["function_name"], response["arguments"])
 

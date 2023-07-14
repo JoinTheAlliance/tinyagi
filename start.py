@@ -37,8 +37,7 @@ def seed(filename="seeds.json"):
         seed_data = json.load(f)
 
     # generate array of timestamps that are 10 seconds apart, from newest to oldest
-    timestamp = time.time()
-    timestamps = [timestamp - (10 * i) for i in range(len(seed_data))]
+    timestamps = [time.time() - (10 * i) for i in range(len(seed_data))]
 
     # Iterate over each entry in the JSON data
     for i, entry in enumerate(seed_data):
@@ -58,9 +57,8 @@ if "--reset" in os.sys.argv:
     # delete logs folder
     if os.path.isdir("./logs"):
         os.system("rm -rf ./logs")
-    # create it again
     os.mkdir("./logs")
-    os.mkdir("./logs/prompts")
+    os.mkdir("./logs/loop")
     if "--seed" in os.sys.argv:
         seed()
 
