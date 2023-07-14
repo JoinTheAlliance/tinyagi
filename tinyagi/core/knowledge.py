@@ -6,7 +6,7 @@ from agentmemory import (
 )
 from easycompletion import count_tokens, trim_prompt
 
-from tinyagi.core.constants import ENTRY_TOKEN_DISPLAY_LIMIT, SIMILARY_THRESHOLD, TOKEN_DISPLAY_LIMIT
+from tinyagi.core.constants import MAX_PROMPT_LIST_TOKENS, SIMILARY_THRESHOLD, MAX_PROMPT_TOKENS
 
 from .events import get_epoch
 
@@ -71,13 +71,13 @@ def formatted_search_knowledge(search_text, min_distance=None, max_distance=None
     # trim any individual knowledge, just in case
     for i in range(len(knowledge)):
         document = knowledge[i]["document"]
-        if count_tokens(document) > ENTRY_TOKEN_DISPLAY_LIMIT:
+        if count_tokens(document) > MAX_PROMPT_LIST_TOKENS:
             knowledge[i]["document"] = (
-                trim_prompt(document, ENTRY_TOKEN_DISPLAY_LIMIT - 5) + " ..."
+                trim_prompt(document, MAX_PROMPT_LIST_TOKENS - 5) + " ..."
             )
     formatted_knowledge = "\n".join([k["document"] for k in knowledge])
 
-    while count_tokens(formatted_knowledge) > TOKEN_DISPLAY_LIMIT:
+    while count_tokens(formatted_knowledge) > MAX_PROMPT_TOKENS:
         if len(recent_knowledge) == 1:
             raise Exception(
                 "Single knowledge length is greater than token limit, should not happen"

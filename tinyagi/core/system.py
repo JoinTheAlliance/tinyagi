@@ -1,17 +1,20 @@
 from datetime import datetime
 import os
+import time
 
 from agentmemory import count_memories, create_memory
+from easycompletion import openai_function_call
 
 from tinyagi.core.constants import DEBUG
 
 
 def check_log_dirs():
-        # check if /logs and /logs/loop exists and create them if they don't
+    # check if /logs and /logs/loop exists and create them if they don't
     if not os.path.isdir("./logs"):
         os.mkdir("./logs")
     if not os.path.isdir("./logs/loop"):
         os.mkdir("./logs/loop")
+
 
 # Get the current event epoch
 def get_epoch():
@@ -68,3 +71,34 @@ def write_to_log(content, write_to_debug=False, filename="logs/events.txt"):
         debug_filename = filename.replace(".txt", "_debug.txt")
         with open(debug_filename, "a") as f:
             f.write(f"DEBUG >>> {content}\n")
+
+
+def write_dict_to_log(dictionary, filename="observation"):
+    # if debug is not true, skip this
+    if os.environ.get("TINYAGI_DEBUG") not in ["1", "true", "True"]:
+        return
+
+    check_log_dirs()
+
+    text = ""
+    # observation is a key value store
+    for key, value in dictionary.items():
+        text += f"{key}: {value}\n"
+
+    # write the prompt, functions and response to a file
+    with open(f"./logs/loop/{filename}_{time.time()}.txt", "w") as f:
+        f.write(text)
+
+def debuggable_function_call(text, functions, name="prompt"):
+    # Wraps openai_function_call in debug logging
+    response = openai_function_call(text=text, functions=functions)
+    if DEBUG:
+        debug_log(
+            f"openai_function_call\nprompt:\n{text}\nfunctions:\n{functions}\nresponse:\n{response}"
+        )
+        check_log_dirs()
+        # write the prompt, functions and response to a file
+        with open(f"./logs/loop/{name}_{time.time()}.txt", "w") as f:
+            f.write(text)
+
+    return response

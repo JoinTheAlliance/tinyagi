@@ -1,14 +1,12 @@
 # core/loop.py
 # Handles the main execution loop, which repeats at a fixed internal
 
-import json
 import time
 import os
 import sys
 from datetime import datetime
 
 from easycompletion import (
-    openai_function_call,
     compose_prompt,
     compose_function,
     count_tokens,
@@ -16,14 +14,17 @@ from easycompletion import (
 )
 
 from tinyagi.core.constants import (
-    DEBUG,
-    UPDATE_INTERVAL,
-    EVENT_COUNT_DISPLAY_LIMIT,
-    TOKEN_DISPLAY_LIMIT,
-    ENTRY_TOKEN_DISPLAY_LIMIT,
+    MAX_PROMPT_LIST_ITEMS,
+    MAX_PROMPT_TOKENS,
+    MAX_PROMPT_LIST_TOKENS,
 )
 
-from .system import check_log_dirs, debug_log, increment_epoch, get_epoch
+from .system import (
+    increment_epoch,
+    get_epoch,
+    write_dict_to_log,
+    debuggable_function_call,
+)
 
 from .actions import (
     get_action,
@@ -40,22 +41,23 @@ from .knowledge import (
 
 
 ### START ###
+
+
 def start():
     while True:
-        print("looping")
         loop()
-        time.sleep(UPDATE_INTERVAL)
-
 
 ### MAIN LOOP ###
+
+
 def loop():
     """
     Main execution loop. This is modeled on the OODA loop -- https://en.wikipedia.org/wiki/OODA_loop
     # The steps are observe, oriented, decide, act
-    # Observe - collect inputs and summarize the current world state - what is currently going on and what actions might we take next?
-    # Orient - summarize the last epoch and think about what to do next, then augment the observation
-    # Decide - based on the orientation and observation, decide which relevant action to take
-    # Act - execute the action that was decided on
+    # Observe - Collect inputs and summarize the create an initial observation of the world state
+    # Orient - Summarize the last epoch and reason about what to do next, then augment the observation
+    # Decide - Decide which action to take
+    # Act - Execute the action that was decided on
     """
 
     # Each run of the loop is an epoch
@@ -65,55 +67,30 @@ def loop():
     if epoch == 1:
         create_event("I have just woken up.", type="system", subtype="intialized")
 
-    epoch = get_epoch()
-
     ### OBSERVE ###
-    # Collect inputs and summarize the current world state - what is currently going on and what actions might we take next?
+    # Collect inputs and summarize the create an initial observation of the world state
     observation = observe()
 
     ### ORIENT ###
-    # Summarize the last epoch and think about what to do next
-
+    # Summarize the last epoch and reason about what to do next
     observation = orient(observation)
 
     ### DECIDE ###
-    # Based on the orientation, decide which relevant action to take
+    # Based on the orientation, decide which action to take
     observation = decide(observation)
 
     ### ACT ###
     # Execute the action that was decided on
-    # parse the name and arguments from the response object to call an action
     observation = act(observation)
 
-    write_observation_to_log(observation, "loop_end")
-    
-
-def write_observation_to_log(observation, step="loop"):
-    # if debug is not true, skip this
-    if os.environ.get("TINYAGI_DEBUG") not in ["1", "true", "True"]:
-        return
-
-    check_log_dirs()
-
-    print("observation is", observation)
-
-    text = ""
-    # observation is a key value store
-    for key, value in observation.items():
-        text += f"{key}: {value}\n"
-    debug_log(f"observation:{text}")
-    filename = "observation"
-    # write the prompt, functions and response to a file
-    with open(f"./logs/loop/{filename}_{step}_{time.time()}.txt", "w") as f:
-        f.write(text)
-
+    write_dict_to_log(observation, "observation_loop_end")
 
 
 ### OBSERVE ###
 
 
 def observe():
-    events = get_events(n_results=EVENT_COUNT_DISPLAY_LIMIT)
+    events = get_events(n_results=MAX_PROMPT_LIST_ITEMS)
 
     # reverse events
     events = events[::-1]
@@ -124,12 +101,12 @@ def observe():
     # trim any individual events, just in case
     for i in range(len(events)):
         document = events[i]["document"]
-        if count_tokens(document) > ENTRY_TOKEN_DISPLAY_LIMIT:
+        if count_tokens(document) > MAX_PROMPT_LIST_TOKENS:
             events[i]["document"] = (
-                trim_prompt(document, ENTRY_TOKEN_DISPLAY_LIMIT - 5) + " ..."
+                trim_prompt(document, MAX_PROMPT_LIST_TOKENS - 5) + " ..."
             )
 
-    while count_tokens(annotated_events) > TOKEN_DISPLAY_LIMIT:
+    while count_tokens(annotated_events) > MAX_PROMPT_TOKENS:
         # remove the first event
         events = events[1:]
         annotated_events = "\n".join([event_to_string(event) for event in events])
@@ -139,14 +116,14 @@ def observe():
     # trim any individual knowledge, just in case
     for i in range(len(recent_knowledge)):
         document = recent_knowledge[i]["document"]
-        if count_tokens(document) > ENTRY_TOKEN_DISPLAY_LIMIT:
+        if count_tokens(document) > MAX_PROMPT_LIST_TOKENS:
             recent_knowledge[i]["document"] = (
-                trim_prompt(document, ENTRY_TOKEN_DISPLAY_LIMIT - 5) + " ..."
+                trim_prompt(document, MAX_PROMPT_LIST_TOKENS - 5) + " ..."
             )
 
     formatted_knowledge = "\n".join([k["document"] for k in recent_knowledge])
 
-    while count_tokens(formatted_knowledge) > TOKEN_DISPLAY_LIMIT:
+    while count_tokens(formatted_knowledge) > MAX_PROMPT_TOKENS:
         if len(recent_knowledge) == 1:
             raise Exception(
                 "Single knowledge length is greater than token limit, should not happen"
@@ -169,11 +146,12 @@ def observe():
         "available_actions": None,  # populated in the loop by the orient function
         "reasoning": None,  # populated in the loop by the decision function
     }
-    write_observation_to_log(observation, "loop_end")
+    write_dict_to_log(observation, "observation_observe")
     return observation
 
 
 ### ORIENT ###
+
 
 orient_prompt = """Current Epoch: {{epoch}}
 The current time is {{current_time}} on {{current_date}}.
@@ -274,11 +252,12 @@ def orient(observation):
 
     # Add observation summary to event stream
     create_event(summary, type="summary")
-    write_observation_to_log(observation, "orient")
+    write_dict_to_log(observation, "observation_orient")
     return observation
 
 
 ### DECIDE ###
+
 
 decision_prompt = """Current Epoch: {{epoch}}
 The current time is {{current_time}} on {{current_date}}.
@@ -341,8 +320,12 @@ def decide(observation):
     observation["reasoning"] = reasoning
     observation["action_name"] = response["arguments"]["action_name"]
     create_event(reasoning, type="reasoning")
-    write_observation_to_log(observation, "decide")
+    write_dict_to_log(observation, "observation_decide")
     return observation
+
+
+### ACT ###
+
 
 def act(observation):
     action_name = observation["action_name"]
@@ -367,22 +350,5 @@ def act(observation):
     # TODO: check if the action is the last as last time
 
     use_action(response["function_name"], response["arguments"])
-    write_observation_to_log(observation, "act")
+    write_dict_to_log(observation, "observation_act")
     return observation
-
-### UTILS ###
-
-
-def debuggable_function_call(text, functions, name="prompt"):
-    # Wraps openai_function_call in debug logging
-    response = openai_function_call(text=text, functions=functions)
-    if DEBUG:
-        debug_log(
-            f"openai_function_call\nprompt:\n{text}\nfunctions:\n{functions}\nresponse:\n{response}"
-        )
-        check_log_dirs()
-        # write the prompt, functions and response to a file
-        with open(f"./logs/loop/{name}_{time.time()}.txt", "w") as f:
-            f.write(text)
-
-    return response

@@ -17,7 +17,7 @@ from agentmemory import (
 )
 from easycompletion import count_tokens
 
-from tinyagi.core.constants import TOKEN_DISPLAY_LIMIT
+from tinyagi.core.constants import MAX_PROMPT_TOKENS
 from .events import create_event, debug_log, get_epoch
 
 # Create an empty dictionary to hold the actions
@@ -60,7 +60,7 @@ def get_last_action():
 def get_formatted_available_actions(summary):
     available_actions = get_available_actions(summary)
     formatted_available_actions = "\n".join(available_actions)
-    while count_tokens(formatted_available_actions) > TOKEN_DISPLAY_LIMIT:
+    while count_tokens(formatted_available_actions) > MAX_PROMPT_TOKENS:
         if len(available_actions) == 1:
             raise Exception(
                 "Single knowledge length is greater than token limit, should not happen"
