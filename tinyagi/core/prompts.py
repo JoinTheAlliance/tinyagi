@@ -12,7 +12,7 @@ from easycompletion import (
     count_tokens,
 )
 
-from tinyagi.core.system import check_log_dirs, debug_log
+from tinyagi.core.system import check_log_dirs, debug_log, get_epoch
 
 from .events import (
     get_events,
@@ -23,19 +23,22 @@ from easycompletion import (
     compose_function,
 )
 
-orient_prompt = """\
-The current time is {{current_time}} on {{current_date}}.
-
-# Event stream
-These are the events I have done recently:
-{{events}}
+orient_prompt = """The current time is {{current_time}} on {{current_date}}.
+Recent Events are formatted as follows:
+Epoch # | <Type> [Subtype] (Creator): <Event>
+============================================
+{{annotated_events}}
 
 # Assistant Task
-Please summarize, from the most recent events, how it's going, what I learned this epoch and what I should do next.
-First, summarize as yourself (the assistant), then summarize as if you were me, the user, in the first person from my perspective.
-Lastly, include any new knowledge that I learned this epoch as an array of knowledge items.
-Each knowledge item should be a factual statement that I learned, and should include the source, the content and the relationship.
-If there is no new knowledge, respnd with an empty array [].
+- Summarize what happened in Epoch {{epoch}} and reason about what I should do next to move forward.
+- First, summarize as yourself (the assistant). Include any relevant information for me, the user, for the next step.
+- Next summarize as if you were me, the user, in the first person from my perspective. Use "I" instead of "You".
+- Lastly, include any new knowledge that I learned this epoch as an array of knowledge items.
+- Your summary should include what I learned, what you think I should do next and why. You should argue for why you think this is the best next step.
+- I am worried about getting stuck in a loop or make new progress. Your reasoning should be novel and interesting and helpful me to make progress towards my goals.
+- Each knowledge array item should be a factual statement that I learned, and should include the source, the content and the relationship.
+- ONLY extract knowledge from this epoch, which is #{{epoch}}. Do not extract knowledge from previous epochs.
+- If there is no new knowledge, respond with an empty array [].
 """
 
 
@@ -77,37 +80,41 @@ orient_function = compose_function(
 )
 
 
-decision_prompt = """\
-The current time is {{current_time}} on {{current_date}}.
+decision_prompt = """The current time is {{current_time}} on {{current_date}}.
 
 Here are some things I know:
 {{knowledge}}
 
 This is my event stream. These are the latest events that have happened:
-{{events}}
+{{annotated_events}}
 
 These are the actions available for me to take:
 {{available_actions}}
 
-Which action should I take next?
-Your task: Please decide which of the actions that you think is the best next step for me.
-Respond with the name of the action.
-I will do the action and let you know how it went.
-Do not ask if you can help. Do not ask how you can assist. Just tell me the action that is the best next step for me. You are the decision maker.
-"""
+Assistant Notes:
+- Do not ask if you can help. Do not ask how you can assist. Do not gather more information.
+- I will not repeat the same action unless it achieves some additional goal. I don't like getting stuck in loops or repeating myself.
+- I prefer to act in a way that is novel and interesting.
+- I only want to gather additional knowledge when I have to. I like to try things first.
 
+Your task: 
+- Decide which of the actions that you think is the best next step to progress towards my goals.
+- Based on the information provided, write a summary from your perspective of what action I should take next and why (assistant_reasoning)
+- Respond with the name of the action (action_name)
+- Rewrite the summary as if you were me, the user, in the first person (user_reasoning)
+"""
 
 decision_function = compose_function(
     name="decide_action",
     description="Decide which action to take next.",
     properties={
-        "action_name": {
-            "type": "string",
-            "description": "The name of the action to take. Should be one of the available actions, and should not include quotes or any punctuation",
-        },
         "assistant_reasoning": {
             "type": "string",
             "description": "The reasoning behind the decision. Why did you choose this action? Should be written from your perspective, as the assistant, telling the user why you chose this action.",
+        },
+        "action_name": {
+            "type": "string",
+            "description": "The name of the action to take. Should be one of the available actions, and should not include quotes or any punctuation",
         },
         "user_reasoning": {
             "type": "string",
@@ -155,6 +162,27 @@ def compose_observation(token_limit=1536, short=False):
 
     formatted_events = "\n".join([event["document"] for event in events])
 
+    # annotated events
+    annotated_events = ""
+    # iterate through events and print f"{event['metadata']['epoch']} | 
+    for event in events:
+        if(annotated_events != ""):
+            annotated_events += "\n"
+        e_m = event['metadata']
+        print("event document")
+        print(event['document'])
+        print("e_m")
+        print(e_m)
+        # check if e_m['epoch'] is none, set it to 0 if it is
+        if e_m.get('epoch') is None:
+            e_m['epoch'] = 0
+        annotated_events += f"{e_m['epoch']} | {e_m['type']}"
+        if e_m.get('subtype') is not None:
+            annotated_events += f"::{e_m['subtype']}"
+        if e_m.get('creator') != 'Me' and e_m.get('creator') is not None:
+            annotated_events += f" ({e_m['creator']})"
+        annotated_events += f": {event['document']}"
+
     summaries = get_events(type="summary", n_results=limits["summaries"])
     formatted_summaries = "\n".join([s["document"] for s in summaries])
 
@@ -162,19 +190,21 @@ def compose_observation(token_limit=1536, short=False):
     print('****** SUMMARIES')
     print(formatted_summaries)
     if formatted_summaries == "":
-        formatted_summaries = "(No summaries yet.)"
+        formatted_summaries = "(No summaries yet)"
 
     observation_data = {
+        "epoch": get_epoch(),
         "current_time": datetime.now().strftime("%H:%M"),
         "current_date": datetime.now().strftime("%Y-%m-%d"),
         "platform": sys.platform,
         "cwd": os.getcwd(),
         "events": formatted_events,
+        "annotated_events": annotated_events,
         "previous_summaries": formatted_summaries,
         "knowledge": None,  # populated in loop
         "summary": None,  # populated in loop from orient function
         "available_actions": None,  # populated in the loop by the orient function
-        "action_reasoning": None,  # populated in the loop by the decision function
+        "reasoning": None,  # populated in the loop by the decision function
     }
 
     if short is True:

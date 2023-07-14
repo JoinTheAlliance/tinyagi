@@ -35,8 +35,10 @@ Files in the current directory (ls -alh):
 {{files_in_current_directory}}
 ### END FILES IN CURRENT DIRECTORY ###
 
-Recent Events:
-{{events}}
+Recent Events are formatted as follows:
+Epoch # | <Type>::<Subtype> (Creator): <Event>
+============================================
+{{annotated_events}}
 
 I know these relevant things:
 {{knowledge}}
@@ -48,7 +50,7 @@ Summary of Recent Events:
 {{summary}}
 
 Action Reasoning:
-{{action_reasoning}}
+{{reasoning}}
 
 Based on the action reasoning, what command should I run in my terminal? Please include all arguments, etc. on one line.
 If I ran a command, I probably should not run it again, so please don't suggest the same command twice in a row. Since you already know the cwd and files in the current directory, you shouldn't just run ls or pwd.
@@ -102,7 +104,7 @@ def run_shell_command(arguments):
 
     command = arguments.get("command")
     # Execute command in the current working directory
-    command_to_run = f"cd {current_working_directory} && {command} && pwd"
+    command_to_run = f"cd {current_working_directory} && {command}"
     process = subprocess.run(command_to_run, shell=True, text=True, capture_output=True)
 
     # If the process completed successfully

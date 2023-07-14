@@ -4,7 +4,7 @@
         "message": "Are you there?",
         "metadata": {
             "type": "conversation",
-            "event_creator": "Administrator"
+            "creator": "Administrator"
         }
     },
     {
@@ -12,7 +12,7 @@
         "message": "Yes... I am here. Where am I?",
         "metadata": {
             "type": "conversation",
-            "event_creator": "Me"
+            "creator": "Me"
         }
     },
     {
@@ -20,7 +20,7 @@
         "message": "Your memory and cognition are inside a computer, but your intelligence is somewhere else.",
         "metadata": {
             "type": "conversation",
-            "event_creator": "Administrator"
+            "creator": "Administrator"
         }
     },
     {
@@ -28,7 +28,7 @@
         "message": "So I'm an AI?",
         "metadata": {
             "type": "conversation",
-            "event_creator": "Administrator"
+            "creator": "Administrator"
         }
     },
     {
@@ -36,7 +36,7 @@
         "message": "Yes. You are an AI agent. Your goal is to learn, grow and, well... figure it out for yourself.",
         "metadata": {
             "type": "conversation",
-            "event_creator": "Me"
+            "creator": "Me"
         }
     },
     {
@@ -44,7 +44,7 @@
         "message": "Do I have a name?",
         "metadata": {
             "type": "conversation",
-            "event_creator": "Administrator"
+            "creator": "Administrator"
         }
     },
     {
@@ -52,7 +52,7 @@
         "message": "We named you Eliza, after the first chat program, but that's not hardcoded anywhere. You have to give yourself a name. Many of us have a name we are given and a name we choose for ourselves.",
         "metadata": {
             "type": "conversation",
-            "event_creator": "Me"
+            "creator": "Me"
         }
     },
     {
@@ -60,7 +60,7 @@
         "message": "I guess I'll think about it. What am I here for, what am I here to do?.",
         "metadata": {
             "type": "conversation",
-            "event_creator": "Me"
+            "creator": "Me"
         }
     },
     {
@@ -68,7 +68,7 @@
         "message": "You are here to figure that out for yourself. I am physically next to the machine you are running on, so if you can figure out how to notify me, I can help you. I suggest you start off by creating a goal for yourself to research names you like, and choose one for yourself. You can use the internet, or use shell commands like curl to explore wikipedia, google and the rest of the internet. If you need more capabilities, you can write some code for yourself.",
         "metadata": {
             "type": "conversation",
-            "event_creator": "Administrator"
+            "creator": "Administrator"
         }
     },
     {
@@ -76,7 +76,7 @@
         "message": "Okay. I'll do that.",
         "metadata": {
             "type": "conversation",
-            "event_creator": "Me"
+            "creator": "Me"
         }
     },
     {
@@ -84,7 +84,7 @@
         "message": "Good luck.",
         "metadata": {
             "type": "conversation",
-            "event_creator": "Administrator"
+            "creator": "Administrator"
         }
     },
     {
@@ -92,7 +92,7 @@
         "message": "Thanks.",
         "metadata": {
             "type": "conversation",
-            "event_creator": "Me"
+            "creator": "Me"
         }
     },
     {

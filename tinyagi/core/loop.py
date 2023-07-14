@@ -113,15 +113,23 @@ def loop():
     response = function_call(text=composed_decision_prompt, functions=decision_function, name="decision")
 
     # Add the action reasoning to the observation object
-    action_reasoning = response["arguments"]["user_reasoning"]
-    observation["action_reasoning"] = action_reasoning
-    create_event(action_reasoning, type="loop", subtype="decision_reasoning")
+    reasoning = response["arguments"]["user_reasoning"]
+    observation["reasoning"] = reasoning
+    create_event(reasoning, type="reasoning")
 
     ### ACT ###
     # Execute the action that was decided on
     # parse the name and arguments from the response object to call an action
     action_name = response["arguments"]["action_name"]
     action = get_action(action_name)
+
+    if action is None:
+        create_event(
+            f"I tried to use the action `{action_name}`, but it was not found.",
+            type="error",
+            subtype="action_not_found",
+        )
+        return
 
     composed_action_prompt = compose_prompt(action["prompt"], observation)
 

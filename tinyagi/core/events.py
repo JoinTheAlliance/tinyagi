@@ -3,13 +3,13 @@ from agentmemory import create_memory, search_memory, get_memories
 from .system import get_epoch, write_to_log, debug_log
 
 
-def create_event(content, type=None, subtype=None, event_creator="Me", metadata={}):
+def create_event(content, type=None, subtype=None, creator="Me", metadata={}):
     """
     Create event, then save it to the event log file and print it
     """
     metadata["type"] = type
     metadata["subtype"] = subtype
-    metadata["event_creator"] = event_creator
+    metadata["creator"] = creator
     metadata["epoch"] = get_epoch()
 
     # if any keys are None, delete them
