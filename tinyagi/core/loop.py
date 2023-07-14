@@ -5,8 +5,17 @@ import os
 import time
 
 from easycompletion import (
+    count_tokens,
     openai_function_call,
     compose_prompt,
+    trim_prompt,
+)
+
+from tinyagi.core.constants import (
+    DEBUG,
+    ENTRY_TOKEN_DISPLAY_LIMIT,
+    TOKEN_DISPLAY_LIMIT,
+    UPDATE_INTERVAL,
 )
 
 from .system import check_log_dirs, debug_log, increment_epoch, get_epoch
@@ -14,25 +23,27 @@ from .system import check_log_dirs, debug_log, increment_epoch, get_epoch
 from .actions import (
     get_action,
     get_available_actions,
+    get_formatted_available_actions,
     use_action,
 )
 from .events import create_event
 
-from .knowledge import add_knowledge, search_knowledge
+from .knowledge import add_knowledge, formatted_search_knowledge, search_knowledge
 
 from .prompts import (
     orient_prompt,
     decision_prompt,
     orient_function,
     decision_function,
-    compose_observation,
+    create_initial_observation,
+    write_observation_to_log,
 )
 
 
 def function_call(text, functions, name="prompt"):
     # Wraps openai_function_call in debug logging
     response = openai_function_call(text=text, functions=functions)
-    if os.environ.get("TINYAGI_DEBUG") in ["1", "true", "True"]:
+    if DEBUG:
         debug_log(
             f"openai_function_call\nprompt:\n{text}\nfunctions:\n{functions}\nresponse:\n{response}"
         )
@@ -59,19 +70,21 @@ def loop():
     epoch = get_epoch()
 
     if epoch == 1:
-        create_event("I have just woken up.", type="loop", subtype="init")
+        create_event("I have just woken up.", type="system", subtype="intialized")
 
     epoch = get_epoch()
 
     ### OBSERVE ###
     # Collect inputs and summarize the current world state - what is currently going on and what actions might we take next?
-    observation = compose_observation()
+    observation = create_initial_observation()
 
     ### ORIENT ###
     # Summarize the last epoch and think about what to do next
 
     composed_orient_prompt = compose_prompt(orient_prompt, observation)
-    response = function_call(text=composed_orient_prompt, functions=orient_function, name="orient")
+    response = function_call(
+        text=composed_orient_prompt, functions=orient_function, name="orient"
+    )
 
     arguments = response["arguments"]
     if arguments is None:
@@ -86,31 +99,34 @@ def loop():
             metadata = {
                 "source": k["source"],
                 "relationship": k["relationship"],
-                "document": k["content"],
             }
-            document = f"From {k['source']}: {k['content']} - {k['relationship']}"
-            add_knowledge(document, metadata=metadata)
+            add_knowledge(k["content"], metadata=metadata)
 
     # Get the summary and add to the observation object
     summary = response["arguments"]["summary_as_user"]
     observation["summary"] = summary
 
     # Search for knowledge based on the summary and add to the observation object
-    knowledge = search_knowledge(search_text=summary, n_results=10)
-    formatted_knowledge = "\n".join([k["document"] for k in knowledge])
-    observation["knowledge"] = formatted_knowledge
+    observation["knowledge"] = formatted_search_knowledge(
+        search_text=summary, n_results=10
+    )
 
-    available_actions = get_available_actions(summary)
-    formatted_available_actions = "\n".join(available_actions)
-    observation["available_actions"] = formatted_available_actions
-
+    # Search for the most relevant available actions based on the summary
+    observation["available_actions"] = get_formatted_available_actions(summary)
+    print("***** observation")
+    print(observation)
     # Add observation summary to event stream
     create_event(summary, type="summary")
 
     ### DECIDE ###
     # Based on the orientation, decide which relevant action to take
     composed_decision_prompt = compose_prompt(decision_prompt, observation)
-    response = function_call(text=composed_decision_prompt, functions=decision_function, name="decision")
+    response = function_call(
+        text=composed_decision_prompt, functions=decision_function, name="decision"
+    )
+
+    print("*** composed_decision_prompt ***")
+    print(composed_decision_prompt)
 
     # Add the action reasoning to the observation object
     reasoning = response["arguments"]["user_reasoning"]
@@ -133,13 +149,18 @@ def loop():
 
     composed_action_prompt = compose_prompt(action["prompt"], observation)
 
-    response = function_call(text=composed_action_prompt, functions=action["function"], name=f"action_{action_name}")
+    response = function_call(
+        text=composed_action_prompt,
+        functions=action["function"],
+        name=f"action_{action_name}",
+    )
 
     use_action(response["function_name"], response["arguments"])
 
+    write_observation_to_log(observation, end=True)
+
+
 def start():
     while True:
-        interval = os.getenv("UPDATE_INTERVAL") or 1
-        interval = int(interval)
         loop()
-        time.sleep(interval)
+        time.sleep(UPDATE_INTERVAL)

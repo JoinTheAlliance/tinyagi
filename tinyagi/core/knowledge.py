@@ -1,26 +1,33 @@
 from agentmemory import (
     create_memory,
     delete_memory,
+    get_memories,
     search_memory,
 )
+from easycompletion import count_tokens, trim_prompt
+
+from tinyagi.core.constants import ENTRY_TOKEN_DISPLAY_LIMIT, SIMILARY_THRESHOLD, TOKEN_DISPLAY_LIMIT
 
 from .events import get_epoch
 
 
-def add_knowledge(content, metadata={}, max_similarity=.92):
+def add_knowledge(content, metadata={}, similarity=SIMILARY_THRESHOLD):
     """
     Search for similar knowledge. If there is none, create it.
     """
 
-    max_distance = 1.0 - max_similarity
+    max_distance = 1.0 - similarity
 
     similar_knowledge = search_knowledge(
         content, max_distance=max_distance, n_results=1
     )
 
+    print("similar knowledge:")
+    print(similar_knowledge)
+
     metadata = {
-            "epoch": get_epoch(),
-        }
+        "epoch": get_epoch(),
+    }
 
     if len(similar_knowledge) == 0:
         metadata["unique"] = True
@@ -33,7 +40,7 @@ def add_knowledge(content, metadata={}, max_similarity=.92):
     create_memory("knowledge", content, metadata=metadata)
 
 
-def remove_knowledge(content, similarity_threshold=0.9):
+def remove_knowledge(content, similarity_threshold=SIMILARY_THRESHOLD):
     """
     Find goal that contains content, then remove it
     """
@@ -50,7 +57,34 @@ def remove_knowledge(content, similarity_threshold=0.9):
 
 def delete_knowledge_by_id(id):
     delete_memory("knowledge", id)
+    
 
+def get_knowledge_from_epoch(epoch=get_epoch()):
+    """
+    Get knowledge from a specific epoch
+    """
+    memories = get_memories("knowledge", filter_metadata={"epoch": epoch})
+    return memories
+
+def formatted_search_knowledge(search_text, min_distance=None, max_distance=None, n_results=5):
+    knowledge = search_knowledge(search_text, min_distance=min_distance, max_distance=max_distance, n_results=n_results)
+    # trim any individual knowledge, just in case
+    for i in range(len(knowledge)):
+        document = knowledge[i]["document"]
+        if count_tokens(document) > ENTRY_TOKEN_DISPLAY_LIMIT:
+            knowledge[i]["document"] = (
+                trim_prompt(document, ENTRY_TOKEN_DISPLAY_LIMIT - 5) + " ..."
+            )
+    formatted_knowledge = "\n".join([k["document"] for k in knowledge])
+
+    while count_tokens(formatted_knowledge) > TOKEN_DISPLAY_LIMIT:
+        if len(recent_knowledge) == 1:
+            raise Exception(
+                "Single knowledge length is greater than token limit, should not happen"
+            )
+        # remove the last event
+        recent_knowledge = recent_knowledge[:-1]
+        formatted_knowledge = "\n".join([k["document"] for k in recent_knowledge])
 
 def search_knowledge(search_text, min_distance=None, max_distance=None, n_results=5):
     """
@@ -62,5 +96,5 @@ def search_knowledge(search_text, min_distance=None, max_distance=None, n_result
         max_distance=max_distance,
         search_text=search_text,
         n_results=n_results,
-        filter_metadata={ "unique": True }
+        filter_metadata={"unique": True},
     )

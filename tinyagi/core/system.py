@@ -3,6 +3,8 @@ import os
 
 from agentmemory import count_memories, create_memory
 
+from tinyagi.core.constants import DEBUG
+
 
 def check_log_dirs():
         # check if /logs and /logs/loop exists and create them if they don't
@@ -35,7 +37,7 @@ def debug_log(content, filename="logs/events.txt"):
     """
     Write to the debug log file
     """
-    if os.environ.get("TINYAGI_DEBUG") in ["1", "true", "True"]:
+    if DEBUG:
         print(f"{content}")
         write_to_log(content, write_to_debug=True, filename=filename)
 

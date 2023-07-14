@@ -4,7 +4,7 @@ from tinyagi import (
     delete_knowledge_by_id,
     search_knowledge,
 )
-from agentmemory import count_memories, wipe_all_memories
+from agentmemory import count_memories, get_memories, wipe_all_memories
 
 
 def test_add_knowledge():
@@ -14,12 +14,20 @@ def test_add_knowledge():
     assert count == 1, "Knowledge should be added"
 
     add_knowledge("test")
-    count = count_memories("knowledge")
-    print(count)
-    assert count == 1, "Similar knowledge should not be added twice"
+    memories = get_memories("knowledge")
+    unique_memories = []
+    not_unique_memories = []
+    for memory in memories:
+        if memory["metadata"].get("unique", False):
+            unique_memories.append(memory)
+        else:
+            not_unique_memories.append(memory)
 
+    assert len(unique_memories) == 1, "Each memory should be unique"
+    assert len(not_unique_memories) == 1, "Not-unique memories should be marked as such"
     knowledge = search_knowledge("test")
     assert len(knowledge) > 0 and knowledge[0]["document"] == "test"
+    delete_knowledge_by_id(not_unique_memories[0]["id"])
 
     example_text = "Barbie and Ken are having the time of their lives in the colorful and seemingly perfect world of Barbie Land."
     add_knowledge(example_text)

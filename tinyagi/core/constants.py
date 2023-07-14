@@ -1,0 +1,13 @@
+import os
+import dotenv
+
+dotenv.load_dotenv()
+
+DEBUG = os.environ.get("TINYAGI_DEBUG") in ["1", "true", "True"]
+UPDATE_INTERVAL = int(os.environ.get("TINYAGI_UPDATE_INTERVAL", 1))
+SIMILARY_THRESHOLD = 0.92
+
+EVENT_COUNT_DISPLAY_LIMIT = 30
+ENTRY_TOKEN_DISPLAY_LIMIT = 1536 # 2048 - 512
+TOKEN_DISPLAY_LIMIT = 6144 # 8192 - 2048
+MAX_PROMPT_LIMIT = 15360 # 16384 - 1024

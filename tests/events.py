@@ -8,7 +8,7 @@ def test_create_event():
     """
     wipe_all_memories()
     previous_count = count_memories("events")
-    create_event("Test event")
+    create_event("Test event", "test")
     current_count = count_memories("events")
     assert current_count == previous_count + 1, "Event creation did not increase count"
 

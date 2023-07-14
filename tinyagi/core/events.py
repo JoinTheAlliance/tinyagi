@@ -3,7 +3,7 @@ from agentmemory import create_memory, search_memory, get_memories
 from .system import get_epoch, write_to_log, debug_log
 
 
-def create_event(content, type=None, subtype=None, creator="Me", metadata={}):
+def create_event(content, type=None, subtype=None, creator=None, metadata={}):
     """
     Create event, then save it to the event log file and print it
     """
@@ -15,10 +15,17 @@ def create_event(content, type=None, subtype=None, creator="Me", metadata={}):
     # if any keys are None, delete them
     metadata = {k: v for k, v in metadata.items() if v is not None}
 
+    event = {
+        "document": content,
+        "metadata": metadata,
+    }
+
+    event_string = event_to_string(event)
+
     create_memory("events", content, metadata=metadata)
-    print(f"{content}")
-    write_to_log(f"{content}")
-    debug_log(f"Created event: {content}")
+    print(f"{event_string}")
+    write_to_log(f"{event_string}")
+    debug_log(f"{event_string}")
 
 
 def get_events(type=None, n_results=None, filter_metadata=None):
@@ -43,3 +50,20 @@ def search_events(search_text, n_results=None):
     memories = search_memory("events", search_text, n_results=n_results)
     debug_log(f"Searching events: {memories}")
     return memories
+
+
+def event_to_string(event):
+    # Create an event with a formatted string and annotations
+    e_m = event['metadata']
+    # check if e_m['epoch'] is none, set it to 0 if it is
+    if e_m.get('epoch') is None:
+        e_m['epoch'] = 0
+    if e_m.get('type') is None:
+        e_m['type'] = 'unknown'
+    new_event = f"{e_m['epoch']} | {e_m['type']}"
+    if e_m.get('subtype') is not None:
+        new_event += f"::{e_m['subtype']}"
+    if e_m.get('creator') is not None:
+        new_event += f" ({e_m['creator']})"
+    new_event += f": {event['document']}"
+    return new_event

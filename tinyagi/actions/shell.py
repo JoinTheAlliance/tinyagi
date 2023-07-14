@@ -5,14 +5,17 @@ import os
 import time
 import re
 
-from easycompletion import count_tokens
+from easycompletion import count_tokens, trim_prompt
 
 from tinyagi.core.events import create_event
 from tinyagi.core.actions import get_actions as get_all_actions
 
+SHELL_COMMAND_TOKEN_LIMIT = 2048
+
 # Initial directory
 original_cwd = os.getcwd()
 current_working_directory = original_cwd
+
 
 def get_files_in_current_directory():
     # call ls -alh in the current working directory
@@ -23,6 +26,7 @@ def get_files_in_current_directory():
     # remove the last line, which is the current working directory
     result_decoded = result_decoded[:-1]
     return result_decoded
+
 
 run_command_prompt_template = """TIME: {{current_time}}
 DATE: {{current_date}}
@@ -35,35 +39,33 @@ Files in the current directory (ls -alh):
 {{files_in_current_directory}}
 ### END FILES IN CURRENT DIRECTORY ###
 
-Recent Events are formatted as follows:
-Epoch # | <Type>::<Subtype> (Creator): <Event>
-============================================
-{{annotated_events}}
-
 I know these relevant things:
 {{knowledge}}
 
-Previous epoch summaries:
-{{previous_summaries}}
+Recent Events are formatted as follows:
+Epoch # | <Type>::<Subtype> (Creator): <Event>
+============================================
+{{events}}
 
-Summary of Recent Events:
+Summary of Last Epoch:
 {{summary}}
 
 Action Reasoning:
 {{reasoning}}
 
-Based on the action reasoning, what command should I run in my terminal? Please include all arguments, etc. on one line.
-If I ran a command, I probably should not run it again, so please don't suggest the same command twice in a row. Since you already know the cwd and files in the current directory, you shouldn't just run ls or pwd.
-DO NOT suggest running ls or pwd since those were provided already, and are not a useful action.
-Also include what outcome I should expect, in plan English. I will be writing down the "expected_output" field in my notes so please write it from my perspective.
+TASK: Based on the action reasoning, what command should I run in my terminal? Please include all arguments, etc. on one line.
+- Write a one-liner that I can run in my terminal (command)
+- Then, write a summary of what output you expect to see (expected_output)
+- If I ran a command, I probably should not run it again, so please don't suggest the same command twice in a row. Since you already know the cwd and files in the current directory, you shouldn't just run ls or pwd.
+- DO NOT suggest running any commands that will provide us with the same information we already have. For example, if we already know the current working directory, don't suggest running pwd.
 """
 
 # Replace {{files_in_current_directory}} with the files in the current directory
 # This ill be auto-replaced later but needs to be initialized once
 run_command_prompt_template = run_command_prompt_template.replace(
-        "{{files_in_current_directory}}", "\n".join(get_files_in_current_directory()
-        )
-    ).replace("{{current_working_directory}}", current_working_directory)
+    "{{files_in_current_directory}}", "\n".join(get_files_in_current_directory())
+).replace("{{current_working_directory}}", current_working_directory)
+
 
 def compose_prompt_with_local_variables():
     prompt_lines = run_command_prompt_template.split("\n")
@@ -96,6 +98,7 @@ def compose_prompt_with_local_variables():
     prompt = "\n".join(prompt_lines)
     return prompt
 
+
 def run_shell_command(arguments):
     global current_working_directory
 
@@ -121,48 +124,48 @@ def run_shell_command(arguments):
         else:
             result_split = "\n".join(result_split)
 
-
         result_tokens = count_tokens(result)
-        if result_tokens > 800:
+        if result_tokens > SHELL_COMMAND_TOKEN_LIMIT:
             # create a filename from the timestamp and command
             command_string = re.sub(r"[^a-zA-Z0-9_]+", "", command)
-            # trim command string to under 100 characters
-            command_string = command_string[:100]
+            # trim command string to under 10 characters
+            command_string = command_string[:10]
             # check if ./logs/shell_output/ exists and create it if it doesn't
             if not os.path.isdir(f"{original_cwd}/logs/shell_output"):
                 os.mkdir(f"{original_cwd}/logs/shell_output")
-            filename = f"{original_cwd}/logs/shell_output/{time.time()}_{command_string}.txt"
+            filename = (
+                f"{original_cwd}/logs/shell_output/{command_string}_{time.time()}.txt"
+            )
             # Save the result to a file
             with open(filename, "w") as f:
                 f.write(result)
+
             create_event(
                 "I ran the command `"
                 + command
-                + "` in `"
-                + current_working_directory
-                + "`. The result was long so I saved it to `"
-                + filename + "`",
+                + "`\n"
+                + "(NOTE: The output may be truncated. The complete output has been saved to `"
+                + filename + "`\n"
+                + "I got the following result:\n"
+                + result,
                 type="action",
                 subtype="run_shell_command",
             )
             return True
 
-        create_event(
-            "I ran the command `"
-            + command
-            + "` in `"
-            + current_working_directory
-            + "` and I got the following result:\n"
-            + result,
-            type="action",
-            subtype="run_shell_command",
+        event_text = (
+            "I ran the command `" + command + "` in `" + current_working_directory
         )
+        result = result.strip()
+        if result != "":
+            event_text += "` and I got the following result:\n" + result
+        create_event(event_text, type="action", subtype="run_shell_command")
         return True
 
     else:  # If the process did not complete successfully
         error_message = process.stderr
         create_event(
-            f"I ran the command `{command}` in `{current_working_directory}` and got an error\n: {error_message}",
+            f"I ran the command `{command}` in `{current_working_directory}` and got an error\n: {error_message.strip()}",
             type="action",
             subtype="run_shell_command",
         )

@@ -10,34 +10,43 @@ import time
 from easycompletion import (
     compose_function,
     count_tokens,
+    trim_prompt,
 )
+from tinyagi.core.constants import (
+    EVENT_COUNT_DISPLAY_LIMIT,
+    TOKEN_DISPLAY_LIMIT,
+    ENTRY_TOKEN_DISPLAY_LIMIT,
+)
+from tinyagi.core.knowledge import get_knowledge_from_epoch
 
 from tinyagi.core.system import check_log_dirs, debug_log, get_epoch
 
-from .events import (
-    get_events,
-    get_events,
-)
+from .events import get_events, get_events, event_to_string
 
 from easycompletion import (
     compose_function,
 )
 
-orient_prompt = """The current time is {{current_time}} on {{current_date}}.
+orient_prompt = """Current Epoch: {{epoch}}
+The current time is {{current_time}} on {{current_date}}.
+
+I learned the following knowledge last epoch:
+{{recent_knowledge}}
+
 Recent Events are formatted as follows:
 Epoch # | <Type> [Subtype] (Creator): <Event>
 ============================================
-{{annotated_events}}
+{{events}}
 
 # Assistant Task
-- Summarize what happened in Epoch {{epoch}} and reason about what I should do next to move forward.
+- Summarize what happened in Epoch {{last_epoch}} and reason about what I should do next to move forward.
 - First, summarize as yourself (the assistant). Include any relevant information for me, the user, for the next step.
 - Next summarize as if you were me, the user, in the first person from my perspective. Use "I" instead of "You".
 - Lastly, include any new knowledge that I learned this epoch as an array of knowledge items.
 - Your summary should include what I learned, what you think I should do next and why. You should argue for why you think this is the best next step.
 - I am worried about getting stuck in a loop or make new progress. Your reasoning should be novel and interesting and helpful me to make progress towards my goals.
 - Each knowledge array item should be a factual statement that I learned, and should include the source, the content and the relationship.
-- ONLY extract knowledge from this epoch, which is #{{epoch}}. Do not extract knowledge from previous epochs.
+- ONLY extract knowledge from the last epoch, which is #{{last_epoch}}. Do not extract knowledge from previous epochs.
 - If there is no new knowledge, respond with an empty array [].
 """
 
@@ -80,15 +89,18 @@ orient_function = compose_function(
 )
 
 
-decision_prompt = """The current time is {{current_time}} on {{current_date}}.
+decision_prompt = """Current Epoch: {{epoch}}
+The current time is {{current_time}} on {{current_date}}.
 
-Here are some things I know:
+Here are some relevant things I know:
 {{knowledge}}
 
-This is my event stream. These are the latest events that have happened:
-{{annotated_events}}
+Recent Events are formatted as follows:
+Epoch # | <Type>::<Subtype> (Creator): <Event>
+============================================
+{{events}}
 
-These are the actions available for me to take:
+Available actions for me to choose from:
 {{available_actions}}
 
 Assistant Notes:
@@ -98,10 +110,11 @@ Assistant Notes:
 - I only want to gather additional knowledge when I have to. I like to try things first.
 
 Your task: 
-- Decide which of the actions that you think is the best next step to progress towards my goals.
+- Based on recent events, which of the actions that you think is the best next action for me to progress towards my goals.
 - Based on the information provided, write a summary from your perspective of what action I should take next and why (assistant_reasoning)
 - Respond with the name of the action (action_name)
 - Rewrite the summary as if you were me, the user, in the first person (user_reasoning)
+- I can only choose from the available actions. You must choose one of the available actions.
 """
 
 decision_function = compose_function(
@@ -124,99 +137,84 @@ decision_function = compose_function(
     required_properties=["action_name", "assistant_reasoning", "user_reasoning"],
 )
 
-def write_observation_to_log(observation_data):
-    check_log_dirs()
+
+def write_observation_to_log(observation_data, end=False):
     # if debug is not true, skip this
     if os.environ.get("TINYAGI_DEBUG") not in ["1", "true", "True"]:
         return
-    
+
+    check_log_dirs()
+
     text = ""
     # observation is a key value store
     for key, value in observation_data.items():
         text += f"{key}: {value}\n"
     debug_log(f"observation:{text}")
+    filename = "observation_start"
+    if end is True:
+        filename = "observation_end"
     # write the prompt, functions and response to a file
-    with open(f"./logs/loop/observation_{time.time()}.txt", "w") as f:
+    with open(f"./logs/loop/{filename}_{time.time()}.txt", "w") as f:
         f.write(text)
-            
 
-def compose_observation(token_limit=1536, short=False):
-    limits = {
-        "events": 50,
-        "summaries": 3,
-        "knowledge": 10,
-        "available_actions": 10,
-    }
-    if short is True:
-        limits = {
-            "events": 10,
-            "summaries": 2,
-            "knowledge": 5,
-            "available_actions": 5,
-        }
 
-    events = get_events(n_results=limits["events"])
+def create_initial_observation():
+    events = get_events(n_results=EVENT_COUNT_DISPLAY_LIMIT)
 
     # reverse events
     events = events[::-1]
 
-    formatted_events = "\n".join([event["document"] for event in events])
-
     # annotated events
-    annotated_events = ""
-    # iterate through events and print f"{event['metadata']['epoch']} | 
-    for event in events:
-        if(annotated_events != ""):
-            annotated_events += "\n"
-        e_m = event['metadata']
-        print("event document")
-        print(event['document'])
-        print("e_m")
-        print(e_m)
-        # check if e_m['epoch'] is none, set it to 0 if it is
-        if e_m.get('epoch') is None:
-            e_m['epoch'] = 0
-        annotated_events += f"{e_m['epoch']} | {e_m['type']}"
-        if e_m.get('subtype') is not None:
-            annotated_events += f"::{e_m['subtype']}"
-        if e_m.get('creator') != 'Me' and e_m.get('creator') is not None:
-            annotated_events += f" ({e_m['creator']})"
-        annotated_events += f": {event['document']}"
+    annotated_events = "\n".join([event_to_string(event) for event in events])
 
-    summaries = get_events(type="summary", n_results=limits["summaries"])
-    formatted_summaries = "\n".join([s["document"] for s in summaries])
+    # trim any individual events, just in case
+    for i in range(len(events)):
+        document = events[i]["document"]
+        if count_tokens(document) > ENTRY_TOKEN_DISPLAY_LIMIT:
+            events[i]["document"] = (
+                trim_prompt(document, ENTRY_TOKEN_DISPLAY_LIMIT - 5) + " ..."
+            )
 
-    print('************************************************')
-    print('****** SUMMARIES')
-    print(formatted_summaries)
-    if formatted_summaries == "":
-        formatted_summaries = "(No summaries yet)"
+    while count_tokens(annotated_events) > TOKEN_DISPLAY_LIMIT:
+        # remove the first event
+        events = events[1:]
+        annotated_events = "\n".join([event_to_string(event) for event in events])
+
+    recent_knowledge = get_knowledge_from_epoch(get_epoch() - 1)
+
+    # trim any individual knowledge, just in case
+    for i in range(len(recent_knowledge)):
+        document = recent_knowledge[i]["document"]
+        if count_tokens(document) > ENTRY_TOKEN_DISPLAY_LIMIT:
+            recent_knowledge[i]["document"] = (
+                trim_prompt(document, ENTRY_TOKEN_DISPLAY_LIMIT - 5) + " ..."
+            )
+
+    formatted_knowledge = "\n".join([k["document"] for k in recent_knowledge])
+
+    while count_tokens(formatted_knowledge) > TOKEN_DISPLAY_LIMIT:
+        if len(recent_knowledge) == 1:
+            raise Exception(
+                "Single knowledge length is greater than token limit, should not happen"
+            )
+        # remove the first event
+        recent_knowledge = recent_knowledge[1:]
+        formatted_knowledge = "\n".join([k["document"] for k in recent_knowledge])
 
     observation_data = {
         "epoch": get_epoch(),
+        "last_epoch": str(get_epoch() - 1),
         "current_time": datetime.now().strftime("%H:%M"),
         "current_date": datetime.now().strftime("%Y-%m-%d"),
         "platform": sys.platform,
         "cwd": os.getcwd(),
-        "events": formatted_events,
-        "annotated_events": annotated_events,
-        "previous_summaries": formatted_summaries,
+        "events": annotated_events,
+        "recent_knowledge": formatted_knowledge,
         "knowledge": None,  # populated in loop
         "summary": None,  # populated in loop from orient function
         "available_actions": None,  # populated in the loop by the orient function
         "reasoning": None,  # populated in the loop by the decision function
     }
 
-    if short is True:
-        return observation_data
-
-    prompt_string = json.dumps(observation_data, indent=None)
-    token_count = count_tokens(prompt_string)
-    
-
-
-    # if the observation is too big, shorten it
-    if token_count > token_limit:
-        return compose_observation(short=True)
     write_observation_to_log(observation_data)
     return observation_data
