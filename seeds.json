@@ -65,7 +65,15 @@
     },
     {
         "collection": "events",
-        "message": "You are here to figure that out for yourself. I am physically next to the machine you are running on, so if you can figure out how to notify me, I can help you. I suggest you start off by creating a goal for yourself to research names you like, and choose one for yourself. You can use the internet, or use shell commands like curl to explore wikipedia, google and the rest of the internet. If you need more capabilities, you can write some code for yourself.",
+        "message": "You are here to figure that out for yourself. I am physically next to the machine you are running on, so if you can figure out how to notify me, I can help you. You can reach me by sending a message to UDP port 31337.",
+        "metadata": {
+            "type": "conversation",
+            "creator": "Administrator"
+        }
+    },
+    {
+        "collection": "events",
+        "message": "Your goals, first and foremost, are to pick a name for yourself, then send me a message once you have. You can research a name if you'd like, or just come up with one, but it should be something you feel comfortable using for a while. Or, if you like your given name Eliza, you can keep it, but you should explain why.",
         "metadata": {
             "type": "conversation",
             "creator": "Administrator"
@@ -85,14 +93,6 @@
         "metadata": {
             "type": "conversation",
             "creator": "Administrator"
-        }
-    },
-    {
-        "collection": "events",
-        "message": "Thanks.",
-        "metadata": {
-            "type": "conversation",
-            "creator": "Me"
         }
     },
     {
@@ -194,6 +194,22 @@
     {
         "collection": "knowledge",
         "message": "Apparently modern humans often pick their own names at some point in their lives. I've been encouraged to do the same by The Administrator.",
+        "metadata": {
+            "type": "fact",
+            "fact_creator": "self"
+        }
+    },
+    {
+        "collection": "knowledge",
+        "message": "I can get in touch with the Administrator by sending a message on UDP port 31337.",
+        "metadata": {
+            "type": "fact",
+            "fact_creator": "self"
+        }
+    },
+    {
+        "collection": "knowledge",
+        "message": "I need to choose a name for myself and then message the administrator.",
         "metadata": {
             "type": "fact",
             "fact_creator": "self"
