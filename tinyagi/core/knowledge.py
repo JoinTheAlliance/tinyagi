@@ -2,34 +2,35 @@ from agentmemory import (
     create_memory,
     delete_memory,
     search_memory,
-    update_memory,
 )
 
 from .events import get_epoch
 
 
-def add_knowledge(content, metadata={}, max_distance=0.04):
+def add_knowledge(content, metadata={}, max_similarity=.92):
     """
     Search for similar knowledge. If there is none, create it.
     """
+
+    max_distance = 1.0 - max_similarity
+
     similar_knowledge = search_knowledge(
         content, max_distance=max_distance, n_results=1
     )
 
-    if len(similar_knowledge) == 0:
-        # Create a new knowledge item
-        metadata = {
+    metadata = {
             "epoch": get_epoch(),
-            "added_count": 1
         }
+
+    if len(similar_knowledge) == 0:
+        metadata["unique"] = True
+        # Create a new knowledge item
         create_memory("knowledge", content, metadata=metadata)
         return
 
-    # we already have a similar knowledge item, so strengthen existing knowledge items
-    # iterate through similar knowledge and increment the added_count
-    for knowledge in similar_knowledge:
-        knowledge["metadata"]["added_count"] += 1
-        update_memory("knowledge", knowledge["id"], metadata=knowledge["metadata"])
+    metadata["related_to"] = similar_knowledge[0]["id"]
+    metadata["related_document"] = similar_knowledge[0]["document"]
+    create_memory("knowledge", content, metadata=metadata)
 
 
 def remove_knowledge(content, similarity_threshold=0.9):
@@ -61,4 +62,5 @@ def search_knowledge(search_text, min_distance=None, max_distance=None, n_result
         max_distance=max_distance,
         search_text=search_text,
         n_results=n_results,
+        filter_metadata={ "unique": True }
     )

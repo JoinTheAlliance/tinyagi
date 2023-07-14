@@ -1,6 +1,9 @@
 import os
 import json
 import time
+from dotenv import load_dotenv
+
+load_dotenv()  # take environment variables from .env.
 
 from agentmemory import wipe_all_memories, create_memory
 from tinyagi.core.actions import register_actions
@@ -44,16 +47,20 @@ def seed(filename="seeds.json"):
 
         # Add the timestamp to the metadata
         entry["metadata"]["created_at"] = str(timestamp)
-        
+
         # Create the memory
-        create_memory(
-            entry["collection"], entry["message"], entry["metadata"]
-        )
+        create_memory(entry["collection"], entry["message"], entry["metadata"])
 
 
 # check if --reset is passed
 if "--reset" in os.sys.argv:
     wipe_all_memories()
+    # delete logs folder
+    if os.path.isdir("./logs"):
+        os.system("rm -rf ./logs")
+    # create it again
+    os.mkdir("./logs")
+    os.mkdir("./logs/prompts")
     if "--seed" in os.sys.argv:
         seed()
 

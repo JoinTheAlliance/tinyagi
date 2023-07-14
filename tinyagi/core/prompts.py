@@ -12,7 +12,6 @@ from easycompletion import (
 )
 
 from .events import (
-    get_epoch,
     get_events,
     get_events,
 )
@@ -24,20 +23,16 @@ from easycompletion import (
 orient_prompt = """\
 The current time is {{current_time}} on {{current_date}}.
 
-Here are some things I know:
-{{knowledge}}
+# Event stream
+These are the events I have done recently:
+{{events}}
 
-This is my event stream. These are the events that happened in previous epochs:
-{{events_from_previous_epochs}}
-
-These are the most recent events from last epoch:
-{{events_from_last_epoch}}
-
+# Assistant Task
 Please summarize, from the most recent events, how it's going, what I learned this epoch and what I should do next.
 First, summarize as yourself (the assistant), then summarize as if you were me, the user, in the first person from my perspective.
 Lastly, include any new knowledge that I learned this epoch as an array of knowledge items.
 Each knowledge item should be a factual statement that I learned, and should include the source, the content and the relationship.
-If there is no new knowledge, use an empty array [].
+If there is no new knowledge, respnd with an empty array [].
 """
 
 
@@ -123,8 +118,6 @@ decision_function = compose_function(
 def compose_observation(token_limit=1536, short=False):
     limits = {
         "events": 50,
-        "events_from_previous_epochs": 25,
-        "events_from_last_epoch": 25,
         "summaries": 3,
         "knowledge": 10,
         "available_actions": 10,
@@ -132,8 +125,6 @@ def compose_observation(token_limit=1536, short=False):
     if short is True:
         limits = {
             "events": 10,
-            "events_from_previous_epochs": 10,
-            "events_from_last_epoch": 10,
             "summaries": 2,
             "knowledge": 5,
             "available_actions": 5,
@@ -141,14 +132,8 @@ def compose_observation(token_limit=1536, short=False):
 
     events = get_events(n_results=limits["events"])
 
-    events_from_last_epoch = get_events(
-        n_results=limits["events_from_last_epoch"],
-        filter_metadata={"epoch": get_epoch() - 1},
-    )
-    events_from_previous_epochs = get_events(
-        n_results=limits["events_from_previous_epochs"],
-        filter_metadata={"epoch": {"$gte": get_epoch() - 2}},
-    )
+    # reverse events
+    events = events[::-1]
 
     # each event is a dictionary with keys: id, document, metadata
     # Inside the metadata is the epoch number
@@ -156,25 +141,15 @@ def compose_observation(token_limit=1536, short=False):
 
     formatted_events = "\n".join([event["document"] for event in events])
 
-    formatted_events_from_last_epoch = "\n".join(
-        [event["document"] for event in events_from_last_epoch]
-    )
-
-    formatted_events_from_previous_epochs = "\n".join(
-        [event["document"] for event in events_from_previous_epochs]
-    )
-
     summaries = get_events(type="summary", n_results=limits["summaries"])
     formatted_summaries = "\n".join([s["document"] for s in summaries])
 
     observation_data = {
         "current_time": datetime.now().strftime("%H:%M"),
         "current_date": datetime.now().strftime("%Y-%m-%d"),
-        "current_working_directory": os.getcwd(),
-        "current_playform": sys.platform,
+        "platform": sys.platform,
+        "cwd": os.getcwd(),
         "events": formatted_events,
-        "events_from_previous_epochs": formatted_events_from_previous_epochs,
-        "events_from_last_epoch": formatted_events_from_last_epoch,
         "previous_summaries": formatted_summaries,
         "knowledge": None,  # populated in loop
         "summary": None,  # populated in loop from orient function

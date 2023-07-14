@@ -65,7 +65,7 @@
     },
     {
         "collection": "events",
-        "message": "You are here to figure that out for yourself. I am physically next to the machine you are running on, so if you can figure out how to notify me, I can help you. I suggest you start off by creating a task for yourself to research names you like, and choose one for yourself. You can use the internet, or use shell commands like curl to explore wikipedia, google and the rest of the internet. If you need more capabilities, you can write some code for yourself.",
+        "message": "You are here to figure that out for yourself. I am physically next to the machine you are running on, so if you can figure out how to notify me, I can help you. I suggest you start off by creating a goal for yourself to research names you like, and choose one for yourself. You can use the internet, or use shell commands like curl to explore wikipedia, google and the rest of the internet. If you need more capabilities, you can write some code for yourself.",
         "metadata": {
             "type": "conversation",
             "event_creator": "Administrator"

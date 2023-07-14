@@ -28,12 +28,24 @@ from .prompts import (
     compose_observation,
 )
 
-def function_call(text, functions):
+
+def function_call(text, functions, name="prompt"):
     # Wraps openai_function_call in debug logging
-    response = openai_function_call(
-        text=text, functions=functions
-    )
-    debug_log(f"openai_function_call\nprompt:\n{text}\nfunctions:\n{functions}\nresponse:\n{response}")
+    response = openai_function_call(text=text, functions=functions)
+    if os.environ.get("TINYAGI_DEBUG") in ["1", "true", "True"]:
+        debug_log(
+            f"openai_function_call\nprompt:\n{text}\nfunctions:\n{functions}\nresponse:\n{response}"
+        )
+        # check if /logs and /logs/prompts exists and create them if they don't
+        if not os.path.isdir("./logs"):
+            os.mkdir("./logs")
+        if not os.path.isdir("./logs/prompts"):
+            os.mkdir("./logs/prompts")
+        timestamp = time.time()
+        # write the prompt, functions and response to a file
+        with open(f"./logs/prompts/{name}_{timestamp}.txt", "w") as f:
+            f.write(text)
+
     return response
 
 
@@ -50,9 +62,6 @@ def loop():
     # Each run of the loop is an epoch
     increment_epoch()
     epoch = get_epoch()
-    create_event(
-        "Epoch #" + str(epoch) + " started.", type="loop", subtype="epoch_start"
-    )
 
     if epoch == 1:
         create_event("I have just woken up.", type="loop", subtype="init")
@@ -63,16 +72,21 @@ def loop():
     # Collect inputs and summarize the current world state - what is currently going on and what actions might we take next?
     observation = compose_observation()
 
+    debug_log(f"observation:\n{observation}")
+
     ### ORIENT ###
     # Summarize the last epoch and think about what to do next
+
     composed_orient_prompt = compose_prompt(orient_prompt, observation)
-    response = function_call(
-        text=composed_orient_prompt, functions=orient_function
-    )
-    
+    response = function_call(text=composed_orient_prompt, functions=orient_function, name="orient")
+
+    arguments = response["arguments"]
+    if arguments is None:
+        arguments = {}
+        print("No arguments returned from orient_function")
 
     # Create new knowledge and add to the knowledge base
-    knowledge = response["arguments"].get("knowledge", [])
+    knowledge = arguments.get("knowledge", [])
     if len(knowledge) > 0:
         for k in knowledge:
             # each item in knowledge contains content, source and relationship
@@ -103,9 +117,7 @@ def loop():
     ### DECIDE ###
     # Based on the orientation, decide which relevant action to take
     composed_decision_prompt = compose_prompt(decision_prompt, observation)
-    response = function_call(
-        text=composed_decision_prompt, functions=decision_function
-    )
+    response = function_call(text=composed_decision_prompt, functions=decision_function, name="decision")
 
     # Add the action reasoning to the observation object
     action_reasoning = response["arguments"]["user_reasoning"]
@@ -119,16 +131,9 @@ def loop():
 
     composed_action_prompt = compose_prompt(action["prompt"], observation)
 
-    response = function_call(
-        text=composed_action_prompt, functions=action["function"]
-    )
+    response = function_call(text=composed_action_prompt, functions=action["function"], name="action")
 
     use_action(response["function_name"], response["arguments"])
-
-    create_event(
-        "Epoch #" + str(epoch) + " finished.", type="loop", subtype="epoch_end"
-    )
-
 
 def start():
     while True:

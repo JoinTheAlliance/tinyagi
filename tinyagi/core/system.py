@@ -9,7 +9,7 @@ def get_epoch():
     # returns current event epoch
     # or initializes event epoch to 0
     count = count_memories("epoch")
-    debug_log("Getting epoch:" + str(count))
+    debug_log("Getting epoch: " + str(count))
     return count
 
 
@@ -20,7 +20,7 @@ def increment_epoch():
     # if length of current_epoch is 0, then epoch is not set
     document = f"Epoch {new_epoch_index} started at {str(datetime.utcnow())}"
     create_memory("epoch", document, id=new_epoch_index)
-    debug_log("Incrementing epoch:" + str(new_epoch_index))
+    debug_log("Incrementing epoch: " + str(new_epoch_index))
     return new_epoch_index
 
 
@@ -29,7 +29,7 @@ def debug_log(content, filename="logs/events.txt"):
     Write to the debug log file
     """
     if os.environ.get("TINYAGI_DEBUG") in ["1", "true", "True"]:
-        print(f"***** DEBUG *****\n{content}")
+        print(f"{content}")
         write_to_log(content, write_to_debug=True, filename=filename)
 
 
