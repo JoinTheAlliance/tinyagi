@@ -11,7 +11,6 @@ from rich.console import Console
 console = Console()
 
 type_color = {
-    "event": "purple",
     "error": "red",
     "summary": "cyan",
     "reasoning": "blue",

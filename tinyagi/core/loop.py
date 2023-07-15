@@ -5,7 +5,9 @@ import os
 import sys
 import threading
 from datetime import datetime
+
 from pynput import keyboard
+
 from easycompletion import compose_prompt, compose_function
 from .system import (
     increment_epoch,

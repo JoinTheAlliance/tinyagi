@@ -1,11 +1,13 @@
-import asyncio
 import os
 import json
 import time
 from dotenv import load_dotenv
 import socket
-import sys
 from threading import Thread
+from pyfiglet import Figlet
+from rich.panel import Panel
+from rich.console import Console
+console = Console()
 
 load_dotenv()  # take environment variables from .env.
 
@@ -76,12 +78,30 @@ def udp_listen():
             )
 
 
+eliza = """
+EEEEEE  LL      IIII  ZZZZZZZ   AAAAA                       
+EE      LL       II       ZZ   AA   AA                      
+EEEEE   LL       II     ZZZ    AAAAAAA                      
+EE      LL       II    ZZ      AA   AA                      
+EEEEEE  LLLLLL  IIII  ZZZZZZZ  AA   AA      
+"""
+
+def print_ascii_art():
+    """
+    Prints ASCII art of the given text using pyfiglet.
+
+    Parameters:
+    - text (str): the text to print as ASCII art
+    """
+    
+    f = Figlet(font="letters")
+    print("\n")
+    console.print(f.renderText("tinyagi"), style="yellow")
+    console.print("Starting...\n\n", style="BRIGHT_BLACK")
+
+
+
 udp_listen_thread = Thread(target=udp_listen)
 udp_listen_thread.start()
-
-loop = asyncio.get_event_loop()
-
-try:
-    loop.run_until_complete(start())
-finally:
-    loop.close()
+print_ascii_art()
+start()

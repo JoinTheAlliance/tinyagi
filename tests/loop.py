@@ -1,4 +1,6 @@
 import time
+import threading
+
 from tinyagi.core.loop import (
     compose_decision_function,
     compose_decision_prompt,
@@ -12,10 +14,9 @@ from tinyagi.core.loop import (
     stop,
     step,
 )
+
+
 from tinyagi.core.actions import register_actions, unregister_actions
-
-import threading
-
 
 def test_observe():
     observation = observe()
