@@ -6,14 +6,25 @@ from agentmemory import (
 )
 from easycompletion import count_tokens, trim_prompt
 
-from tinyagi.core.constants import MAX_PROMPT_LIST_TOKENS, SIMILARY_THRESHOLD, MAX_PROMPT_TOKENS
+from tinyagi.core.constants import (
+    MAX_PROMPT_LIST_TOKENS,
+    SIMILARY_THRESHOLD,
+    MAX_PROMPT_TOKENS,
+)
 
 from .events import get_epoch
 
 
 def add_knowledge(content, metadata={}, similarity=SIMILARY_THRESHOLD):
     """
-    Search for similar knowledge. If there is none, create it.
+    Searches for similar knowledge. If no similar knowledge exists, creates it.
+
+    Parameters:
+    - content (str): The content of the knowledge.
+    - metadata (dict, optional): Additional metadata for the knowledge. Defaults to empty dictionary.
+    - similarity (float, optional): The threshold for determining similarity. Defaults to SIMILARY_THRESHOLD.
+
+    Returns: None
     """
 
     max_distance = 1.0 - similarity
@@ -39,8 +50,15 @@ def add_knowledge(content, metadata={}, similarity=SIMILARY_THRESHOLD):
 
 def remove_knowledge(content, similarity_threshold=SIMILARY_THRESHOLD):
     """
-    Find goal that contains content, then remove it
+    Finds a knowledge item that contains the content and removes it.
+
+    Parameters:
+    - content (str): The content to search for.
+    - similarity_threshold (float, optional): The threshold for determining similarity. Defaults to SIMILARY_THRESHOLD.
+
+    Returns: bool - True if the knowledge item is found and removed, False otherwise.
     """
+
     knowledge = search_memory("knowledge", content)
     if len(knowledge) > 0:
         goal = knowledge[0]
@@ -53,19 +71,51 @@ def remove_knowledge(content, similarity_threshold=SIMILARY_THRESHOLD):
 
 
 def delete_knowledge_by_id(id):
+    """
+    Deletes a knowledge item by its ID.
+
+    Parameters:
+    - id (str): The ID of the knowledge item to be deleted.
+
+    Returns: None
+    """
     delete_memory("knowledge", id)
-    
+
 
 def get_knowledge_from_epoch(epoch=get_epoch()):
     """
-    Get knowledge from a specific epoch
+    Retrieves knowledge from a specific epoch.
+
+    Parameters:
+    - epoch (int, optional): The epoch to retrieve knowledge from. Defaults to the current epoch.
+
+    Returns: list of knowledge documents from the specified epoch
     """
     memories = get_memories("knowledge", filter_metadata={"epoch": epoch})
     return memories
 
-def formatted_search_knowledge(search_text, min_distance=None, max_distance=None, n_results=5):
+
+def formatted_search_knowledge(
+    search_text, min_distance=None, max_distance=None, n_results=5
+):
+    """
+    Searches for knowledge and formats the results.
+
+    Parameters:
+    - search_text (str): The text to search for.
+    - min_distance (float, optional): The minimum distance for search results. Defaults to None.
+    - max_distance (float, optional): The maximum distance for search results. Defaults to None.
+    - n_results (int, optional): The number of results to return. Defaults to 5.
+
+    Returns: str - A string containing the formatted results of the search.
+    """
     header_text = "I know these relevant things:"
-    knowledge = search_knowledge(search_text, min_distance=min_distance, max_distance=max_distance, n_results=n_results)
+    knowledge = search_knowledge(
+        search_text,
+        min_distance=min_distance,
+        max_distance=max_distance,
+        n_results=n_results,
+    )
     # trim any individual knowledge, just in case
     for i in range(len(knowledge)):
         document = knowledge[i]["document"]
@@ -87,6 +137,13 @@ def formatted_search_knowledge(search_text, min_distance=None, max_distance=None
 
 
 def get_formatted_recent_knowledge():
+    """
+    Retrieves and formats recent knowledge.
+
+    Parameters: None
+
+    Returns: str - A string containing the formatted recent knowledge.
+    """
     recent_knowledge = get_knowledge_from_epoch(get_epoch() - 1)
 
     # trim any individual knowledge, just in case
@@ -109,9 +166,18 @@ def get_formatted_recent_knowledge():
         formatted_knowledge = "\n".join([k["document"] for k in recent_knowledge])
     return formatted_knowledge
 
+
 def search_knowledge(search_text, min_distance=None, max_distance=None, n_results=5):
     """
-    Search the 'knowledge' collection by search text
+    Searches the 'knowledge' collection by search text.
+
+    Parameters:
+    - search_text (str): The text to search for.
+    - min_distance (float, optional): The minimum distance for search results. Defaults to None.
+    - max_distance (float, optional): The maximum distance for search results. Defaults to None.
+    - n_results (int, optional): The number of results to return. Defaults to 5.
+
+    Returns: list of knowledge documents that match the search criteria
     """
     return search_memory(
         "knowledge",

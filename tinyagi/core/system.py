@@ -9,27 +9,34 @@ from tinyagi.core.constants import DEBUG
 
 
 def check_log_dirs():
-    # check if /logs and /logs/loop exists and create them if they don't
+    """
+    Checks if the directories /logs and /logs/loop exist, if not they are created.
+    This function does not take any arguments or return any outputs.
+    """
     if not os.path.isdir("./logs"):
         os.mkdir("./logs")
     if not os.path.isdir("./logs/loop"):
         os.mkdir("./logs/loop")
 
 
-# Get the current event epoch
 def get_epoch():
-    # returns current event epoch
-    # or initializes event epoch to 0
+    """
+    Returns the current event epoch or initializes it to 0 if it is not set.
+    This function does not take any arguments.
+    Return: Integer value of the current event epoch.
+    """
     count = count_memories("epoch")
     debug_log("Getting epoch: " + str(count))
     return count
 
 
-# Each loop is an epoch
 def increment_epoch():
+    """
+    Increments the event epoch by 1.
+    This function does not take any arguments.
+    Return: Integer value of the new event epoch.
+    """
     new_epoch_index = get_epoch() + 1
-
-    # if length of current_epoch is 0, then epoch is not set
     document = f"Epoch {new_epoch_index} started at {str(datetime.utcnow())}"
     create_memory("epoch", document, id=new_epoch_index)
     debug_log("Incrementing epoch: " + str(new_epoch_index))
@@ -38,7 +45,11 @@ def increment_epoch():
 
 def debug_log(content, filename="logs/events.txt"):
     """
-    Write to the debug log file
+    Writes content to the debug log file.
+    Arguments:
+    - content: String to be written in the debug log file.
+    - filename: Name of the file where the content is written.
+    Return: None
     """
     if DEBUG:
         print(f"{content}")
@@ -47,17 +58,17 @@ def debug_log(content, filename="logs/events.txt"):
 
 def write_to_log(content, write_to_debug=False, filename="logs/events.txt"):
     """
-    Write to the event log file
+    Writes content to the event log file.
+    Arguments:
+    - content: String to be written in the log file.
+    - write_to_debug: Boolean flag indicating whether the content is written to debug file or not.
+    - filename: Name of the file where the content is written.
+    Return: None
     """
-    # first, check that all directories in filename exist
-    # if not, create them
-
     for i in range(len(filename.split("/")) - 1):
-        # if the current directory doesn't exist, create it
         if not os.path.exists("/".join(filename.split("/")[: i + 1])):
             os.mkdir("/".join(filename.split("/")[: i + 1]))
 
-    # then, write to the file
     if write_to_debug is False:
         with open(filename, "a") as f:
             f.write(f"{content}\n")
@@ -74,30 +85,41 @@ def write_to_log(content, write_to_debug=False, filename="logs/events.txt"):
 
 
 def write_dict_to_log(dictionary, filename="observation"):
-    # if debug is not true, skip this
+    """
+    Writes a dictionary to a log file.
+    Arguments:
+    - dictionary: The dictionary to be written to the log file.
+    - filename: Name of the file where the content is written.
+    Return: None
+    """
     if os.environ.get("TINYAGI_DEBUG") not in ["1", "true", "True"]:
         return
 
     check_log_dirs()
 
     text = ""
-    # observation is a key value store
     for key, value in dictionary.items():
         text += f"{key}: {value}\n"
 
-    # write the prompt, functions and response to a file
     with open(f"./logs/loop/{filename}_{time.time()}.txt", "w") as f:
         f.write(text)
 
+
 def debuggable_function_call(text, functions, name="prompt"):
-    # Wraps openai_function_call in debug logging
+    """
+    Wraps openai_function_call in debug logging.
+    Arguments:
+    - text: String containing the prompt text for the function call.
+    - functions: List of functions to be called.
+    - name: Name of the prompt.
+    Return: Response from the openai_function_call.
+    """
     response = openai_function_call(text=text, functions=functions)
     if DEBUG:
         debug_log(
             f"openai_function_call\nprompt:\n{text}\nfunctions:\n{functions}\nresponse:\n{response}"
         )
         check_log_dirs()
-        # write the prompt, functions and response to a file
         with open(f"./logs/loop/{name}_{time.time()}.txt", "w") as f:
             f.write(text)
 

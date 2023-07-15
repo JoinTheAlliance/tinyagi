@@ -4,12 +4,13 @@ from tinyagi.core.loop import (
     compose_decision_prompt,
     compose_orient_prompt,
     compose_orient_function,
-    decide,
     observe,
     orient,
-    step,
-    stop,
+    decide,
+    act,
     start,
+    stop,
+    step,
 )
 from tinyagi.core.actions import register_actions, unregister_actions
 

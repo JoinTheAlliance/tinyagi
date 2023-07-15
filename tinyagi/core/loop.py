@@ -1,25 +1,18 @@
 # core/loop.py
-# Handles the main execution loop, which repeats at a fixed internal
+# Handles the main execution loop, which repeats at a fixed interval
 
 import os
 import sys
-from datetime import datetime
 import threading
+from datetime import datetime
 from pynput import keyboard
-
-
-from easycompletion import (
-    compose_prompt,
-    compose_function,
-)
-
+from easycompletion import compose_prompt, compose_function
 from .system import (
     increment_epoch,
     get_epoch,
     write_dict_to_log,
     debuggable_function_call,
 )
-
 from .actions import (
     compose_action_function,
     compose_action_prompt,
@@ -28,7 +21,6 @@ from .actions import (
     use_action,
 )
 from .events import create_event, get_formatted_events
-
 from .knowledge import (
     add_knowledge,
     formatted_search_knowledge,
@@ -40,43 +32,75 @@ from .knowledge import (
 
 
 def on_press(key):
+    """
+    Function to handle keyboard inputs
+
+    Args:
+        key: the key which was pressed.
+
+    This function does not return any value.
+    """
     if key == keyboard.Key.space:
         step(event)
 
 
 ### MAIN LOOP ###
+
 event = threading.Event()
 stop_event = threading.Event()
 step_event = threading.Event()
 started_event = threading.Event()
-input_listener = None
+listener = None
 
-def on_press(key):
-    if key == keyboard.Key.space:
-        step(event)
 
 def stop():
+    """
+    Function to handle stopping of the loop
+
+    This function does not take any arguments and does not return any value.
+    """
     global listener
-    print('Stop event set')
+    print("Stop event set")
     stop_event.set()
     if listener is not None and listener.running:
-        listener.stop()    
-    
+        listener.stop()
+
 
 def step(event):
+    """
+    Function to perform a single step in the loop
+
+    Args:
+        event: an instance of threading.Event
+
+    This function does not return any value.
+    """
     event.set()
 
+
 def reset_globals():
-    global event
-    global stop_event
-    global step_event
-    global started_event
+    """
+    Function to reset the global events
+
+    This function does not take any arguments and does not return any value.
+    """
+    global event, stop_event, step_event, started_event
     stop_event = threading.Event()
     step_event = threading.Event()
     started_event = threading.Event()
     event = threading.Event()
 
+
 def start(stepped=False):
+    """
+    Function to start the main loop
+
+    Args:
+        stepped: a boolean value that determines whether the loop should run in stepped mode or not. Defaults to False.
+
+    Returns:
+        thread, step_event: an instance of threading.Thread that's running the main loop and the event that's used to control stepping.
+    """
     global listener
     reset_globals()
     thread = threading.Thread(target=loop, args=(stepped, stop_event, step_event))
@@ -89,18 +113,27 @@ def start(stepped=False):
 
 
 def loop(stepped, stop_event, step_event):
+    """
+    The main loop of the application, running the observe, orient, decide, act cycle until stop event is set
+
+    Args:
+        stepped: a boolean value that determines whether the loop should run in stepped mode or not
+        stop_event: an instance of threading.Event that's used to control stopping of the loop
+        step_event: an instance of threading.Event that's used to control stepping
+
+    This function does not return any value.
+    """
     global listener
     steps = [observe, orient, decide, act]
     observation = None
     started_event.set()  # Indicate that the loop has started
     while not stop_event.is_set():
-        print('Loop started...')
         for step in steps:
-            print(f'Running step: {step.__name__}')
             observation = step(observation)
             if stepped:
-                print("Waiting for next step...")
-                while not step_event.wait(timeout=1):  # Wait here until step_event is set
+                while not step_event.wait(
+                    timeout=1
+                ):  # Wait here until step_event is set
                     if stop_event.is_set():  # Check if stop event has been set
                         break  # Break out of for loop
                 if stop_event.is_set():  # Check if stop event has been set
@@ -108,14 +141,21 @@ def loop(stepped, stop_event, step_event):
                 step_event.clear()  # Clear the step_event
         if stop_event.is_set():  # Check if stop event has been set
             break  # Break out of while loop
-        print('Loop finished...')
-    print('Loop stopped due to stop event')
 
 
 ### OBSERVE FUNCTIONS ###
 
 
 def observe(last_observation=None):
+    """
+    Function to observe the environment and return an observation
+
+    Args:
+        last_observation: the last observation made by the loop. Defaults to None.
+
+    Returns:
+        observation: a dictionary containing the current observation
+    """
     if last_observation is not None:
         write_dict_to_log(last_observation, "observation_end")
 
@@ -144,6 +184,15 @@ def observe(last_observation=None):
 
 
 def compose_orient_prompt(observation):
+    """
+    This function formats the orientation prompt by inserting the observation data into a pre-defined template.
+
+    Args:
+        observation (dict): The dictionary containing data about the current state of the system, such as current epoch, time, date, recent knowledge, and events.
+
+    Returns:
+        str: The fully formed orientation prompt with the data filled in from the observation.
+    """
     return compose_prompt(
         """Current Epoch: {{epoch}}
 The current time is {{current_time}} on {{current_date}}.
@@ -166,6 +215,12 @@ The current time is {{current_time}} on {{current_date}}.
 
 
 def compose_orient_function():
+    """
+    This function defines the structure and requirements of the 'orient' function to be called in the 'orient' stage of the OODA loop.
+
+    Returns:
+        dict: A dictionary containing the details of the 'orient' function, such as its properties, description, and required properties.
+    """
     return compose_function(
         "summarize_recent_events",
         properties={
@@ -205,6 +260,15 @@ def compose_orient_function():
 
 
 def orient(observation):
+    """
+    This function serves as the 'Orient' stage in the OODA loop. It uses the current observation data to summarize the previous epoch and formulate a plan for the next steps.
+
+    Args:
+        observation (dict): The dictionary containing data about the current state of the system.
+
+    Returns:
+        dict: The updated observation dictionary after the 'Orient' stage, including the summary of the last epoch, relevant knowledge, available actions, and so on.
+    """
     response = debuggable_function_call(
         text=compose_orient_prompt(observation),
         functions=compose_orient_function(),
@@ -250,6 +314,15 @@ def orient(observation):
 
 
 def compose_decision_prompt(observation):
+    """
+    This function formats the decision prompt by inserting the observation data into a pre-defined template.
+
+    Args:
+        observation (dict): The dictionary containing data about the current state of the system, such as current epoch, time, date, relevant knowledge, events, and available actions.
+
+    Returns:
+        str: The fully formed decision prompt with the data filled in from the observation.
+    """
     return compose_prompt(
         """Current Epoch: {{epoch}}
 The current time is {{current_time}} on {{current_date}}.
@@ -274,6 +347,12 @@ Your task:
 
 
 def compose_decision_function():
+    """
+    This function defines the structure and requirements of the 'decide' function to be called in the 'Decide' stage of the OODA loop.
+
+    Returns:
+        dict: A dictionary containing the details of the 'decide' function, such as its properties, description, and required properties.
+    """
     return compose_function(
         name="decide_action",
         description="Decide which action to take next.",
@@ -296,6 +375,15 @@ def compose_decision_function():
 
 
 def decide(observation):
+    """
+    This function serves as the 'Decide' stage in the OODA loop. It uses the current observation data to decide which action should be taken next.
+
+    Args:
+        observation (dict): The dictionary containing data about the current state of the system.
+
+    Returns:
+        dict: The updated observation dictionary after the 'Decide' stage, including the selected action and reasoning behind the decision.
+    """
     response = debuggable_function_call(
         text=compose_decision_prompt(observation),
         functions=compose_decision_function(),
@@ -316,6 +404,15 @@ def decide(observation):
 
 
 def act(observation):
+    """
+    This function serves as the 'Act' stage in the OODA loop. It executes the selected action from the 'Decide' stage.
+
+    Args:
+        observation (dict): The dictionary containing data about the current state of the system, including the selected action to be taken.
+
+    Returns:
+        dict: The updated observation dictionary after the 'Act' stage, which will be used in the next iteration of the OODA loop.
+    """
     action_name = observation["action_name"]
     action = get_action(action_name)
 
