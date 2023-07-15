@@ -41,8 +41,4 @@ def run_tests():
     test_create_event()
     test_get_events()
     test_search_events()
-    print("All tests passed!")
-
-
-if __name__ == "__main__":
-    run_tests()
+    print("Event tests passed!")

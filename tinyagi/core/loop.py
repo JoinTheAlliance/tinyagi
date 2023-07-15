@@ -7,8 +7,6 @@ from datetime import datetime
 import threading
 from pynput import keyboard
 
-event = threading.Event()
-input_listener = None
 
 from easycompletion import (
     compose_prompt,
@@ -47,23 +45,40 @@ def on_press(key):
 
 
 ### MAIN LOOP ###
-
+event = threading.Event()
 stop_event = threading.Event()
 step_event = threading.Event()
 started_event = threading.Event()
+input_listener = None
 
+def on_press(key):
+    if key == keyboard.Key.space:
+        step(event)
 
 def stop():
+    global listener
     print('Stop event set')
     stop_event.set()
-
+    if listener is not None and listener.running:
+        listener.stop()    
+    
 
 def step(event):
     event.set()
-    
+
+def reset_globals():
+    global event
+    global stop_event
+    global step_event
+    global started_event
+    stop_event = threading.Event()
+    step_event = threading.Event()
+    started_event = threading.Event()
+    event = threading.Event()
 
 def start(stepped=False):
     global listener
+    reset_globals()
     thread = threading.Thread(target=loop, args=(stepped, stop_event, step_event))
     thread.start()
     if stepped:
@@ -74,14 +89,6 @@ def start(stepped=False):
 
 
 def loop(stepped, stop_event, step_event):
-    """
-    Main execution loop. This is modeled on the OODA loop -- https://en.wikipedia.org/wiki/OODA_loop
-    # The steps are prepare, observe, oriented, decide, act, end
-    # Observe - Collect inputs and summarize the create an initial observation of the world state
-    # Orient - Summarize the last epoch and reason about what to do next, then augment the observation
-    # Decide - Decide which action to take
-    # Act - Execute the action that was decided on
-    """
     global listener
     steps = [observe, orient, decide, act]
     observation = None
@@ -93,8 +100,14 @@ def loop(stepped, stop_event, step_event):
             observation = step(observation)
             if stepped:
                 print("Waiting for next step...")
-                step_event.wait()  # Wait here until step_event is set
+                while not step_event.wait(timeout=1):  # Wait here until step_event is set
+                    if stop_event.is_set():  # Check if stop event has been set
+                        break  # Break out of for loop
+                if stop_event.is_set():  # Check if stop event has been set
+                    break  # Break out of for loop
                 step_event.clear()  # Clear the step_event
+        if stop_event.is_set():  # Check if stop event has been set
+            break  # Break out of while loop
         print('Loop finished...')
     print('Loop stopped due to stop event')
 

@@ -124,9 +124,4 @@ def run_tests():
     test_register_actions()
     test_search_actions()
     test_get_available_actions()
-
-    print("All tests passed!")
-
-
-if __name__ == "__main__":
-    run_tests()
+    print("Action tests passed!")

@@ -32,8 +32,4 @@ def test_increment_epoch():
 def run_tests():
     test_get_epoch()
     test_increment_epoch()
-    print("All tests passed!")
-
-
-if __name__ == "__main__":
-    run_tests()
+    print("System tests passed!")

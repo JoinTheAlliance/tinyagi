@@ -75,8 +75,4 @@ def run_tests():
     test_remove_knowledge()
     test_search_knowledge()
     test_delete_knowledge_by_id()
-    print("All tests passed!")
-
-
-if __name__ == "__main__":
-    run_tests()
+    print("Knowledge tests passed!")

@@ -178,11 +178,10 @@ def register_actions():
     For each Python file in the 'actions' directory, it imports the file and calls the get_actions action if it exists.
     Then, it adds the returned actions to the 'actions' dictionary.
     """
+    # Reset actions if they were already registered
+    unregister_actions()
+
     debug_log("Registering actions")
-    # Wipe any existing actions to prevent split sources of truth
-    wipe_category("actions")
-    global actions
-    actions = {}
 
     # Get the absolute path to the parent directory of the current file
     parent_dir = os.path.dirname(os.path.abspath(__file__))
@@ -213,3 +212,9 @@ def register_actions():
     # Remove the added path from the Python system path
     sys.path.pop(0)
     debug_log("Registered actions")
+
+
+def unregister_actions():
+    wipe_category("actions")
+    global actions
+    actions = {}
