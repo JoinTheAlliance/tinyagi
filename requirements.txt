@@ -4,3 +4,4 @@ keyboard
 agentmemory
 agentbrowser
 easycompletion
+rich

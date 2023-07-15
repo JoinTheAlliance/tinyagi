@@ -6,7 +6,11 @@ from agentmemory import count_memories, create_memory
 from easycompletion import openai_function_call
 
 from tinyagi.core.constants import DEBUG
+from rich import print
+from rich.panel import Panel
+from rich.console import Console
 
+console = Console()
 
 def check_log_dirs():
     """
@@ -52,7 +56,8 @@ def debug_log(content, filename="logs/events.txt"):
     Return: None
     """
     if DEBUG:
-        print(f"{content}")
+        panel = Panel(content, style="yellow")
+        console.print(panel)
         write_to_log(content, write_to_debug=True, filename=filename)
 
 

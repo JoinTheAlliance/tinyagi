@@ -5,6 +5,19 @@ from tinyagi.core.constants import MAX_PROMPT_LIST_ITEMS, MAX_PROMPT_LIST_TOKENS
 
 from .system import get_epoch, write_to_log, debug_log
 
+from rich.panel import Panel
+from rich.console import Console
+
+console = Console()
+
+type_color = {
+    "event": "purple",
+    "error": "red",
+    "summary": "cyan",
+    "reasoning": "blue",
+    "action": "green",
+    "system": "magenta",
+}
 
 def create_event(content, type=None, subtype=None, creator=None, metadata={}):
     """
@@ -24,6 +37,8 @@ def create_event(content, type=None, subtype=None, creator=None, metadata={}):
     metadata["creator"] = creator
     metadata["epoch"] = get_epoch()
 
+    color = type_color.get(type, "white")
+
     # if any keys are None, delete them
     metadata = {k: v for k, v in metadata.items() if v is not None}
 
@@ -35,7 +50,8 @@ def create_event(content, type=None, subtype=None, creator=None, metadata={}):
     event_string = event_to_string(event)
 
     create_memory("events", content, metadata=metadata)
-    print(f"{event_string}")
+    panel = Panel(event_string, style=color)
+    console.print(panel)
     write_to_log(f"{event_string}")
     debug_log(f"{event_string}")
 
