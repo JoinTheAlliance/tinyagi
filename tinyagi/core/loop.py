@@ -43,28 +43,37 @@ from .knowledge import (
 
 def on_press(key):
     if key == keyboard.Key.space:
-        next_step(event)
+        step(event)
 
 
 ### MAIN LOOP ###
 
+stop_event = threading.Event()
+step_event = threading.Event()
+started_event = threading.Event()
+
+
+def stop():
+    print('Stop event set')
+    stop_event.set()
+
+
+def step(event):
+    event.set()
+    
 
 def start(stepped=False):
     global listener
-    thread = threading.Thread(target=loop, args=(stepped,))
+    thread = threading.Thread(target=loop, args=(stepped, stop_event, step_event))
     thread.start()
     if stepped:
         listener = keyboard.Listener(on_press=on_press)
         listener.start()
-    return thread, event
+    started_event.wait()  # Wait here until loop is started
+    return thread, step_event
 
 
-def next_step(event):
-    event.set()
-
-
-def loop(stepped):
-    global listener
+def loop(stepped, stop_event, step_event):
     """
     Main execution loop. This is modeled on the OODA loop -- https://en.wikipedia.org/wiki/OODA_loop
     # The steps are prepare, observe, oriented, decide, act, end
@@ -73,15 +82,21 @@ def loop(stepped):
     # Decide - Decide which action to take
     # Act - Execute the action that was decided on
     """
+    global listener
     steps = [observe, orient, decide, act]
-    last_output = None
-    while True:
+    observation = None
+    started_event.set()  # Indicate that the loop has started
+    while not stop_event.is_set():
+        print('Loop started...')
         for step in steps:
-            last_output = step(last_output)
+            print(f'Running step: {step.__name__}')
+            observation = step(observation)
             if stepped:
                 print("Waiting for next step...")
-                event.wait()  # Wait here until event is set
-                event.clear()  # Clear the event
+                step_event.wait()  # Wait here until step_event is set
+                step_event.clear()  # Clear the step_event
+        print('Loop finished...')
+    print('Loop stopped due to stop event')
 
 
 ### OBSERVE FUNCTIONS ###

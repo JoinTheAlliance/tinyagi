@@ -22,9 +22,6 @@ def add_knowledge(content, metadata={}, similarity=SIMILARY_THRESHOLD):
         content, max_distance=max_distance, n_results=1
     )
 
-    print("similar knowledge:")
-    print(similar_knowledge)
-
     metadata = {
         "epoch": get_epoch(),
     }

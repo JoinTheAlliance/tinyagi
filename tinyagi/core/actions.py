@@ -75,7 +75,7 @@ def get_formatted_available_actions(summary):
         # remove the last event
         available_actions = available_actions[:-1]
         formatted_available_actions = "\n".join([k["document"] for k in available_actions])
-    return "\n" + header_text + "\n" + formatted_available_actions + "\n"
+    return header_text + "\n" + formatted_available_actions + "\n"
 
 def get_available_actions(summary):
     available_actions = search_actions(search_text=summary, n_results=10)
