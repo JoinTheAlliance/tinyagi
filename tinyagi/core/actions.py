@@ -23,6 +23,12 @@ from .events import create_event, debug_log, get_epoch
 # Create an empty dictionary to hold the actions
 actions = {}
 
+def compose_action_function(action, observation):
+    # TODO: iterate through keys and replace {{}} with observation[key]
+    return action["function"]
+
+def compose_action_prompt(action, observation):
+    return action["prompt"](observation)
 
 def get_actions():
     global actions
@@ -58,6 +64,7 @@ def get_last_action():
     return last
 
 def get_formatted_available_actions(summary):
+    header_text = "Available actions for me to choose from:"
     available_actions = get_available_actions(summary)
     formatted_available_actions = "\n".join(available_actions)
     while count_tokens(formatted_available_actions) > MAX_PROMPT_TOKENS:
@@ -68,7 +75,7 @@ def get_formatted_available_actions(summary):
         # remove the last event
         available_actions = available_actions[:-1]
         formatted_available_actions = "\n".join([k["document"] for k in available_actions])
-    return formatted_available_actions
+    return "\n" + header_text + "\n" + formatted_available_actions + "\n"
 
 def get_available_actions(summary):
     available_actions = search_actions(search_text=summary, n_results=10)

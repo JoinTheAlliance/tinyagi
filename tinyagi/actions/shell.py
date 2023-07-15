@@ -5,10 +5,9 @@ import os
 import time
 import re
 
-from easycompletion import count_tokens, trim_prompt
+from easycompletion import compose_function, compose_prompt, count_tokens
 
 from tinyagi.core.events import create_event
-from tinyagi.core.actions import get_actions as get_all_actions
 
 SHELL_COMMAND_TOKEN_LIMIT = 2048
 
@@ -28,82 +27,38 @@ def get_files_in_current_directory():
     return result_decoded
 
 
-run_command_prompt_template = """TIME: {{current_time}}
+def compose_run_command_prompt(observation):
+    observation["current_working_directory"] = current_working_directory
+    observation["files_in_current_directory"] = (
+    "\n" + "Files in the current directory (ls -alh):\n"
+    "============================================\n"
+    "" + ("\n".join(get_files_in_current_directory())) + "\n"
+    "============================================\n"
+    )
+
+    return compose_prompt(
+        """TIME: {{current_time}}
 DATE: {{current_date}}
 PLATFORM: {{platform}}
 PROJECT DIRECTORY: {{cwd}}
 PWD: {{current_working_directory}}
-
-Files in the current directory (ls -alh):
-### BEGIN FILES IN CURRENT DIRECTORY ###
 {{files_in_current_directory}}
-### END FILES IN CURRENT DIRECTORY ###
-
-I know these relevant things:
-{{knowledge}}
-
-Recent Events are formatted as follows:
-Epoch # | <Type>::<Subtype> (Creator): <Event>
-============================================
+{{relevant_knowledge}}
 {{events}}
-
-Summary of Last Epoch:
 {{summary}}
-
-Action Reasoning:
 {{reasoning}}
-
 TASK: Based on the action reasoning, what command should I run in my terminal? Please include all arguments, etc. on one line.
 - Write a one-liner that I can run in my terminal (command)
 - Then, write a summary of what output you expect to see (expected_output)
 - If I ran a command, I probably should not run it again, so please don't suggest the same command twice in a row. Since you already know the cwd and files in the current directory, you shouldn't just run ls or pwd.
 - DO NOT suggest running any commands that will provide us with the same information we already have. For example, if we already know the current working directory, don't suggest running pwd.
-"""
-
-# Replace {{files_in_current_directory}} with the files in the current directory
-# This ill be auto-replaced later but needs to be initialized once
-run_command_prompt_template = run_command_prompt_template.replace(
-    "{{files_in_current_directory}}", "\n".join(get_files_in_current_directory())
-).replace("{{current_working_directory}}", current_working_directory)
-
-
-def compose_prompt_with_local_variables():
-    prompt_lines = run_command_prompt_template.split("\n")
-
-    # now find the line that starts with "CWD: "
-    for i, line in enumerate(prompt_lines):
-        if line.startswith("PWD:"):
-            # replace the line with the current working directory
-            prompt_lines[i] = f"PWD: {current_working_directory}"
-
-    line_number_start = None
-    line_number_end = None
-
-    # get the index of the line that contains "### BEGIN FILES IN CURRENT DIRECTORY ###"
-    for i, line in enumerate(prompt_lines):
-        if line.startswith("### BEGIN FILES IN CURRENT DIRECTORY ###"):
-            line_number_start = i + 1
-            # now iterate through and get the index of the line that contains "### END FILES IN CURRENT DIRECTORY ###"
-            for j, line in enumerate(prompt_lines):
-                if line.startswith("### END FILES IN CURRENT DIRECTORY ###"):
-                    line_number_end = j
-                    break
-
-    if line_number_start is not None and line_number_end is not None:
-        files_in_current_directory = get_files_in_current_directory()
-        # replace the lines between line_number_start and line_number_end with the files in the current directory
-        prompt_lines[line_number_start:line_number_end] = files_in_current_directory
-
-    # now join the prompt lines back together
-    prompt = "\n".join(prompt_lines)
-    return prompt
+""",
+        observation,
+    )
 
 
 def run_shell_command(arguments):
     global current_working_directory
-
-    run_command_prompt_template = compose_prompt_with_local_variables()
-    get_all_actions()["run_shell_command"]["prompt"] = run_command_prompt_template
 
     command = arguments.get("command")
     # Execute command in the current working directory
@@ -145,7 +100,8 @@ def run_shell_command(arguments):
                 + command
                 + "`\n"
                 + "(NOTE: The output may be truncated. The complete output has been saved to `"
-                + filename + "`\n"
+                + filename
+                + "`\n"
                 + "I got the following result:\n"
                 + result,
                 type="action",
@@ -175,28 +131,25 @@ def run_shell_command(arguments):
 def get_actions():
     return [
         {
-            "function": {
-                "name": "run_shell_command",
-                "description": "Run a shell command in my terminal. I can use this to access my operating system and interact with the world, or to call some code. This is a full terminal, so any code that works in bash will work.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "command": {
-                            "type": "string",
-                            "description": "The full command to run in my shell, including all arguments, etc.",
-                        },
-                        "expected_output": {
-                            "type": "string",
-                            "description": "Describe the expected output of the command. Write it from the user's perspective, in the first person, e.g. 'I should see the current working directory.'",
-                        },
+            "function": compose_function(
+                name="run_shell_command",
+                description="Run a shell command in my terminal. I can use this to access my operating system and interact with the world, or to call some code. This is a full terminal, so any code that works in bash will work.",
+                properties={
+                    "command": {
+                        "type": "string",
+                        "description": "The full command to run in my shell, including all arguments, etc.",
                     },
-                    "required": ["command", "expected_output"],
+                    "expected_output": {
+                        "type": "string",
+                        "description": "Describe the expected output of the command. Write it from the user's perspective, in the first person, e.g. 'I should see the current working directory.'",
+                    },
                 },
-            },
+                required_properties=["command", "expected_output"],
+            ),
+            "prompt": compose_run_command_prompt,
+            "handler": run_shell_command,
             "suggestion_after_actions": ["run_shell_command"],  # suggest self
             "never_after_actions": [],
-            "prompt": run_command_prompt_template,
-            "handler": run_shell_command,
         }
     ]
 

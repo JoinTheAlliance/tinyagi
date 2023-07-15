@@ -1,4 +1,7 @@
 from agentmemory import create_memory, search_memory, get_memories
+from easycompletion import count_tokens, trim_prompt
+
+from tinyagi.core.constants import MAX_PROMPT_LIST_ITEMS, MAX_PROMPT_LIST_TOKENS, MAX_PROMPT_TOKENS
 
 from .system import get_epoch, write_to_log, debug_log
 
@@ -41,6 +44,36 @@ def get_events(type=None, n_results=None, filter_metadata=None):
     )
     debug_log(f"Getting events: {memories}")
     return memories
+
+
+def get_formatted_events():
+    events_header = """Recent Events are formatted as follows:
+Epoch # | <Type>::<Subtype> (Creator): <Event>
+============================================"""
+
+    events = get_events(n_results=MAX_PROMPT_LIST_ITEMS)
+
+    # reverse events
+    events = events[::-1]
+
+    # annotated events
+    annotated_events = "\n".join([event_to_string(event) for event in events])
+
+    # trim any individual events, just in case
+    for i in range(len(events)):
+        document = events[i]["document"]
+        if count_tokens(document) > MAX_PROMPT_LIST_TOKENS:
+            events[i]["document"] = (
+                trim_prompt(document, MAX_PROMPT_LIST_TOKENS - 5) + " ..."
+            )
+
+    while count_tokens(annotated_events) > MAX_PROMPT_TOKENS:
+        # remove the first event
+        events = events[1:]
+        annotated_events = "\n".join([event_to_string(event) for event in events])
+
+    return events_header + "\n" + annotated_events + "\n"
+
 
 
 def search_events(search_text, n_results=None):

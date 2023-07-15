@@ -67,6 +67,7 @@ def get_knowledge_from_epoch(epoch=get_epoch()):
     return memories
 
 def formatted_search_knowledge(search_text, min_distance=None, max_distance=None, n_results=5):
+    header_text = "I know these relevant things:"
     knowledge = search_knowledge(search_text, min_distance=min_distance, max_distance=max_distance, n_results=n_results)
     # trim any individual knowledge, just in case
     for i in range(len(knowledge)):
@@ -85,6 +86,31 @@ def formatted_search_knowledge(search_text, min_distance=None, max_distance=None
         # remove the last event
         recent_knowledge = recent_knowledge[:-1]
         formatted_knowledge = "\n".join([k["document"] for k in recent_knowledge])
+    return "\n" + header_text + "\n" + formatted_knowledge + "\n"
+
+
+def get_formatted_recent_knowledge():
+    recent_knowledge = get_knowledge_from_epoch(get_epoch() - 1)
+
+    # trim any individual knowledge, just in case
+    for i in range(len(recent_knowledge)):
+        document = recent_knowledge[i]["document"]
+        if count_tokens(document) > MAX_PROMPT_LIST_TOKENS:
+            recent_knowledge[i]["document"] = (
+                trim_prompt(document, MAX_PROMPT_LIST_TOKENS - 5) + " ..."
+            )
+
+    formatted_knowledge = "\n".join([k["document"] for k in recent_knowledge])
+
+    while count_tokens(formatted_knowledge) > MAX_PROMPT_TOKENS:
+        if len(recent_knowledge) == 1:
+            raise Exception(
+                "Single knowledge length is greater than token limit, should not happen"
+            )
+        # remove the first event
+        recent_knowledge = recent_knowledge[1:]
+        formatted_knowledge = "\n".join([k["document"] for k in recent_knowledge])
+    return formatted_knowledge
 
 def search_knowledge(search_text, min_distance=None, max_distance=None, n_results=5):
     """
