@@ -1,22 +1,11 @@
 import os
-import json
-import time
-from dotenv import load_dotenv
 import socket
 from threading import Thread
-from pyfiglet import Figlet
-from rich.panel import Panel
-from rich.console import Console
-console = Console()
+from dotenv import load_dotenv
 
 load_dotenv()  # take environment variables from .env.
 
-from agentmemory import wipe_all_memories, create_memory
-from tinyagi.core.actions import register_actions
-from tinyagi.core.loop import start
-
-# set TOKENIZERS_PARALLELISM environment variable to False to avoid warnings
-os.environ["TOKENIZERS_PARALLELISM"] = "False"
+from tinyagi.main import start
 
 
 def check_for_api_key():
@@ -33,26 +22,6 @@ def check_for_api_key():
             os.environ["OPENAI_API_KEY"] = api_key
 
 
-def seed(filename="seeds.json"):
-    with open(filename, "r") as f:
-        seed_data = json.load(f)
-    timestamps = [time.time() - (10 * i) for i in range(len(seed_data))]
-    for i, entry in enumerate(seed_data):
-        timestamp = timestamps[i]
-        entry["metadata"]["created_at"] = str(timestamp)
-        create_memory(entry["collection"], entry["message"], entry["metadata"])
-
-
-if "--reset" in os.sys.argv:
-    wipe_all_memories()
-    if os.path.isdir("./logs"):
-        os.system("rm -rf ./logs")
-    os.mkdir("./logs")
-    os.mkdir("./logs/loop")
-    if "--seed" in os.sys.argv:
-        seed()
-
-register_actions()
 check_for_api_key()
 
 
@@ -78,30 +47,11 @@ def udp_listen():
             )
 
 
-eliza = """
-EEEEEE  LL      IIII  ZZZZZZZ   AAAAA                       
-EE      LL       II       ZZ   AA   AA                      
-EEEEE   LL       II     ZZZ    AAAAAAA                      
-EE      LL       II    ZZ      AA   AA                      
-EEEEEE  LLLLLL  IIII  ZZZZZZZ  AA   AA      
-"""
-
-def print_ascii_art():
-    """
-    Prints ASCII art of the given text using pyfiglet.
-
-    Parameters:
-    - text (str): the text to print as ASCII art
-    """
-    
-    f = Figlet(font="letters")
-    print("\n")
-    console.print(f.renderText("tinyagi"), style="yellow")
-    console.print("Starting...\n\n", style="BRIGHT_BLACK")
-
-
-
 udp_listen_thread = Thread(target=udp_listen)
 udp_listen_thread.start()
-print_ascii_art()
-start()
+
+start(
+    actions_dir="./tinyagi/actions",
+    reset="--reset" in os.sys.argv,
+    seed="--seed" in os.sys.argv,
+)

@@ -6,7 +6,7 @@ import time
 import re
 
 from easycompletion import compose_function, compose_prompt, count_tokens
-from tinyagi.core.utils import debuggable_create_event
+from tinyagi.core.utils import create_event
 
 SHELL_COMMAND_TOKEN_LIMIT = 2048
 
@@ -44,16 +44,16 @@ TASK: Based on the action reasoning, what command should I run in my terminal? P
 """
 
 
-def compose_use_shell_prompt(observation):
-    observation["cwd"] = cwd
-    observation["files_in_current_directory"] = (
+def compose_use_shell_prompt(context):
+    context["cwd"] = cwd
+    context["files_in_current_directory"] = (
         "\n" + "Files in the current directory (ls -alh):\n"
         "============================================\n"
         "" + ("\n".join(get_files_in_current_directory())) + "\n"
         "============================================\n"
     )
 
-    return compose_prompt(use_shell_prompt, observation)
+    return compose_prompt(use_shell_prompt, context)
 
 
 def use_shell(arguments):
@@ -94,7 +94,7 @@ def use_shell(arguments):
             with open(filename, "w") as f:
                 f.write(result)
 
-            debuggable_create_event(
+            create_event(
                 "I ran the command `"
                 + command
                 + "`\n"
@@ -114,12 +114,12 @@ def use_shell(arguments):
         result = result.strip()
         if result != "":
             event_text += "` and I got the following result:\n" + result
-        debuggable_create_event(event_text, type="action", subtype="use_shell")
+        create_event(event_text, type="action", subtype="use_shell")
         return True
 
     else:  # If the process did not complete successfully
         error_message = process.stderr
-        debuggable_create_event(
+        create_event(
             f"I ran the command `{command}` in `{cwd}` and got an error\n: {error_message.strip()}",
             type="action",
             subtype="use_shell",
@@ -146,7 +146,7 @@ def get_actions():
                 required_properties=["command", "expected_output"],
             ),
             "prompt": use_shell_prompt,
-            "composer": compose_use_shell_prompt,
+            "builder": compose_use_shell_prompt,
             "handler": use_shell,
             "suggestion_after_actions": ["use_shell"],  # suggest self
             "never_after_actions": [],
