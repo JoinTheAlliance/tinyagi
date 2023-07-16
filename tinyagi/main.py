@@ -59,16 +59,12 @@ def build_context_step(context_dir):
         Returns:
         context: the context dictionary
         """
-        print('building context')
-        print(context)
 
         if context is None:
             context = {}
         
         for context_builder in context_builders:
             context = context_builder(context)
-            print('built context')
-            print(context)
         return context
 
     return build_context
@@ -102,11 +98,11 @@ def seed_from_json(data):
 
 
 def seed(seed_input):
-    # if seen is a dictionary, use it as the seed data
+    # if seed is a dictionary, use it as the seed data
     if isinstance(seed_input, dict):
         seed_from_json(seed_input)
 
-    elif seed_input is not None and seed_input.endswith(".json"):
+    elif isinstance(seed_input, str) and seed_input.endswith(".json"):
         seed_from_file(seed_input)
 
     elif seed_input is True:
@@ -137,8 +133,8 @@ def start(
     if reset:
         wipe_all_memories()
 
-    # if seed_data is not None:
-    #     seed(seed_data)
+    if seed_data is not None:
+        seed(seed_data)
 
     if actions_dir is not None:
         import_actions(actions_dir)

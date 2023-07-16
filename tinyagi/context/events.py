@@ -16,7 +16,6 @@ MAX_PROMPT_TOKENS = 3072  # 4096 - 1024
 
 
 def build_events_context(context):
-    print('context', context)
     """
     Retrieve and format recent events
 
