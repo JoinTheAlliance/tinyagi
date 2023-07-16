@@ -6,7 +6,6 @@ A really simple approach to a self-learning, open-ended system.
 To install
 ```sh
 pip install -r requirements.txt # install the dependencies
-cp .env.example .env # copy the example environment file
 ```
 To change some configuration stuff, edit the `.env` file, especially the `OPENAI_API_KEY` variable.
 
