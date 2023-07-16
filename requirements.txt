@@ -4,4 +4,6 @@ keyboard
 agentmemory
 agentbrowser
 easycompletion
+agentaction
+agentloop
 rich
