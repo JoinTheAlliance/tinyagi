@@ -1,6 +1,8 @@
 # tinyagi
 A really simple approach to a self-learning, open-ended system.
 
+<img src="resources/image.jpg" width="100%">
+
 To install
 ```sh
 pip install -r requirements.txt # install the dependencies
@@ -13,21 +15,12 @@ To run
 python start.py
 ```
 
-To chat wit your agent, wait until they've figured out how to establish contact
+# TODO:
 
-## Core
-The core code lives here. It's the brain of the agent. It's responsible for loading the actions, memory and connectors, and for running the agent.
+Documentation coming soon
 
-## Actions
-Actions are things that the agent can do. They are loaded from the actions directory and can be used, written and edited at runtime. Make sure you back up any code you use if you don't want it changed.
+# Contributions Welcome
 
-To add an action, copy and paste a action that is similar in the actions directory. Rename it to something unique and modify. The action will be automatically loaded.
+If you like this library and want to contribute in any way, please feel free to submit a PR and I will review it. Please note that the goal here is simplicity and accesibility, using common language and few dependencies.
 
-# Connectors
-Connectors get the agent into the outside world. They are loaded from the connectors directory and can be used, written and edited at runtime. Make sure you back up any code you use if you don't want it changed.
-
-# Scripts
-Helper scripts to get the agent started and configured.
-
-To see what's going on, check out `logs/feed.log`
-
+<img src="resources/youcreatethefuture.jpg">

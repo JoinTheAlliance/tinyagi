@@ -1,9 +1,8 @@
 python-dotenv
-flask
-keyboard
 agentmemory
 agentbrowser
 easycompletion
 agentaction
 agentloop
+pyfiglet
 rich

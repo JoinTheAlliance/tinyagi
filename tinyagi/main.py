@@ -18,8 +18,6 @@ from tinyagi.steps import orient
 # Suppress warning
 os.environ["TOKENIZERS_PARALLELISM"] = "False"
 
-console = Console()
-
 load_dotenv()  # take environment variables from .env.
 
 
@@ -79,6 +77,7 @@ def print_ascii_art():
     """
 
     f = Figlet(font="letters")
+    console = Console()
     print("\n")
     console.print(f.renderText("tinyagi"), style="yellow")
     console.print("Starting...\n\n", style="BRIGHT_BLACK")
