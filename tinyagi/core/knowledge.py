@@ -12,7 +12,7 @@ from tinyagi.core.constants import (
     MAX_PROMPT_TOKENS,
 )
 
-from .events import get_epoch
+from agentevents import get_epoch
 
 
 def add_knowledge(content, metadata={}, similarity=SIMILARY_THRESHOLD):

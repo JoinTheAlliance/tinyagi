@@ -1,149 +1,27 @@
-# core/loop.py
-# Handles the main execution loop, which repeats at a fixed interval
-
 import os
 import sys
-import threading
 from datetime import datetime
 
-from pynput import keyboard
-
 from easycompletion import compose_prompt, compose_function
-from .system import (
-    increment_epoch,
-    get_epoch,
-    write_dict_to_log,
-    debuggable_function_call,
-)
-from .actions import (
-    compose_action_function,
+
+from actionflow import (
     compose_action_prompt,
     get_action,
-    get_formatted_available_actions,
     use_action,
 )
-from .events import create_event, get_formatted_events
+
+from agentevents import (
+    increment_epoch,
+    get_epoch,
+)
+
 from .knowledge import (
     add_knowledge,
     formatted_search_knowledge,
     get_formatted_recent_knowledge,
 )
 
-
-### INPUT HANDLING ###
-
-
-def on_press(key):
-    """
-    Function to handle keyboard inputs
-
-    Args:
-        key: the key which was pressed.
-
-    This function does not return any value.
-    """
-    if key == keyboard.Key.space:
-        step(event)
-
-
-### MAIN LOOP ###
-
-event = threading.Event()
-stop_event = threading.Event()
-step_event = threading.Event()
-started_event = threading.Event()
-listener = None
-
-
-def stop():
-    """
-    Function to handle stopping of the loop
-
-    This function does not take any arguments and does not return any value.
-    """
-    global listener
-    print("Stop event set")
-    stop_event.set()
-    if listener is not None and listener.running:
-        listener.stop()
-
-
-def step(event):
-    """
-    Function to perform a single step in the loop
-
-    Args:
-        event: an instance of threading.Event
-
-    This function does not return any value.
-    """
-    event.set()
-
-
-def reset_globals():
-    """
-    Function to reset the global events
-
-    This function does not take any arguments and does not return any value.
-    """
-    global event, stop_event, step_event, started_event
-    stop_event = threading.Event()
-    step_event = threading.Event()
-    started_event = threading.Event()
-    event = threading.Event()
-
-
-def start(stepped=False):
-    """
-    Function to start the main loop
-
-    Args:
-        stepped: a boolean value that determines whether the loop should run in stepped mode or not. Defaults to False.
-
-    Returns:
-        thread, step_event: an instance of threading.Thread that's running the main loop and the event that's used to control stepping.
-    """
-    global listener
-    reset_globals()
-    thread = threading.Thread(target=loop, args=(stepped, stop_event, step_event))
-    thread.start()
-    if stepped:
-        listener = keyboard.Listener(on_press=on_press)
-        listener.start()
-    started_event.wait()  # Wait here until loop is started
-    return thread, step_event
-
-
-def loop(stepped, stop_event, step_event):
-    """
-    The main loop of the application, running the observe, orient, decide, act cycle until stop event is set
-
-    Args:
-        stepped: a boolean value that determines whether the loop should run in stepped mode or not
-        stop_event: an instance of threading.Event that's used to control stopping of the loop
-        step_event: an instance of threading.Event that's used to control stepping
-
-    This function does not return any value.
-    """
-    global listener
-    steps = [observe, orient, decide, act]
-    observation = None
-    started_event.set()  # Indicate that the loop has started
-    while not stop_event.is_set():
-        for step in steps:
-            observation = step(observation)
-            if stepped:
-                while not step_event.wait(
-                    timeout=1
-                ):  # Wait here until step_event is set
-                    if stop_event.is_set():  # Check if stop event has been set
-                        break  # Break out of for loop
-                if stop_event.is_set():  # Check if stop event has been set
-                    break  # Break out of for loop
-                step_event.clear()  # Clear the step_event
-        if stop_event.is_set():  # Check if stop event has been set
-            break  # Break out of while loop
-
+from .utils import debuggable_create_event, debuggable_function_call
 
 ### OBSERVE FUNCTIONS ###
 
@@ -158,13 +36,10 @@ def observe(last_observation=None):
     Returns:
         observation: a dictionary containing the current observation
     """
-    if last_observation is not None:
-        write_dict_to_log(last_observation, "observation_end")
-
     epoch = increment_epoch()
 
     if epoch == 1:
-        create_event("I have just woken up.", type="system", subtype="intialized")
+        debuggable_create_event("I have just woken up.", type="system", subtype="intialized")
 
     observation = {
         "epoch": get_epoch(),
@@ -176,8 +51,6 @@ def observe(last_observation=None):
         "events": get_formatted_events(),
         "recent_knowledge": get_formatted_recent_knowledge(),
     }
-
-    write_dict_to_log(observation, "observation_start")
 
     return observation
 
@@ -307,8 +180,7 @@ def orient(observation):
     observation["available_actions"] = get_formatted_available_actions(summary)
 
     # Add observation summary to event stream
-    create_event(summary, type="summary")
-    write_dict_to_log(observation, "observation_orient")
+    debuggable_create_event(summary, type="summary")
     return observation
 
 
@@ -397,8 +269,7 @@ def decide(observation):
     reasoning_header = "Action Reasoning:"
     observation["reasoning"] = reasoning_header + "\n" + reasoning + "\n"
     observation["action_name"] = response["arguments"]["action_name"]
-    create_event(reasoning, type="reasoning")
-    write_dict_to_log(observation, "observation_decide")
+    debuggable_create_event(reasoning, type="reasoning")
     return observation
 
 
@@ -419,7 +290,7 @@ def act(observation):
     action = get_action(action_name)
 
     if action is None:
-        create_event(
+        debuggable_create_event(
             f"I tried to use the action `{action_name}`, but it was not found.",
             type="error",
             subtype="action_not_found",
@@ -428,12 +299,11 @@ def act(observation):
 
     response = debuggable_function_call(
         text=compose_action_prompt(action, observation),
-        functions=compose_action_function(action, observation),
+        functions=action["function"],
         name=f"action_{action_name}",
     )
 
     # TODO: check if the action is the last as last time
 
     use_action(response["function_name"], response["arguments"])
-    write_dict_to_log(observation, "observation_act")
     return observation

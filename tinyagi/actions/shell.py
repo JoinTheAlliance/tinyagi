@@ -27,17 +27,7 @@ def get_files_in_current_directory():
     return result_decoded
 
 
-def compose_run_command_prompt(observation):
-    observation["current_working_directory"] = current_working_directory
-    observation["files_in_current_directory"] = (
-    "\n" + "Files in the current directory (ls -alh):\n"
-    "============================================\n"
-    "" + ("\n".join(get_files_in_current_directory())) + "\n"
-    "============================================\n"
-    )
-
-    return compose_prompt(
-        """TIME: {{current_time}}
+run_command_prompt = """TIME: {{current_time}}
 DATE: {{current_date}}
 PLATFORM: {{platform}}
 PROJECT DIRECTORY: {{cwd}}
@@ -52,9 +42,19 @@ TASK: Based on the action reasoning, what command should I run in my terminal? P
 - Then, write a summary of what output you expect to see (expected_output)
 - If I ran a command, I probably should not run it again, so please don't suggest the same command twice in a row. Since you already know the cwd and files in the current directory, you shouldn't just run ls or pwd.
 - DO NOT suggest running any commands that will provide us with the same information we already have. For example, if we already know the current working directory, don't suggest running pwd.
-""",
-        observation,
+"""
+
+
+def compose_run_command_prompt(observation):
+    observation["current_working_directory"] = current_working_directory
+    observation["files_in_current_directory"] = (
+        "\n" + "Files in the current directory (ls -alh):\n"
+        "============================================\n"
+        "" + ("\n".join(get_files_in_current_directory())) + "\n"
+        "============================================\n"
     )
+
+    return compose_prompt(run_command_prompt, observation)
 
 
 def run_shell_command(arguments):
@@ -146,7 +146,8 @@ def get_actions():
                 },
                 required_properties=["command", "expected_output"],
             ),
-            "prompt": compose_run_command_prompt,
+            "prompt": run_command_prompt,
+            "composer": compose_run_command_prompt,
             "handler": run_shell_command,
             "suggestion_after_actions": ["run_shell_command"],  # suggest self
             "never_after_actions": [],
