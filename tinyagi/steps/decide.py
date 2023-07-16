@@ -3,21 +3,10 @@ from easycompletion import (
     compose_function,
 )
 
-from tinyagi.main import create_event, openai_function_call
+from agentevents import create_event
+from easycompletion import openai_function_call
 
-
-def compose_decision_prompt(context):
-    """
-    This function formats the decision prompt by inserting the context data into a pre-defined template.
-
-    Args:
-        context (dict): The dictionary containing data about the current state of the system, such as current epoch, time, date, relevant knowledge, events, and available actions.
-
-    Returns:
-        str: The fully formed decision prompt with the data filled in from the context.
-    """
-    return compose_prompt(
-        """Current Epoch: {{epoch}}
+decision_prompt = """Current Epoch: {{epoch}}
 The current time is {{current_time}} on {{current_date}}.
 {{relevant_knowledge}}
 {{events}}
@@ -34,9 +23,7 @@ Your task:
 - Respond with the name of the action (action_name)
 - Rewrite the summary as if you were me, the user, in the first person (user_reasoning)
 - I can only choose from the available actions. You must choose one of the available actions.
-""",
-        context,
-    )
+"""
 
 
 def compose_decision_function():
@@ -78,9 +65,8 @@ def decide(context):
         dict: The updated context dictionary after the 'Decide' stage, including the selected action and reasoning behind the decision.
     """
     response = openai_function_call(
-        text=compose_decision_prompt(context),
-        functions=compose_decision_function(),
-        name="decision",
+        text=compose_prompt(decision_prompt, context),
+        functions=compose_decision_function()
     )
 
     # Add the action reasoning to the context object

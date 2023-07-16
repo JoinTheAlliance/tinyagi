@@ -2,12 +2,8 @@ import os
 import sys
 from datetime import datetime
 
-from agentevents import (
-    get_epoch,
-)
 
-
-def compose_default_context(context=None):
+def compose_default_context(context={}):
     """
     Create a default context object
 
@@ -17,11 +13,17 @@ def compose_default_context(context=None):
     Returns:
         context: a dictionary containing the current context
     """
-    context = {
-        "current_time": datetime.now().strftime("%H:%M"),
-        "current_date": datetime.now().strftime("%Y-%m-%d"),
-        "platform": sys.platform,
-        "cwd": os.getcwd(),
-    }
-
+    context["current_time"] = datetime.now().strftime("%H:%M")
+    context["current_date"] = datetime.now().strftime("%Y-%m-%d")
+    context["platform"] = sys.platform
+    context["cwd"] = os.getcwd()
     return context
+
+def get_context_builders():
+    """
+    Returns a list of functions that build context dictionaries
+
+    Returns:
+        context_builders: a list of functions that build context dictionaries
+    """
+    return [compose_default_context]

@@ -1,10 +1,12 @@
-from agentactions import (
+from agentaction import (
     compose_action_prompt,
     get_action,
     use_action,
 )
 
-from tinyagi.main import create_event, openai_function_call
+from agentevents import create_event
+
+from easycompletion import openai_function_call
 
 
 def act(context):
@@ -30,8 +32,7 @@ def act(context):
 
     response = openai_function_call(
         text=compose_action_prompt(action, context),
-        functions=action["function"],
-        name=f"action_{action_name}",
+        functions=action["function"]
     )
 
     # TODO: check if the action is the last as last time

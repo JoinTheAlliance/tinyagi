@@ -1,8 +1,3 @@
-import os
-import sys
-import time
-from datetime import datetime
-
 from easycompletion import (
     count_tokens,
     trim_prompt,
@@ -19,15 +14,9 @@ MAX_PROMPT_LIST_ITEMS = 30  # maximum number of events to display
 MAX_PROMPT_LIST_TOKENS = 1536  # 2048 - 512
 MAX_PROMPT_TOKENS = 3072  # 4096 - 1024
 
-TYPE_COLORS = {
-    "error": "red",
-    "summary": "cyan",
-    "reasoning": "blue",
-    "action": "green",
-    "system": "magenta",
-}
 
-def get_formatted_events(n_results=MAX_PROMPT_LIST_ITEMS):
+def build_events_context(context):
+    print('context', context)
     """
     Retrieve and format recent events
 
@@ -39,7 +28,7 @@ def get_formatted_events(n_results=MAX_PROMPT_LIST_ITEMS):
 Epoch # | <Type>::<Subtype> (Creator): <Event>
 ============================================"""
 
-    events = get_events(n_results=n_results)
+    events = get_events(n_results=MAX_PROMPT_LIST_ITEMS)
 
     # reverse events
     events = events[::-1]
@@ -60,5 +49,15 @@ Epoch # | <Type>::<Subtype> (Creator): <Event>
         events = events[1:]
         event_strings = [event_to_string(event) for event in events]
         annotated_events = "\n".join(event_strings)
+    context["events"] = events_header + "\n" + annotated_events + "\n"
+    return context
 
-    return events_header + "\n" + annotated_events + "\n"
+
+def get_context_builders():
+    """
+    Returns a list of functions that build context dictionaries
+
+    Returns:
+        context_builders: a list of functions that build context dictionaries
+    """
+    return [build_events_context]

@@ -2,7 +2,7 @@ from easycompletion import (
     count_tokens,
 )
 
-from agentactions import (
+from agentaction import (
     get_available_actions,
 )
 
@@ -20,8 +20,8 @@ def get_formatted_available_actions(context):
     Returns:
         A string representing the available actions.
     """
-    # check if context['reasoning'] exists
-    search_text = context.get("reasoning", None)
+    # check if context['summary'] exists
+    search_text = context.get("summary", None)
     if search_text is None:
         return context
     header_text = "Available actions for me to choose from:"
@@ -35,5 +35,14 @@ def get_formatted_available_actions(context):
             [k["document"] for k in available_actions]
         )
 
-    # TODO: call compose here with the available actions
-    return header_text + "\n" + formatted_available_actions + "\n"
+    context["available_actions"] = header_text + "\n" + formatted_available_actions + "\n"
+    return context
+
+def get_context_builders():
+    """
+    Returns a list of functions that build context dictionaries
+
+    Returns:
+        context_builders: a list of functions that build context dictionaries
+    """
+    return [get_formatted_available_actions]

@@ -6,7 +6,7 @@ import time
 import re
 
 from easycompletion import compose_function, compose_prompt, count_tokens
-from tinyagi.core.utils import create_event
+from agentevents import create_event
 
 SHELL_COMMAND_TOKEN_LIMIT = 2048
 

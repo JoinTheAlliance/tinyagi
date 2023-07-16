@@ -8,10 +8,10 @@ from agentevents import (
     increment_epoch,
 )
 
-from tinyagi.context.actions import get_formatted_available_actions
-from tinyagi.context.knowledge import add_knowledge, formatted_search_knowledge
+from tinyagi.context.knowledge import add_knowledge
 
-from tinyagi.main import create_event, openai_function_call
+from easycompletion import openai_function_call
+from agentevents import create_event
 
 
 def compose_orient_prompt(context):
@@ -103,19 +103,14 @@ def orient(context):
     epoch = increment_epoch()
 
     if epoch == 1:
-        create_event(
-            "I have just woken up.", type="system", subtype="intialized"
-        )
+        create_event("I have just woken up.", type="system", subtype="intialized")
 
-    context = {
-        "epoch": get_epoch(),
-        "last_epoch": str(get_epoch() - 1),
-    }
+    context["epoch"] = get_epoch()
+    context["last_epoch"] = str(get_epoch() - 1)
 
     response = openai_function_call(
         text=compose_orient_prompt(context),
-        functions=compose_orient_function(),
-        name="orient",
+        functions=compose_orient_function()
     )
 
     arguments = response["arguments"]
@@ -140,14 +135,6 @@ def orient(context):
     summary = response["arguments"]["summary_as_user"]
     summary_header = "Summary of Last Epoch:"
     context["summary"] = summary_header + "\n" + summary + "\n"
-
-    # Search for knowledge based on the summary and add to the context object
-    context["relevant_knowledge"] = formatted_search_knowledge(
-        search_text=summary, n_results=10
-    )
-
-    # Search for the most relevant available actions based on the summary
-    context["available_actions"] = get_formatted_available_actions(summary)
 
     # Add context summary to event stream
     create_event(summary, type="summary")

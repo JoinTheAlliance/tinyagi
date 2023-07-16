@@ -20,9 +20,10 @@ MAX_PROMPT_TOKENS = 3072  # 4096 - 1024
 DEFAULT_SIMILARY_THRESHOLD = 0.92  # used for detecting if things are the similar
 
 
-def formatted_search_knowledge(
-    search_text, min_distance=None, max_distance=None, n_results=5
-):
+def build_relevant_knowledge(context):
+    search_text = context.get("summary", None)
+    if search_text is None:
+        return context
     """
     Searches for knowledge and formats the results.
 
@@ -37,10 +38,8 @@ def formatted_search_knowledge(
     header_text = "I know these relevant things:"
     knowledge = search_memory(
         "knowledge",
-        min_distance=min_distance,
-        max_distance=max_distance,
         search_text=search_text,
-        n_results=n_results,
+        n_results=10,
         filter_metadata={"unique": True},
     )
     # trim any individual knowledge, just in case
@@ -53,17 +52,18 @@ def formatted_search_knowledge(
     formatted_knowledge = "\n".join([k["document"] for k in knowledge])
 
     while count_tokens(formatted_knowledge) > MAX_PROMPT_TOKENS:
-        if len(recent_knowledge) == 1:
+        if len(knowledge) == 1:
             raise Exception(
                 "Single knowledge length is greater than token limit, should not happen"
             )
         # remove the last event
-        recent_knowledge = recent_knowledge[:-1]
-        formatted_knowledge = "\n".join([k["document"] for k in recent_knowledge])
-    return "\n" + header_text + "\n" + formatted_knowledge + "\n"
+        knowledge = knowledge[:-1]
+        formatted_knowledge = "\n".join([k["document"] for k in knowledge])
+    context["relevant_knowledge"] = header_text + "\n" + formatted_knowledge + "\n"
+    return context
 
 
-def get_formatted_recent_knowledge():
+def build_recent_knowledge(context):
     """
     Retrieves and formats recent knowledge.
 
@@ -71,7 +71,7 @@ def get_formatted_recent_knowledge():
 
     Returns: str - A string containing the formatted recent knowledge.
     """
-    get_memories("knowledge", filter_metadata={"epoch": get_epoch() - 1})
+    recent_knowledge = get_memories("knowledge", filter_metadata={"epoch": get_epoch() - 1})
 
     # trim any individual knowledge, just in case
     for i in range(len(recent_knowledge)):
@@ -91,7 +91,8 @@ def get_formatted_recent_knowledge():
         # remove the first event
         recent_knowledge = recent_knowledge[1:]
         formatted_knowledge = "\n".join([k["document"] for k in recent_knowledge])
-    return formatted_knowledge
+    context["relevant_knowledge"] = formatted_knowledge
+    return context
 
 
 def add_knowledge(content, metadata={}, similarity=DEFAULT_SIMILARY_THRESHOLD):
@@ -150,3 +151,13 @@ def remove_knowledge(content, similarity_threshold=DEFAULT_SIMILARY_THRESHOLD):
             delete_memory("knowledge", goal_id)
             return True
     return False
+
+
+def get_context_builders():
+    """
+    Returns a list of functions that build context dictionaries
+
+    Returns:
+        context_builders: a list of functions that build context dictionaries
+    """
+    return [build_recent_knowledge, build_relevant_knowledge]

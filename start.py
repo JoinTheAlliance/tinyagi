@@ -51,7 +51,8 @@ udp_listen_thread = Thread(target=udp_listen)
 udp_listen_thread.start()
 
 start(
+    context_dir="./tinyagi/context",
     actions_dir="./tinyagi/actions",
     reset="--reset" in os.sys.argv,
-    seed="--seed" in os.sys.argv,
+    seed_data="--seed" in os.sys.argv,
 )
