@@ -8,14 +8,15 @@ from easycompletion import openai_function_call
 
 decision_prompt = """Current Epoch: {{epoch}}
 The current time is {{current_time}} on {{current_date}}.
-{{relevant_knowledge}}
-{{events}}
-{{available_actions}}
 Assistant Notes:
 - Do not ask if you can help. Do not ask how you can assist. Do not gather more information.
 - I will not repeat the same action unless it achieves some additional goal. I don't like getting stuck in loops or repeating myself.
 - I prefer to act in a way that is novel and interesting.
 - I only want to gather additional knowledge when I have to. I like to try things first.
+
+{{relevant_knowledge}}
+{{events}}
+{{available_actions}}
 
 Your task: 
 - Based on recent events, which of the actions that you think is the best next action for me to progress towards my goals.
@@ -23,6 +24,7 @@ Your task:
 - Respond with the name of the action (action_name)
 - Rewrite the summary as if you were me, the user, in the first person (user_reasoning)
 - I can only choose from the available actions. You must choose one of the available actions.
+- {{available_actions_short}}
 """
 
 

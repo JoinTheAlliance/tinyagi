@@ -2,6 +2,7 @@ import json
 import time
 from agentmemory import create_memory
 
+
 def seed(seed_input):
     """
     Seed the memory bank from a JSON object or file
@@ -44,4 +45,3 @@ def seed(seed_input):
         except:
             print("Invalid seed data. Must be a JSON file or a JSON string.")
             return
-

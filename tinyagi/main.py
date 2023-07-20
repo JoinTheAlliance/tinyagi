@@ -5,9 +5,13 @@ from rich.console import Console
 
 from agentaction import import_actions
 from agentmemory import wipe_all_memories
-from agentloop import start as start_loop
+from agentloop import (
+    start as start_loop,
+    create_default_context,
+    create_context_builders,
+)
 
-from tinyagi.helpers import build_context_step, seed
+from tinyagi.helpers import seed
 
 from tinyagi.steps import act
 from tinyagi.steps import decide
@@ -41,8 +45,15 @@ def start(
     print_logo()
 
     if steps is None:
-        context_step = build_context_step(context_dir)
-        steps = [context_step, orient, context_step, decide, context_step, act]
+        context_step = create_context_builders(context_dir)
+        steps = [
+            create_default_context,
+            orient,
+            context_step,
+            decide,
+            context_step,
+            act,
+        ]
 
     if reset:
         wipe_all_memories()

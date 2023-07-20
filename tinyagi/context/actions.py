@@ -28,12 +28,12 @@ def get_formatted_available_actions(context):
     available_actions = get_available_actions(search_text)
     formatted_available_actions = "\n".join(available_actions)
     while count_tokens(formatted_available_actions) > MAX_PROMPT_TOKENS:
-        if len(available_actions) == 1:
-            raise Exception("Single knowledge length greater than token limit")
-        available_actions = available_actions[:-1]
         formatted_available_actions = "\n".join(
             [k["document"] for k in available_actions]
         )
+
+    short_actions = ", ".join([k["metadata"]["name"] for k in available_actions])
+    context["available_actions_short"] = "Available actions (name): " + short_actions
 
     context["available_actions"] = header_text + "\n" + formatted_available_actions + "\n"
     return context
