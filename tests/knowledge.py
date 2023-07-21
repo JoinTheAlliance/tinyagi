@@ -18,7 +18,7 @@ def test_add_knowledge():
     unique_memories = []
     not_unique_memories = []
     for memory in memories:
-        if memory["metadata"].get("unique", False):
+        if memory["metadata"].get("unique", False) is True:
             unique_memories.append(memory)
         else:
             not_unique_memories.append(memory)

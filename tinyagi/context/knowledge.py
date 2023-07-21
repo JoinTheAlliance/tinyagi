@@ -9,8 +9,8 @@ from agentevents import (
 
 
 from agentmemory import (
-    create_memory,
-    delete_memory,
+    create_unique_memory,
+    delete_similar_memories,
     get_memories,
     search_memory,
 )
@@ -40,7 +40,7 @@ def build_relevant_knowledge(context):
         "knowledge",
         search_text=search_text,
         n_results=10,
-        filter_metadata={"unique": True},
+        filter_metadata={"unique": "True"},
     )
     # trim any individual knowledge, just in case
     for i in range(len(knowledge)):
@@ -71,7 +71,9 @@ def build_recent_knowledge(context):
 
     Returns: str - A string containing the formatted recent knowledge.
     """
-    recent_knowledge = get_memories("knowledge", filter_metadata={"epoch": get_epoch() - 1})
+    recent_knowledge = get_memories(
+        "knowledge", filter_metadata={"epoch": get_epoch() - 1}
+    )
 
     # trim any individual knowledge, just in case
     for i in range(len(recent_knowledge)):
@@ -108,27 +110,7 @@ def add_knowledge(content, metadata={}, similarity=DEFAULT_SIMILARY_THRESHOLD):
 
     Returns: None
     """
-
-    max_distance = 1.0 - similarity
-
-    similar_knowledge = search_memory(
-        "knowledge",
-        min_distance=0,
-        max_distance=max_distance,
-        search_text=content,
-        n_results=1,
-        filter_metadata={"unique": True},
-    )
-
-    if len(similar_knowledge) == 0:
-        metadata["unique"] = True
-        # Create a new knowledge item
-        create_memory("knowledge", content, metadata=metadata)
-        return
-
-    metadata["related_to"] = similar_knowledge[0]["id"]
-    metadata["related_document"] = similar_knowledge[0]["document"]
-    create_memory("knowledge", content, metadata=metadata)
+    create_unique_memory("knowledge", content, metadata=metadata, similarity=similarity)
 
 
 def remove_knowledge(content, similarity_threshold=DEFAULT_SIMILARY_THRESHOLD):
@@ -142,15 +124,7 @@ def remove_knowledge(content, similarity_threshold=DEFAULT_SIMILARY_THRESHOLD):
     Returns: bool - True if the knowledge item is found and removed, False otherwise.
     """
 
-    knowledge = search_memory("knowledge", content)
-    if len(knowledge) > 0:
-        goal = knowledge[0]
-        goal_similarity = 1.0 - goal["distance"]
-        if goal_similarity > similarity_threshold:
-            goal_id = goal["id"]
-            delete_memory("knowledge", goal_id)
-            return True
-    return False
+    return delete_similar_memories("knowledge", content, similarity_threshold)
 
 
 def get_context_builders():
