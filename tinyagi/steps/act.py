@@ -26,7 +26,11 @@ def act(context):
         create_memory(
             "events",
             f"I tried to use the action `{action_name}`, but it was not found.",
-            metadata={"type": "error", "subtype": "action_not_found"},
+            metadata={
+                "type": "error",
+                "subtype": "action_not_found",
+                "epoch": context["epoch"],
+            },
         )
         return {"error": f"Action {action_name} not found"}
 
@@ -50,7 +54,11 @@ def act(context):
         create_memory(
             "events",
             f"I tried to use the action `{action_name}`, but it failed.",
-            metadata={"type": "error", "subtype": "action_failed"},
+            metadata={
+                "type": "error",
+                "subtype": "action_failed",
+                "epoch": context["epoch"],
+            },
         )
         log(
             f"Action {action_name} failed",
@@ -62,7 +70,11 @@ def act(context):
         create_memory(
             "events",
             f"I used the action `{action_name}` successfully.\nOutput:\n{action_result['result']}",
-            metadata={"type": "success", "subtype": "action_success"},
+            metadata={
+                "type": "success",
+                "subtype": "action_success",
+                "epoch": context["epoch"],
+            },
         )
         log(
             f"Action {action_name} succeeded\nOutput:\n{action_result['result']}",

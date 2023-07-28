@@ -2,7 +2,7 @@ import asyncio
 import os
 import threading
 from agentmemory import create_memory, get_memories
-from easycompletion import compose_function, compose_prompt, openai_text_call
+from easycompletion import compose_function, compose_prompt, openai_function_call, openai_text_call
 from agentcomlink.server import send_message, register_message_handler
 
 from tinyagi.context.events import build_events_context
@@ -10,9 +10,20 @@ from tinyagi.context.events import build_events_context
 from agentlogger import log
 from agentagenda import list_tasks_as_formatted_string
 
+from tinyagi.context.knowledge import build_relevant_knowledge
+
 
 def use_chat(arguments):
     message = arguments["message"]
+    # TODO: simplify epoch
+    events = get_memories("events", n_results=1)
+    if len(events) > 0:
+        epoch = events[0]["metadata"]["epoch"]
+    else:
+        epoch = 0
+    create_memory(
+        "event", message, metadata={"type": "message", "sender": "user", "epoch": epoch}
+    )
     # send_message is asynchronous, so we need to start with asyncio
     send_message(message)
 
@@ -20,9 +31,11 @@ def use_chat(arguments):
 started = False
 
 prompt = """\
-{{tasks}}
+{{relevant_knowledge}}
 
 {{events}}
+
+{{tasks}}
 
 Recent Conversation:
 {{chat}}
@@ -33,6 +46,18 @@ TASK: Write a chat message response to the administrator as me, the user. Do not
 - Be conversational, i.e. brief and not lengthy or verbose.
 - Do not add the speaker's name, e.g. 'User: ' or 'Administrator: '. Just the chat message itself.
 """
+
+create_task_function = compose_function(
+    name="create_task",
+    description="Create a task with the given objective.",
+    properties={
+        "objective": {
+            "type": "string",
+            "description": "The objective of the task to be created.",
+        }
+    },
+    required_properties=["objective"],
+)
 
 
 def build_chat_context(context={}):
@@ -55,8 +80,16 @@ def build_chat_context(context={}):
 
 
 def response_handler(message):
+    events = get_memories("events", n_results=1)
+    # TODO: simplify epoch
+    if len(events) > 0:
+        epoch = events[0]["metadata"]["epoch"]
+    else:
+        epoch = 0
     create_memory(
-        "event", message, metadata={"type": "message", "sender": "administrator"}
+        "event",
+        message,
+        metadata={"type": "message", "sender": "administrator", "epoch": epoch},
     )
 
     log(
@@ -69,9 +102,10 @@ def response_handler(message):
 
     context = build_events_context({})
     context = build_chat_context(context)
+    context = build_relevant_knowledge(context)
     context["tasks"] = list_tasks_as_formatted_string()
     context["message"] = message
-    response = openai_text_call(text=compose_prompt(prompt, context))
+    response = openai_function_call(text=compose_prompt(prompt, context))
 
     content = response["text"]
 
@@ -82,7 +116,9 @@ def response_handler(message):
         source="chat",
         title="tinyagi",
     )
-    create_memory("event", content, metadata={"type": "message", "sender": "user"})
+    create_memory(
+        "event", content, metadata={"type": "message", "sender": "user", "epoch": epoch}
+    )
     send_message(content)
 
 

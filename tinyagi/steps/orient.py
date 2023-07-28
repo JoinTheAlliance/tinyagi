@@ -128,9 +128,15 @@ def orient(context):
     # Get the summary and add to the context object
     summary = response["arguments"]["summary_as_user"]
     summary_header = "Summary of Last Epoch:"
-    context["summary"] = summary_header + "\n" + summary + "\n"
 
-    log_content = context["summary"]
+    log_content = ""
+
+    if summary is "" or summary is None:
+        context["summary"] = None
+    else:
+        context["summary"] = summary_header + "\n" + summary + "\n"
+        log_content += context["summary"]
+
     if len(new_knowledge) > 0:
         log_content += "\nNew Knowledge:\n" + "\n".join(new_knowledge)
     log(log_content, source="orient", type="step", title="tinyagi")

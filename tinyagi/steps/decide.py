@@ -78,10 +78,12 @@ def decide(context):
     reasoning_header = "Action Reasoning:"
     context["reasoning"] = reasoning_header + "\n" + reasoning + "\n"
     context["action_name"] = response["arguments"]["action_name"]
-    
+
     log_content = f"Action: {context['action_name']}\nReasoning: {context['reasoning']}"
 
     log(log_content, type="step", source="decide", title="tinyagi")
 
-    create_memory("events", reasoning, metadata={"type": "reasoning"})
+    create_memory(
+        "events", reasoning, metadata={"type": "reasoning", "epoch": context["epoch"]}
+    )
     return context

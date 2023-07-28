@@ -34,7 +34,7 @@ def build_relevant_knowledge(context):
     knowledge = search_memory(
         "knowledge",
         search_text=search_text,
-        n_results=10,
+        n_results=8,
         filter_metadata={"unique": "True"},
     )
     # trim any individual knowledge, just in case
@@ -88,7 +88,7 @@ def build_recent_knowledge(context):
         # remove the first event
         recent_knowledge = recent_knowledge[1:]
         formatted_knowledge = "\n".join([k["document"] for k in recent_knowledge])
-    context["relevant_knowledge"] = formatted_knowledge
+    context["recent_knowledge"] = formatted_knowledge
     return context
 
 
