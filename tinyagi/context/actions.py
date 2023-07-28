@@ -9,7 +9,7 @@ def build_actions_context(context):
     if search_text is None:
         return context
     result = get_formatted_actions(search_text)
-    context["available_actions"] = "\n".result["formatted_actions"]
+    context["available_actions"] = result["formatted_actions"]
     context["available_short_actions"] = result["short_actions"]
     return context
 

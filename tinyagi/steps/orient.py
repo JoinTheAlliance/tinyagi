@@ -1,17 +1,12 @@
+from agentmemory import create_memory
 from easycompletion import (
     compose_prompt,
     compose_function,
 )
 
-from agentevents import (
-    get_epoch,
-    increment_epoch,
-)
-
 from tinyagi.context.knowledge import add_knowledge
 
 from easycompletion import openai_function_call
-from agentevents import create_event
 
 
 def compose_orient_prompt(context):
@@ -100,13 +95,9 @@ def orient(context):
     Returns:
         dict: The updated context dictionary after the 'Orient' stage, including the summary of the last epoch, relevant knowledge, available actions, and so on.
     """
-    epoch = increment_epoch()
-
-    if epoch == 1:
-        create_event("I have just woken up.", type="system", subtype="intialized")
-
-    context["epoch"] = get_epoch()
-    context["last_epoch"] = str(get_epoch() - 1)
+    print("orient")
+    context["last_epoch"] = context["epoch"]
+    context["epoch"] = context["epoch"] + 1
 
     response = openai_function_call(
         text=compose_orient_prompt(context),
@@ -126,7 +117,7 @@ def orient(context):
             metadata = {
                 "source": k["source"],
                 "relationship": k["relationship"],
-                "epoch": get_epoch(),
+                "epoch": context["epoch"],
             }
 
             add_knowledge(k["content"], metadata=metadata)
@@ -137,5 +128,6 @@ def orient(context):
     context["summary"] = summary_header + "\n" + summary + "\n"
 
     # Add context summary to event stream
-    create_event(summary, type="summary")
+    create_memory("events", summary, metadata={"type": "summary"})
+    
     return context

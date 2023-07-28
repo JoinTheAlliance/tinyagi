@@ -3,6 +3,6 @@ agentmemory
 agentbrowser
 easycompletion
 agentaction
+agentshell
 agentloop
-pyfiglet
-rich
+agentlogger

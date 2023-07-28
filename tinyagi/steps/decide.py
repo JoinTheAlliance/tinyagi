@@ -1,9 +1,9 @@
+from agentmemory import create_memory
 from easycompletion import (
     compose_prompt,
     compose_function,
 )
 
-from agentevents import create_event
 from easycompletion import openai_function_call
 
 decision_prompt = """Current Epoch: {{epoch}}
@@ -66,9 +66,10 @@ def decide(context):
     Returns:
         dict: The updated context dictionary after the 'Decide' stage, including the selected action and reasoning behind the decision.
     """
+    print("decide")
     response = openai_function_call(
         text=compose_prompt(decision_prompt, context),
-        functions=compose_decision_function()
+        functions=compose_decision_function(),
     )
 
     # Add the action reasoning to the context object
@@ -76,5 +77,5 @@ def decide(context):
     reasoning_header = "Action Reasoning:"
     context["reasoning"] = reasoning_header + "\n" + reasoning + "\n"
     context["action_name"] = response["arguments"]["action_name"]
-    create_event(reasoning, type="reasoning")
+    create_memory("events", reasoning, metadata={"type": "reasoning"})
     return context

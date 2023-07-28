@@ -4,7 +4,7 @@ from agentaction import (
     use_action,
 )
 
-from agentevents import create_event
+from agentmemory import create_memory
 
 from easycompletion import openai_function_call
 
@@ -19,20 +19,20 @@ def act(context):
     Returns:
         dict: The updated context dictionary after the 'Act' stage, which will be used in the next iteration of the OODA loop.
     """
+    print("act")
     action_name = context["action_name"]
     action = get_action(action_name)
 
     if action is None:
-        create_event(
+        create_memory(
+            "events",
             f"I tried to use the action `{action_name}`, but it was not found.",
-            type="error",
-            subtype="action_not_found",
+            metadata={"type": "error", "subtype": "action_not_found"},
         )
         return {"error": f"Action {action_name} not found"}
 
     response = openai_function_call(
-        text=compose_action_prompt(action, context),
-        functions=action["function"]
+        text=compose_action_prompt(action, context), functions=action["function"]
     )
 
     # TODO: check if the action is the last as last time

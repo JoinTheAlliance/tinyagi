@@ -3,11 +3,6 @@ from easycompletion import (
     trim_prompt,
 )
 
-from agentevents import (
-    get_epoch,
-)
-
-
 from agentmemory import (
     create_unique_memory,
     delete_similar_memories,
@@ -72,7 +67,7 @@ def build_recent_knowledge(context):
     Returns: str - A string containing the formatted recent knowledge.
     """
     recent_knowledge = get_memories(
-        "knowledge", filter_metadata={"epoch": get_epoch() - 1}
+        "knowledge", filter_metadata={"epoch": context["epoch"] - 1}
     )
 
     # trim any individual knowledge, just in case
