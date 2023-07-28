@@ -6,4 +6,5 @@ agentmemory
 agentshell
 agentcomlink
 easycompletion
+agentagenda
 python-dotenv
