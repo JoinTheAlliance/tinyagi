@@ -3,6 +3,7 @@ from easycompletion import (
     compose_prompt,
     compose_function,
 )
+from agentlogger import log
 
 from tinyagi.context.knowledge import add_knowledge
 
@@ -20,7 +21,8 @@ def compose_orient_prompt(context):
         str: The fully formed orientation prompt with the data filled in from the context.
     """
     return compose_prompt(
-        """Current Epoch: {{epoch}}
+        """\
+Current Epoch: {{epoch}}
 The current time is {{current_time}} on {{current_date}}.
 {{recent_knowledge}}
 {{events}}
@@ -34,7 +36,7 @@ The current time is {{current_time}} on {{current_date}}.
 - Each knowledge array item should be a factual statement that I learned, and should include the source, the content and the relationship.
 - For the "content" of each knowledge item, please be extremely detailed. Include as much information as possible, including who or where you learned it from, what it means, how it relates to my goals, etc.
 - ONLY extract knowledge from the last epoch, which is #{{last_epoch}}. Do not extract knowledge from previous epochs.
-- If there is no new knowledge, respond with an empty array [].
+- If there is no new knowledge, respond with an empty array [].\
 """,
         context,
     )
@@ -95,19 +97,19 @@ def orient(context):
     Returns:
         dict: The updated context dictionary after the 'Orient' stage, including the summary of the last epoch, relevant knowledge, available actions, and so on.
     """
-    print("orient")
     context["last_epoch"] = context["epoch"]
     context["epoch"] = context["epoch"] + 1
 
     response = openai_function_call(
-        text=compose_orient_prompt(context),
-        functions=compose_orient_function()
+        text=compose_orient_prompt(context), functions=compose_orient_function()
     )
 
     arguments = response["arguments"]
     if arguments is None:
         arguments = {}
         print("No arguments returned from orient_function")
+
+    new_knowledge = []
 
     # Create new knowledge and add to the knowledge base
     knowledge = arguments.get("knowledge", [])
@@ -121,13 +123,21 @@ def orient(context):
             }
 
             add_knowledge(k["content"], metadata=metadata)
+            new_knowledge.append(k["content"])
 
     # Get the summary and add to the context object
     summary = response["arguments"]["summary_as_user"]
     summary_header = "Summary of Last Epoch:"
     context["summary"] = summary_header + "\n" + summary + "\n"
 
+    log_content = context["summary"]
+    if len(new_knowledge) > 0:
+        log_content += "\nNew Knowledge:\n" + "\n".join(new_knowledge)
+    log(log_content, source="orient", type="step", title="tinyagi")
+
     # Add context summary to event stream
-    create_memory("events", summary, metadata={"type": "summary"})
-    
+    create_memory(
+        "events", summary, metadata={"type": "summary", "epoch": context["epoch"]}
+    )
+
     return context

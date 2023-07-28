@@ -6,6 +6,8 @@ from easycompletion import (
 
 from easycompletion import openai_function_call
 
+from agentlogger import log
+
 decision_prompt = """Current Epoch: {{epoch}}
 The current time is {{current_time}} on {{current_date}}.
 Assistant Notes:
@@ -66,7 +68,6 @@ def decide(context):
     Returns:
         dict: The updated context dictionary after the 'Decide' stage, including the selected action and reasoning behind the decision.
     """
-    print("decide")
     response = openai_function_call(
         text=compose_prompt(decision_prompt, context),
         functions=compose_decision_function(),
@@ -77,5 +78,10 @@ def decide(context):
     reasoning_header = "Action Reasoning:"
     context["reasoning"] = reasoning_header + "\n" + reasoning + "\n"
     context["action_name"] = response["arguments"]["action_name"]
+    
+    log_content = f"Action: {context['action_name']}\nReasoning: {context['reasoning']}"
+
+    log(log_content, type="step", source="decide", title="tinyagi")
+
     create_memory("events", reasoning, metadata={"type": "reasoning"})
     return context
