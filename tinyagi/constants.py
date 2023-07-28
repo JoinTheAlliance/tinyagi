@@ -1,0 +1,3 @@
+MAX_PROMPT_LIST_ITEMS = 30  # maximum number of events to display
+MAX_PROMPT_LIST_TOKENS = 1536  # 2048 - 512
+MAX_PROMPT_TOKENS = 3072  # 4096 - 1024

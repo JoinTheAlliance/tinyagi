@@ -1,13 +1,15 @@
 import os
 from dotenv import load_dotenv
-from pyfiglet import Figlet
-from rich.console import Console
+from agentlogger import log, print_header
 
 from agentaction import import_actions
 from agentmemory import wipe_all_memories
-from agentloop import start as start_loop
+from agentloop import (
+    start as start_loop,
+    create_context_builders,
+)
 
-from tinyagi.helpers import build_context_step, seed
+from tinyagi.steps.initialize import initialize
 
 from tinyagi.steps import act
 from tinyagi.steps import decide
@@ -24,11 +26,9 @@ def print_logo():
     Prints ASCII logo using pyfiglet.
     """
 
-    f = Figlet(font="letters")
-    console = Console()
     print("\n")
-    console.print(f.renderText("tinyagi"), style="yellow")
-    console.print("Starting...\n", style="BRIGHT_BLACK")
+    print_header("tinyagi", color="yellow", font="slant")
+    log("Starting...", type="system", color="BRIGHT_BLACK")
 
 
 def start(
@@ -41,14 +41,20 @@ def start(
     print_logo()
 
     if steps is None:
-        context_step = build_context_step(context_dir)
-        steps = [context_step, orient, context_step, decide, context_step, act]
-
+        context_step = create_context_builders(context_dir)
+        steps = [
+            initialize,
+            orient,
+            context_step,
+            decide,
+            context_step,
+            act,
+        ]
     if reset:
         wipe_all_memories()
 
-    if seed_data is not None:
-        seed(seed_data)
+    # if seed_data is not None:
+    #     import_file_to_memory(seed_data)
 
     if actions_dir is not None:
         import_actions(actions_dir)

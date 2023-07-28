@@ -4,9 +4,9 @@ from agentaction import (
     use_action,
 )
 
-from agentevents import create_event
-
+from agentmemory import create_memory
 from easycompletion import openai_function_call
+from agentlogger import log
 
 
 def act(context):
@@ -23,19 +23,52 @@ def act(context):
     action = get_action(action_name)
 
     if action is None:
-        create_event(
+        create_memory(
+            "events",
             f"I tried to use the action `{action_name}`, but it was not found.",
-            type="error",
-            subtype="action_not_found",
+            metadata={"type": "error", "subtype": "action_not_found"},
         )
         return {"error": f"Action {action_name} not found"}
 
     response = openai_function_call(
-        text=compose_action_prompt(action, context),
-        functions=action["function"]
+        text=compose_action_prompt(action, context), functions=action["function"]
     )
 
-    # TODO: check if the action is the last as last time
+    formatted_arguments = ""
+    for key, value in response["arguments"].items():
+        formatted_arguments += f"{key}: {value}\n"
 
-    use_action(response["function_name"], response["arguments"])
+    log_content = (
+        f"Using action {response['function_name']} with arguments {formatted_arguments}"
+    )
+
+    log(log_content, type="step", source="decide", title="tinyagi")
+
+    action_result = use_action(response["function_name"], response["arguments"])
+
+    if action_result is None or action_result["success"] is False:
+        create_memory(
+            "events",
+            f"I tried to use the action `{action_name}`, but it failed.",
+            metadata={"type": "error", "subtype": "action_failed"},
+        )
+        log(
+            f"Action {action_name} failed",
+            type="error",
+            source="decide",
+            title="tinyagi",
+        )
+    else:
+        create_memory(
+            "events",
+            f"I used the action `{action_name}` successfully.\nOutput:\n{action_result['result']}",
+            metadata={"type": "success", "subtype": "action_success"},
+        )
+        log(
+            f"Action {action_name} succeeded\nOutput:\n{action_result['result']}",
+            type="success",
+            source="decide",
+            title="tinyagi",
+        )
+
     return context

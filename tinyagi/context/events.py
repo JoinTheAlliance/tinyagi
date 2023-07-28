@@ -1,18 +1,39 @@
+from agentmemory import get_memories
+from tinyagi.constants import (
+    MAX_PROMPT_LIST_ITEMS,
+    MAX_PROMPT_LIST_TOKENS,
+    MAX_PROMPT_TOKENS,
+)
+
 from easycompletion import (
     count_tokens,
     trim_prompt,
 )
 
 
-from agentevents import (
-    get_events,
-    event_to_string,
-)
+def event_to_string(event):
+    """
+    Converts an event document into a formatted string.
 
+    Parameters:
+    - event (dict): The event document to be formatted.
 
-MAX_PROMPT_LIST_ITEMS = 30  # maximum number of events to display
-MAX_PROMPT_LIST_TOKENS = 1536  # 2048 - 512
-MAX_PROMPT_TOKENS = 3072  # 4096 - 1024
+    Returns: str - The formatted event string.
+    """
+    # Create an event with a formatted string and annotations
+    e_m = event["metadata"]
+    # check if e_m['epoch'] is none, set it to 0 if it is
+    if e_m.get("epoch") is None:
+        e_m["epoch"] = 0
+    if e_m.get("type") is None:
+        e_m["type"] = "unknown"
+    new_event = f"{e_m['epoch']} | {e_m['type']}"
+    if e_m.get("subtype") is not None:
+        new_event += f"::{e_m['subtype']}"
+    if e_m.get("creator") is not None:
+        new_event += f" ({e_m['creator']})"
+    new_event += f": {event['document']}"
+    return new_event
 
 
 def build_events_context(context):
@@ -23,11 +44,12 @@ def build_events_context(context):
 
     Returns: str - A string representing a list of formatted events
     """
-    events_header = """Recent Events are formatted as follows:
+    events_header = """\
+Recent Events are formatted as follows:
 Epoch # | <Type>::<Subtype> (Creator): <Event>
 ============================================"""
 
-    events = get_events(n_results=MAX_PROMPT_LIST_ITEMS)
+    events = get_memories("events", n_results=MAX_PROMPT_LIST_ITEMS)
 
     # reverse events
     events = events[::-1]

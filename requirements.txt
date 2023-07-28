@@ -1,8 +1,9 @@
-python-dotenv
-agentmemory
-agentbrowser
-easycompletion
 agentaction
+agentbrowser
+agentlogger
 agentloop
-pyfiglet
-rich
+agentmemory
+agentshell
+agentcomlink
+easycompletion
+python-dotenv
