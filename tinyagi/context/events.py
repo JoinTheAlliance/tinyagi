@@ -36,7 +36,7 @@ def event_to_string(event):
     return new_event
 
 
-def build_events_context(context):
+def build_events_context(context={}):
     """
     Retrieve and format recent events
 

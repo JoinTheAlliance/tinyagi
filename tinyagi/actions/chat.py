@@ -2,8 +2,8 @@ import asyncio
 import os
 import threading
 from agentmemory import create_memory, get_memories
-from easycompletion import compose_function, compose_prompt, openai_function_call, openai_text_call
-from agentcomlink.server import send_message, register_message_handler
+from easycompletion import compose_function, compose_prompt, function_completion, text_completion
+from agentcomlink import send_message, register_message_handler, list_files_formatted
 
 from tinyagi.context.events import build_events_context
 
@@ -34,6 +34,8 @@ prompt = """\
 {{relevant_knowledge}}
 
 {{events}}
+
+{{files}}
 
 {{tasks}}
 
@@ -103,11 +105,16 @@ def response_handler(message):
     context = build_events_context({})
     context = build_chat_context(context)
     context = build_relevant_knowledge(context)
+    context["user_files"] = list_files_formatted()
+
     context["tasks"] = list_tasks_as_formatted_string()
     context["message"] = message
-    response = openai_function_call(text=compose_prompt(prompt, context))
+    response = text_completion(text=compose_prompt(prompt, context))
 
-    content = response["text"]
+    content = response.get("text", None)
+
+    if content is None:
+        print("**** NO TEXT RETURNED FROM RESPONSE HANDLER ****")
 
     log(
         f"Sending message to administrator: {content}",
