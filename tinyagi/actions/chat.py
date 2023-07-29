@@ -2,7 +2,7 @@ import asyncio
 import os
 import threading
 from agentmemory import create_memory, get_memories
-from easycompletion import compose_function, compose_prompt, function_completion, text_completion
+from easycompletion import compose_function, compose_prompt, text_completion
 from agentcomlink import send_message, register_message_handler, list_files_formatted
 
 from tinyagi.context.events import build_events_context
@@ -34,11 +34,7 @@ prompt = """\
 {{relevant_knowledge}}
 
 {{events}}
-
-{{files}}
-
-{{tasks}}
-
+{{user_files}}
 Recent Conversation:
 {{chat}}
 
@@ -109,7 +105,10 @@ def response_handler(message):
 
     context["tasks"] = list_tasks_as_formatted_string()
     context["message"] = message
-    response = text_completion(text=compose_prompt(prompt, context))
+    text = compose_prompt(prompt, context)
+    print("TEXT")
+    print(text)
+    response = text_completion(text=text)
 
     content = response.get("text", None)
 
