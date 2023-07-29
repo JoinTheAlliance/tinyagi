@@ -139,7 +139,9 @@ def orient(context):
 
     if len(new_knowledge) > 0:
         log_content += "\nNew Knowledge:\n" + "\n".join(new_knowledge)
-    log(log_content, source="orient", type="step", title="tinyagi")
+    
+    if len(log_content) > 0:
+        log(log_content, source="orient", type="step", title="tinyagi")
 
     # Add context summary to event stream
     create_memory(

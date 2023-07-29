@@ -106,8 +106,7 @@ def response_handler(message):
     context["tasks"] = list_tasks_as_formatted_string()
     context["message"] = message
     text = compose_prompt(prompt, context)
-    print("TEXT")
-    print(text)
+
     response = text_completion(text=text)
 
     content = response.get("text", None)
@@ -153,22 +152,22 @@ def get_actions():
         register_message_handler(response_handler)
 
     return [
-        {
-            "function": compose_function(
-                name="send_message_to_administrator",
-                description="Write the message I should send to the administrator.",
-                properties={
-                    "message": {
-                        "type": "string",
-                        "description": "The message I should send to the administrator, as a chat message from me to them.",
-                    }
-                },
-                required_properties=["message"],
-            ),
-            "prompt": prompt,
-            # "builder": compose_chat_prompt,
-            "handler": use_chat,
-            "suggestion_after_actions": [],
-            "never_after_actions": [],
-        }
+        # {
+        #     "function": compose_function(
+        #         name="send_message_to_administrator",
+        #         description="Write the message I should send to the administrator.",
+        #         properties={
+        #             "message": {
+        #                 "type": "string",
+        #                 "description": "The message I should send to the administrator, as a chat message from me to them.",
+        #             }
+        #         },
+        #         required_properties=["message"],
+        #     ),
+        #     "prompt": prompt,
+        #     # "builder": compose_chat_prompt,
+        #     "handler": use_chat,
+        #     "suggestion_after_actions": [],
+        #     "never_after_actions": [],
+        # }
     ]
