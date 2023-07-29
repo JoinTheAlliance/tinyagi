@@ -3,11 +3,11 @@ import os
 import threading
 from agentmemory import create_memory, get_memories
 from easycompletion import compose_function, compose_prompt, text_completion
-from agentcomlink import send_message, register_message_handler, list_files_formatted
+from agentcomlink import async_send_message, send_message, register_message_handler, list_files_formatted
 
 from tinyagi.context.events import build_events_context
 
-from agentlogger import log
+from tinyagi.utils import log
 from agentagenda import list_tasks_as_formatted_string
 
 from tinyagi.context.knowledge import build_relevant_knowledge
@@ -77,8 +77,10 @@ def build_chat_context(context={}):
     return context
 
 
-def response_handler(message):
+async def response_handler(data):
     events = get_memories("events", n_results=1)
+    message = data["message"]
+    type = data["type"]
     # TODO: simplify epoch
     if len(events) > 0:
         epoch = events[0]["metadata"]["epoch"]
@@ -87,7 +89,7 @@ def response_handler(message):
     create_memory(
         "event",
         message,
-        metadata={"type": "message", "sender": "administrator", "epoch": epoch},
+        metadata={"type": type, "sender": "administrator", "epoch": epoch},
     )
 
     log(
@@ -96,6 +98,7 @@ def response_handler(message):
         color="white",
         source="chat",
         title="tinyagi",
+        send_to_feed=False
     )
 
     context = build_events_context({})
@@ -120,11 +123,13 @@ def response_handler(message):
         color="yellow",
         source="chat",
         title="tinyagi",
+        send_to_feed=False
     )
     create_memory(
         "event", content, metadata={"type": "message", "sender": "user", "epoch": epoch}
     )
-    send_message(content)
+    
+    await async_send_message(content)
 
 
 def get_actions():
@@ -152,22 +157,22 @@ def get_actions():
         register_message_handler(response_handler)
 
     return [
-        # {
-        #     "function": compose_function(
-        #         name="send_message_to_administrator",
-        #         description="Write the message I should send to the administrator.",
-        #         properties={
-        #             "message": {
-        #                 "type": "string",
-        #                 "description": "The message I should send to the administrator, as a chat message from me to them.",
-        #             }
-        #         },
-        #         required_properties=["message"],
-        #     ),
-        #     "prompt": prompt,
-        #     # "builder": compose_chat_prompt,
-        #     "handler": use_chat,
-        #     "suggestion_after_actions": [],
-        #     "never_after_actions": [],
-        # }
+        {
+            "function": compose_function(
+                name="send_message_to_administrator",
+                description="Write the message I should send to the administrator.",
+                properties={
+                    "message": {
+                        "type": "string",
+                        "description": "The message I should send to the administrator, as a chat message from me to them.",
+                    }
+                },
+                required_properties=["message"],
+            ),
+            "prompt": prompt,
+            # "builder": compose_chat_prompt,
+            "handler": use_chat,
+            "suggestion_after_actions": [],
+            "never_after_actions": [],
+        }
     ]

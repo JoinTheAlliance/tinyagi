@@ -6,7 +6,7 @@ from agentaction import (
 
 from agentmemory import create_memory
 from easycompletion import openai_function_call
-from agentlogger import log
+from tinyagi.utils import log
 
 
 def act(context):

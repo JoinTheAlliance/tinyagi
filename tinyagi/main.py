@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
-from agentlogger import log, print_header
+from agentlogger import print_header
+from tinyagi.utils import log
 
 from agentaction import import_actions
 from agentmemory import wipe_all_memories
@@ -37,6 +38,7 @@ def start(
     context_dir="./tinyagi/context",
     seed_data=None,
     reset=False,
+    stepped=False
 ):
     print_logo()
 
@@ -59,5 +61,5 @@ def start(
     if actions_dir is not None:
         import_actions(actions_dir)
 
-    loop_dict = start_loop(steps)
+    loop_dict = start_loop(steps, stepped=stepped)
     return loop_dict

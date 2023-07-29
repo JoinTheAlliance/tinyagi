@@ -3,7 +3,7 @@ from easycompletion import (
     compose_prompt,
     compose_function,
 )
-from agentlogger import log
+from tinyagi.utils import log
 
 from tinyagi.context.knowledge import add_knowledge
 
@@ -118,7 +118,7 @@ def orient(context):
             # each item in knowledge contains content, source and relationship
             metadata = {
                 "source": k["source"],
-                "relationship": k["relationship"],
+                "relationship": k.get("relationship", None),
                 "epoch": context["epoch"],
             }
 

@@ -6,7 +6,7 @@ from easycompletion import (
 
 from easycompletion import openai_function_call
 
-from agentlogger import log
+from tinyagi.utils import log
 
 decision_prompt = """Current Epoch: {{epoch}}
 The current time is {{current_time}} on {{current_date}}.

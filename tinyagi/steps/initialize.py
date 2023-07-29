@@ -2,7 +2,7 @@ import datetime
 import os
 import sys
 
-from agentlogger import log
+from tinyagi.utils import log
 
 from datetime import datetime
 
