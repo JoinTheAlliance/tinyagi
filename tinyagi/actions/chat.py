@@ -47,7 +47,7 @@ def use_chat(arguments):
     message = arguments["message"]
     emotion = arguments["emotion"]
     gesture = arguments["gesture"]
-    message = str({
+    message = json.dumps({
         "message": message,
         "emotion": emotion,
         "gesture": gesture,
@@ -258,7 +258,7 @@ async def response_handler(data, loop_dict):
 
     create_memory(
         "event",
-        str(message),
+        json.dumps(message),
         metadata={"type": "message", "sender": "user", "epoch": str(epoch)},
     )
 
@@ -592,7 +592,7 @@ def respond_to_twitch():
                 "sender": "user",
                 "emotion": emotion,
                 "gesture": gesture,
-                "urls": str(urls),
+                "urls": json.dumps(urls),
                 "epoch": str(epoch),
             },
         )
