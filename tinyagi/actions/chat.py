@@ -50,7 +50,7 @@ def use_chat(arguments):
     else:
         epoch = 0
     create_memory(
-        "event", message, metadata={"type": "message", "sender": "user", "epoch": epoch}
+        "event", "I sent the message: " + message, metadata={"type": "message", "sender": "user", "epoch": epoch}
     )
 
     # check if there is an existing event loop
@@ -74,9 +74,12 @@ Recent Conversation:
 
 Administrator: {{message}}
 
-TASK: Respond to the to the administrator as me. Do not explain, hedge or acknolwedge. Just write the response as if you were me.\
+TASK: Respond as me. Do not explain, hedge or acknolwedge. Just write the response as if you were me.\
+- IF the administrator asks you to start a task, start it, otherwise respond conversationally
 - Be conversational, i.e. brief and not lengthy or verbose.
-- Do not add the speaker's name, or say 'got it' or anything like that. Just the chat message itself.
+- Do not add any <name>: or speaker's name, and don't say 'got it' or anything like that. Just the chat message itself.
+- Write a conversational response to the administrator's message
+- Do not acknowledge or anything, JUST write the message
 """
 
 
@@ -143,6 +146,9 @@ async def response_handler(data, loop_dict):
     context["message"] = message
     text = compose_prompt(prompt, context)
 
+    print('******** text')
+    print(text)
+
     # functions
     actions = get_all_actions()
 
@@ -169,6 +175,14 @@ async def response_handler(data, loop_dict):
         )
 
     if function_name is not None:
+        log(
+            f"Calling function: {function_name}",
+            type="chat",
+            color="yellow",
+            source="chat",
+            title="tinyagi",
+            send_to_feed=False,
+        )
         action = actions.get(function_name, None)
         if function_name == "send_message":
             message = arguments["message"]
@@ -483,9 +497,25 @@ def respond_to_twitch():
     context["user_files"] = list_files_formatted()
     context["tasks"] = list_tasks_as_formatted_string()
     composed_prompt = compose_prompt(twitch_prompt, context)
-    response = text_completion(text=composed_prompt)
-    content = response.get("text", None)
-    if content is not None:
+    response = function_completion(text=composed_prompt, functions=twitch_function)
+    arguments = response.get("arguments", None)
+    
+    events = get_memories("events", n_results=1)
+    if len(events) > 0:
+        epoch = events[0]["metadata"]["epoch"]
+    else:
+        epoch = 0
+        
+    if arguments is not None:
+        content = arguments["message"]
+        summary = arguments["summary"]
+
+        create_memory(
+            "event",
+            summary,
+            metadata={"type": "message", "sender": "user", "epoch": str(epoch)},
+        )
+
         use_chat({"message": content})
 
 
@@ -503,6 +533,22 @@ TASK: I am currently streaming. Write a response to the messages under Recent Tw
 - Don't say sure, got it, etc. Just write the response I should say.
 - Don't add the speaker's name, e.g. 'User: ' or 'Administrator: '. Just the message itself.
 """
+
+twitch_function = compose_function(
+    name="respond_to_twitch",
+    description="Respond to the most recent messages in chat. Either choose one message, or respond generally to the messages.",
+    properties={
+        "summary": {
+            "type": "string",
+            "description": "A summary of the most recent messages in chat.",
+        },
+        "message": {
+            "type": "string",
+            "description": "The message I should send, as a brief conversational chat message from me to them.",
+        }
+    },
+    required_properties=["summary", "message"],
+)
 
 
 def build_twitch_context(context={}):
