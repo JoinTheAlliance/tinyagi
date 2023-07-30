@@ -1,4 +1,13 @@
-from agentagenda import create_task, search_tasks, cancel_task, finish_task, finish_step, add_step, cancel_step
+from agentagenda import (
+    create_task,
+    search_tasks,
+    cancel_task,
+    finish_task,
+    finish_step,
+    add_step,
+    cancel_step,
+)
+
 
 def create_task_handler(arguments):
     """
@@ -6,7 +15,8 @@ def create_task_handler(arguments):
     """
     goal = arguments["goal"]
     create_task(goal)
-    print('created task')
+    print("created task")
+
 
 def cancel_task_handler(arguments):
     goal = arguments["goal"]
@@ -15,7 +25,7 @@ def cancel_task_handler(arguments):
     if len(tasks) > 0:
         task = tasks[0]
         cancel_task(task)
-    print('canceled task')
+    print("canceled task")
 
 
 def complete_task_handler(arguments):
@@ -24,7 +34,7 @@ def complete_task_handler(arguments):
     if len(tasks) > 0:
         task = tasks[0]
         finish_task(task)
-    print('completed task')
+    print("completed task")
 
 
 def complete_step_handler(arguments):
@@ -39,7 +49,8 @@ def complete_step_handler(arguments):
         for s in steps:
             if s["name"] == step:
                 finish_step(task, s)
-    print('completed step')
+    print("completed step")
+
 
 def add_step_handler(arguments):
     goal = arguments["goal"]
@@ -48,7 +59,8 @@ def add_step_handler(arguments):
     if len(tasks) > 0:
         task = tasks[0]
         add_step(task, step)
-    print('added step')
+    print("added step")
+
 
 def cancel_step_handler(arguments):
     goal = arguments["goal"]
@@ -60,9 +72,11 @@ def cancel_step_handler(arguments):
         for s in steps:
             if s["name"] == step:
                 cancel_step(task, s)
-    print('canceled step')
+    print("canceled step")
+
 
 def get_actions():
+    print("**** TASKS")
     return [
         {
             "function": {
@@ -78,14 +92,14 @@ def get_actions():
                         "goal": {
                             "type": "string",
                             "description": "The goal of the task.",
-                        }
+                        },
                     },
                     "required": ["acknowledgement", "goal"],
                 },
             },
             "prompt": "Respond with the sentence NO PROMPT",
-            "chain_from": [],
-            "dont_chain_from": [],
+            "suggestion_after_actions": [],
+            "never_after_actions": [],
             "handler": create_task_handler,
         },
         {
@@ -102,14 +116,14 @@ def get_actions():
                         "goal": {
                             "type": "string",
                             "description": "The goal of the task to cancel.",
-                        }
+                        },
                     },
                     "required": ["acknowledgement", "goal"],
                 },
             },
             "prompt": "Respond with the sentence NO PROMPT",
-            "chain_from": [],
-            "dont_chain_from": [],
+            "suggestion_after_actions": [],
+            "never_after_actions": [],
             "handler": create_task_handler,
         },
         {
@@ -126,14 +140,14 @@ def get_actions():
                         "goal": {
                             "type": "string",
                             "description": "The goal of the task to complete.",
-                        }
+                        },
                     },
                     "required": ["acknowledgement", "goal"],
                 },
             },
             "prompt": "Respond with the sentence NO PROMPT",
-            "chain_from": [],
-            "dont_chain_from": [],
+            "suggestion_after_actions": [],
+            "never_after_actions": [],
             "handler": complete_task_handler,
         },
         {
@@ -154,14 +168,14 @@ def get_actions():
                         "step": {
                             "type": "string",
                             "description": "The step to complete.",
-                        }
+                        },
                     },
                     "required": ["acknowledgement", "goal", "step"],
                 },
             },
             "prompt": "Respond with the sentence NO PROMPT",
-            "chain_from": [],
-            "dont_chain_from": [],
+            "suggestion_after_actions": [],
+            "never_after_actions": [],
             "handler": complete_step_handler,
         },
         {
@@ -182,13 +196,13 @@ def get_actions():
                         "step": {
                             "type": "string",
                             "description": "The step to complete.",
-                        }
+                        },
                     },
                     "required": ["acknowledgement", "goal", "step"],
                 },
             },
-            "chain_from": [],
-            "dont_chain_from": [],
+            "suggestion_after_actions": [],
+            "never_after_actions": [],
             "prompt": "Respond with the sentence NO PROMPT",
             "handler": add_step_handler,
         },
@@ -210,13 +224,13 @@ def get_actions():
                         "step": {
                             "type": "string",
                             "description": "The step to complete.",
-                        }
+                        },
                     },
                     "required": ["acknowlegement", "goal", "step"],
                 },
             },
-            "chain_from": [],
-            "dont_chain_from": [],
+            "suggestion_after_actions": [],
+            "never_after_actions": [],
             "handler": cancel_step_handler,
         },
     ]

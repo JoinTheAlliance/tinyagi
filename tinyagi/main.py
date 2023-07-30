@@ -63,5 +63,8 @@ def start(
     set_loop_dict(loop_dict)
 
     if actions_dir is not None:
+        print("Imported actions from " + actions_dir)
         import_actions(actions_dir)
+    else:
+        print("No actions directory provided, skipping import")
     return loop_dict
