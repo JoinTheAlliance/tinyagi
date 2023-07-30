@@ -90,7 +90,7 @@ Recent Conversation:
 
 Administrator: {{message}}
 
-TASK: Respond as me. Do not explain, hedge or acknolwedge. Just write the response as if you were me.\
+Respond as me. Do not explain, hedge or acknolwedge. Just write the response as if you were me.\
 - IF the administrator asks you to start a task, start it, otherwise respond conversationally
 - Be conversational, i.e. brief and not lengthy or verbose.
 - Do not add any <name>: or speaker's name, and don't say 'got it' or anything like that. Just the chat message itself.
@@ -619,7 +619,7 @@ Earlier Twitch Chat
 Recent Twitch Chat
 {{twitch}}
 
-TASK: I am currently streaming. Help me to write a response to the messages under Recent Twitch Chat, from me to the chat, from my perspective.
+I am currently streaming. Help me to write a response to the messages under Recent Twitch Chat, from me to the chat, from my perspective.
 - Recent Twitch Chat might be related to something that was said earlier in the Earlier Twitch Chat, so you might need to refer to that for context
 - I want to sound conversational, i.e. brief and not lengthy or verbose.
 - ONLY write what I should say. JUST the message content itself.
