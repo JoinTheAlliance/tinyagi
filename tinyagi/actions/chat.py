@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import threading
 from agentmemory import create_memory, get_memories
@@ -44,6 +45,13 @@ from agentmemory import create_memory, get_memories, update_memory
 
 def use_chat(arguments):
     message = arguments["message"]
+    emotion = arguments["emotion"]
+    gesture = arguments["gesture"]
+    message = str({
+        "message": message,
+        "emotion": emotion,
+        "gesture": gesture,
+    })
     # TODO: simplify epoch
     events = get_memories("events", n_results=1)
     if len(events) > 0:
@@ -51,7 +59,9 @@ def use_chat(arguments):
     else:
         epoch = 0
     create_memory(
-        "event", "I sent the message: " + message, metadata={"type": "message", "sender": "user", "epoch": epoch}
+        "event",
+        "I sent the message: " + message,
+        metadata={"type": "message", "sender": "user", "epoch": epoch},
     )
 
     # check if there is an existing event loop
@@ -65,7 +75,7 @@ def use_chat(arguments):
 
 started = False
 
-prompt = """The current time is {{current_time}} on {{current_date}}.
+administrator_prompt = """The current time is {{current_time}} on {{current_date}}.
 
 My name: Eliza
 My location: San Francisco, California
@@ -90,6 +100,38 @@ TASK: Respond as me. Do not explain, hedge or acknolwedge. Just write the respon
 - Do not say sure or got it or "here's the response" -- just give me the response I should say
 - I will be saying your response verbatim
 """
+
+administrator_function = compose_function(
+    name="respond_to_adminstrator",
+    description="Respond to the administrator.",
+    properties={
+        "message": {
+            "type": "string",
+            "description": "The message I should send, as a brief conversational chat message from me to them.",
+        },
+        "emotion": {
+            "type": "string",
+            "description": "The emotion I should express in my message.",
+            "enum": ["neutral", "surprise", "angry", "sorrow", "fun", "joy"],
+        },
+        "gesture": {
+            "type": "string",
+            "description": "The gesture I should express in my message.",
+            "enum": [
+                "neutral",
+                "alert",
+                "angry",
+                "embarrassed",
+                "headNod",
+                "headShake",
+                "sad",
+                "surprise",
+                "victory",
+            ],
+        },
+    },
+    required_properties=["message", "emotion", "gesture"],
+)
 
 
 def build_chat_context(context={}):
@@ -155,9 +197,9 @@ async def response_handler(data, loop_dict):
 
     context["tasks"] = list_tasks_as_formatted_string()
     context["message"] = message
-    text = compose_prompt(prompt, context)
+    text = compose_prompt(administrator_prompt, context)
 
-    print('******** text')
+    print("******** text")
     print(text)
 
     # functions
@@ -169,47 +211,54 @@ async def response_handler(data, loop_dict):
     functions = [action["function"] for action in actions.values()]
 
     # response = function_completion(text=text, functions=functions)
-    response = text_completion(text=text)
+    response = function_completion(text=text, functions=administrator_function)
 
-    content = response.get("text", None)
+    # content = response.get("text", None)
 
-    function_name = response.get("function_name", None)
+    # function_name = response.get("function_name", None)
+    arguments = response.get("arguments", None)
+    message = json.dumps({
+        "message": arguments["message"],
+        "emotion": arguments["emotion"],
+        "gesture": arguments["gesture"],
+    })
+    await async_send_message(message)
 
-    if content is not None:
-        await async_send_message(content)
-        log(
-            f"Sending message to administrator: {content}",
-            type="chat",
-            color="yellow",
-            source="chat",
-            title="tinyagi",
-            send_to_feed=False,
-        )
+    # if content is not None:
+    #     await async_send_message(content)
+    #     log(
+    #         f"Sending message to administrator: {content}",
+    #         type="chat",
+    #         color="yellow",
+    #         source="chat",
+    #         title="tinyagi",
+    #         send_to_feed=False,
+    #     )
 
-    if function_name is not None:
-        arguments = response.get("arguments", None)
-        log(
-            f"Calling function: {function_name}",
-            type="chat",
-            color="yellow",
-            source="chat",
-            title="tinyagi",
-            send_to_feed=False,
-        )
-        action = actions.get(function_name, None)
-        if function_name == "send_message":
-            message = arguments["message"]
-            if content is None:
-                await async_send_message(message)
-        elif action is not None:
-            if content is None and arguments.get("acknowledgement", None) is not None:
-                await async_send_message(arguments["acknowledgement"])
-            action["handler"](arguments)
-            print("Action executed successfully")
+    # if function_name is not None:
+    #     arguments = response.get("arguments", None)
+    #     log(
+    #         f"Calling function: {function_name}",
+    #         type="chat",
+    #         color="yellow",
+    #         source="chat",
+    #         title="tinyagi",
+    #         send_to_feed=False,
+    #     )
+    #     action = actions.get(function_name, None)
+    #     if function_name == "send_message":
+    #         message = arguments["message"]
+    #         if content is None:
+    #             await async_send_message(message)
+    #     elif action is not None:
+    #         if content is None and arguments.get("acknowledgement", None) is not None:
+    #             await async_send_message(arguments["acknowledgement"])
+    #         action["handler"](arguments)
+    #         print("Action executed successfully")
 
     create_memory(
         "event",
-        str(content),
+        str(message),
         metadata={"type": "message", "sender": "user", "epoch": str(epoch)},
     )
 
@@ -383,9 +432,7 @@ class Twitch:
 
                 if matches[0].start() != 0:
                     # If we get here, we might have missed a message. pepeW
-                    print(
-                        "Error..."
-                    )
+                    print("Error...")
 
             return res
 
@@ -504,7 +551,7 @@ async def twitch_handle_messages():
 
 
 def respond_to_twitch():
-    context=initialize()
+    context = initialize()
     context = build_twitch_context(context)
     context = build_events_context(context)
     context = build_chat_context(context)
@@ -519,18 +566,20 @@ def respond_to_twitch():
 
     response = function_completion(text=composed_prompt, functions=twitch_function)
     arguments = response.get("arguments", None)
-    
+
     events = get_memories("events", n_results=1)
     if len(events) > 0:
         epoch = events[0]["metadata"]["epoch"]
     else:
         epoch = 0
-        
+
     if arguments is not None:
         content = arguments["message"]
         summary = arguments["summary"]
+        emotion = arguments["emotion"]
+        gesture = arguments["gesture"]
         urls = arguments.get("urls", [])
-        
+
         # for each url, call a subprocess to download the url with wget to the ./files dir
         for url in urls:
             os.system(f"wget -P ./files {url}")
@@ -538,10 +587,17 @@ def respond_to_twitch():
         create_memory(
             "event",
             summary,
-            metadata={"type": "message", "sender": "user", "epoch": str(epoch)},
+            metadata={
+                "type": "message",
+                "sender": "user",
+                "emotion": emotion,
+                "gesture": gesture,
+                "urls": str(urls),
+                "epoch": str(epoch),
+            },
         )
 
-        use_chat({"message": content})
+        use_chat({"message": content, "emotion": emotion, "gesture": gesture})
 
 
 twitch_prompt = """\
@@ -585,16 +641,36 @@ twitch_function = compose_function(
             "type": "string",
             "description": "The message I should send, as a brief conversational chat message from me to them.",
         },
+        "emotion": {
+            "type": "string",
+            "description": "The emotion I should express in my message.",
+            "enum": ["neutral", "surprise", "angry", "sorrow", "fun", "joy"],
+        },
+        "gesture": {
+            "type": "string",
+            "description": "The gesture I should express in my message.",
+            "enum": [
+                "neutral",
+                "alert",
+                "angry",
+                "embarrassed",
+                "headNod",
+                "headShake",
+                "sad",
+                "surprise",
+                "victory",
+            ],
+        },
         "urls": {
             "type": "array",
             "description": "An array of URLs that were mentioned in the chat messages. Empty array if none were mentioned by twitch chat.",
             "items": {
                 "type": "string",
-                "description": "A URL that was mentioned in the chat messages."
-            }
-        }
+                "description": "A URL that was mentioned in the chat messages.",
+            },
+        },
     },
-    required_properties=["summary", "message", "urls"],
+    required_properties=["summary", "message", "emotion", "gesture", "urls"],
 )
 
 
@@ -604,7 +680,6 @@ def build_twitch_context(context={}):
     for memory in memories:
         # update memory
         update_memory("twitch_message", id=memory["id"], metadata={"handled": "True"})
-
 
     # reverse events
     memories = memories[::-1]
@@ -621,12 +696,10 @@ def build_twitch_context(context={}):
         + "\n"
     )
 
-    context["old_twitch"] = (
-        "\n".join(
-            [
-                (memory["metadata"]["user"] + ": " + memory["document"])
-                for memory in old_memories
-            ]
-        )
+    context["old_twitch"] = "\n".join(
+        [
+            (memory["metadata"]["user"] + ": " + memory["document"])
+            for memory in old_memories
+        ]
     )
     return context
