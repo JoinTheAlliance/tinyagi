@@ -1,14 +1,15 @@
 import os
 from dotenv import load_dotenv
 from agentlogger import print_header
+from tinyagi.constants import set_loop_dict
 from tinyagi.utils import log
 
 from agentaction import import_actions
 from agentmemory import wipe_all_memories
 from agentloop import (
     start as start_loop,
-    create_context_builders,
 )
+from tinyagi.context.builder import create_context_builders
 
 from tinyagi.steps.initialize import initialize
 
@@ -38,7 +39,7 @@ def start(
     context_dir="./tinyagi/context",
     seed_data=None,
     reset=False,
-    stepped=False
+    paused=False
 ):
     print_logo()
 
@@ -61,5 +62,6 @@ def start(
     if actions_dir is not None:
         import_actions(actions_dir)
 
-    loop_dict = start_loop(steps, stepped=stepped)
+    loop_dict = start_loop(steps, paused=paused)
+    set_loop_dict(loop_dict)
     return loop_dict

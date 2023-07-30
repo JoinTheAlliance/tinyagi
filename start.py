@@ -55,5 +55,5 @@ start(
     actions_dir="./tinyagi/actions",
     reset="--reset" in os.sys.argv,
     seed_data="--seed" in os.sys.argv,
-    stepped="--stepped" in os.sys.argv,
+    paused="--stepped" in os.sys.argv,
 )

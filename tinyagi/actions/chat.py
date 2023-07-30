@@ -5,6 +5,8 @@ from agentmemory import create_memory, get_memories
 from easycompletion import compose_function, compose_prompt, text_completion
 from agentcomlink import async_send_message, send_message, register_message_handler, list_files_formatted
 
+from agentloop import pause, unpause
+
 from tinyagi.context.events import build_events_context
 
 from tinyagi.utils import log
@@ -12,6 +14,7 @@ from agentagenda import list_tasks_as_formatted_string
 
 from tinyagi.context.knowledge import build_relevant_knowledge
 
+from tinyagi.constants import get_loop_dict
 
 def use_chat(arguments):
     message = arguments["message"]
@@ -80,6 +83,17 @@ def build_chat_context(context={}):
 async def response_handler(data):
     events = get_memories("events", n_results=1)
     message = data["message"]
+
+    # if the beginning of the message is "/pause", call pause
+    if message.startswith("/pause"):
+        pause(get_loop_dict())
+        return
+    
+    # if the beginning of the message is "/unpause", call unpause
+    if message.startswith("/unpause"):
+        unpause(get_loop_dict())
+        return
+
     type = data["type"]
     # TODO: simplify epoch
     if len(events) > 0:
