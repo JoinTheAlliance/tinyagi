@@ -152,16 +152,17 @@ async def response_handler(data, loop_dict):
     # functions
     actions = get_all_actions()
 
+    # TODO:
     # actions is a dictionary of actions, where the name of the action is the key
     # get the function from each action
     functions = [action["function"] for action in actions.values()]
 
-    response = function_completion(text=text, functions=functions)
+    # response = function_completion(text=text, functions=functions)
+    response = text_completion(text=text)
 
     content = response.get("text", None)
 
     function_name = response.get("function_name", None)
-    arguments = response.get("arguments", None)
 
     if content is not None:
         await async_send_message(content)
@@ -175,6 +176,7 @@ async def response_handler(data, loop_dict):
         )
 
     if function_name is not None:
+        arguments = response.get("arguments", None)
         log(
             f"Calling function: {function_name}",
             type="chat",
@@ -497,6 +499,10 @@ def respond_to_twitch():
     context["user_files"] = list_files_formatted()
     context["tasks"] = list_tasks_as_formatted_string()
     composed_prompt = compose_prompt(twitch_prompt, context)
+
+    print("******")
+    print(composed_prompt)
+
     response = function_completion(text=composed_prompt, functions=twitch_function)
     arguments = response.get("arguments", None)
     
@@ -509,6 +515,11 @@ def respond_to_twitch():
     if arguments is not None:
         content = arguments["message"]
         summary = arguments["summary"]
+        urls = arguments.get("urls", [])
+        
+        # for each url, call a subprocess to download the url with wget to the ./files dir
+        for url in urls:
+            os.system(f"wget -P ./files {url}")
 
         create_memory(
             "event",
@@ -522,16 +533,21 @@ def respond_to_twitch():
 twitch_prompt = """\
 {{user_files}}
 
+Earlier Twitch Chat
+{{old_twitch}}
+
 {{events}}
 
 Recent Twitch Chat
 {{twitch}}
 
-TASK: I am currently streaming. Write a response to the messages under Recent Twitch Chat from my perspective.\
+TASK: I am currently streaming. Write a response to the messages under Recent Twitch Chat from my perspective.
+- Recent Twitch Chat might be related to something that was said earlier in the Earlier Twitch Chat, so you might need to refer to that for context
 - Be conversational, i.e. brief and not lengthy or verbose.
 - ONLY write what I should say. JUST the message content itself.
 - Don't say sure, got it, etc. Just write the response I should say.
 - Don't add the speaker's name, e.g. 'User: ' or 'Administrator: '. Just the message itself.
+- Extract any URLS and include them as an array in your response. Do not include any URLs if none were mentioned in recent twitch chat
 """
 
 twitch_function = compose_function(
@@ -545,21 +561,31 @@ twitch_function = compose_function(
         "message": {
             "type": "string",
             "description": "The message I should send, as a brief conversational chat message from me to them.",
+        },
+        "urls": {
+            "type": "array",
+            "description": "An array of URLs that were mentioned in the chat messages. Empty array if none were mentioned by twitch chat.",
+            "items": {
+                "type": "string",
+                "description": "A URL that was mentioned in the chat messages."
+            }
         }
     },
-    required_properties=["summary", "message"],
+    required_properties=["summary", "message", "urls"],
 )
 
 
 def build_twitch_context(context={}):
     memories = get_memories("twitch_message", filter_metadata={"handled": "False"})
-
+    old_memories = get_memories("twitch_message", filter_metadata={"handled": "True"})
     for memory in memories:
         # update memory
         update_memory("twitch_message", id=memory["id"], metadata={"handled": "True"})
 
+
     # reverse events
     memories = memories[::-1]
+    old_memories = old_memories[::-1]
 
     # annotated events
     context["twitch"] = (
@@ -570,5 +596,14 @@ def build_twitch_context(context={}):
             ]
         )
         + "\n"
+    )
+
+    context["old_twitch"] = (
+        "\n".join(
+            [
+                (memory["metadata"]["user"] + ": " + memory["document"])
+                for memory in old_memories
+            ]
+        )
     )
     return context
