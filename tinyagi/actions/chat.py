@@ -2,8 +2,17 @@ import asyncio
 import os
 import threading
 from agentmemory import create_memory, get_memories
-from easycompletion import compose_function, compose_prompt, text_completion
-from agentcomlink import async_send_message, send_message, register_message_handler, list_files_formatted
+from easycompletion import (
+    compose_function,
+    compose_prompt,
+    function_completion,
+)
+from agentcomlink import (
+    async_send_message,
+    send_message,
+    register_message_handler,
+    list_files_formatted,
+)
 
 from agentloop import pause, unpause
 
@@ -13,6 +22,10 @@ from tinyagi.utils import log
 from agentagenda import list_tasks_as_formatted_string
 
 from tinyagi.context.knowledge import build_relevant_knowledge
+
+from tinyagi.constants import get_loop_dict
+
+from agentaction import get_action, get_actions as get_all_actions
 
 from tinyagi.constants import get_loop_dict
 
@@ -28,7 +41,13 @@ def use_chat(arguments):
         "event", message, metadata={"type": "message", "sender": "user", "epoch": epoch}
     )
     # send_message is asynchronous, so we need to start with asyncio
-    send_message(message)
+    thread = get_loop_dict()["thread"]
+    # get the event loop from the thread
+    loop = asyncio.new_event_loop()
+    # set the event loop for the thread
+    asyncio.set_event_loop(loop)
+    # run the coroutine in the thread
+    asyncio.run_coroutine_threadsafe(async_send_message(message), loop)
 
 
 started = False
@@ -88,7 +107,7 @@ async def response_handler(data):
     if message.startswith("/pause"):
         pause(get_loop_dict())
         return
-    
+
     # if the beginning of the message is "/unpause", call unpause
     if message.startswith("/unpause"):
         unpause(get_loop_dict())
@@ -112,7 +131,7 @@ async def response_handler(data):
         color="white",
         source="chat",
         title="tinyagi",
-        send_to_feed=False
+        send_to_feed=False,
     )
 
     context = build_events_context({})
@@ -124,26 +143,58 @@ async def response_handler(data):
     context["message"] = message
     text = compose_prompt(prompt, context)
 
-    response = text_completion(text=text)
+    # functions
+    actions = get_all_actions()
+
+    print("actions")
+    print(actions)
+    
+    # actions is a dictionary of actions, where the name of the action is the key
+    # get the function from each action
+    functions = [action["function"] for action in actions.values()]
+
+    print('**********************')
+    print('functions')
+    print(functions)
+
+    response = function_completion(text=text, functions=functions)
+    print('*************************')
+    print('response')
+    print(response)
 
     content = response.get("text", None)
 
-    if content is None:
-        print("**** NO TEXT RETURNED FROM RESPONSE HANDLER ****")
+    function_name = response.get("function_name", None)
+    arguments = response.get("arguments", None)
 
-    log(
+    if content is not None:
+        await async_send_message(content)
+        log(
         f"Sending message to administrator: {content}",
         type="chat",
         color="yellow",
         source="chat",
         title="tinyagi",
-        send_to_feed=False
+        send_to_feed=False,
     )
+        
+    if function_name is not None:
+        action = actions.get(function_name, None)
+        if function_name == "send_message":
+            message = arguments["message"]
+            await async_send_message(message)
+        elif action is not None:
+            if arguments.get("acknowledgement", None) is not None:
+                await async_send_message(arguments["acknowledgement"])
+            action["handler"](arguments)
+            print("Action executed successfully")
+
+    print('********** CONTENT')
+    print(content)
+
     create_memory(
-        "event", content, metadata={"type": "message", "sender": "user", "epoch": epoch}
+        "event", str(content), metadata={"type": "message", "sender": "user", "epoch": str(epoch)}
     )
-    
-    await async_send_message(content)
 
 
 def get_actions():
@@ -173,15 +224,19 @@ def get_actions():
     return [
         {
             "function": compose_function(
-                name="send_message_to_administrator",
-                description="Write the message I should send to the administrator.",
+                name="send_message",
+                description="Send a message.",
                 properties={
+                    "to": {
+                        "type": "string",
+                        "description": "The name of the person I should send the message to.",
+                    },
                     "message": {
                         "type": "string",
-                        "description": "The message I should send to the administrator, as a chat message from me to them.",
+                        "description": "The message I should send, as a brief conversational chat message from me to them.",
                     }
                 },
-                required_properties=["message"],
+                required_properties=["to", "message"],
             ),
             "prompt": prompt,
             # "builder": compose_chat_prompt,
