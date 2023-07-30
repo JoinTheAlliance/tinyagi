@@ -75,162 +75,222 @@ def cancel_step_handler(arguments):
     print("canceled step")
 
 
+create_task_prompt = """\
+Current Time: {{current_time}}
+Current Date: {{current_date}}
+{{relevant_knowledge}}
+{{events}}
+{{summary}}
+{{reasoning}}
+
+Based on the reasoning, create a new task
+"""
+
+cancel_task_prompt = """\
+{{events}}
+{{summary}}
+{{reasoning}}
+
+{{tasks}}
+
+{{current_task}}
+
+Based on the reasoning, should I cancel a task, and if so, which one? If you don't want to cancel the task, respond with 'none', otherwise respond with the name or goal of the task you want to cancel."""
+
+complete_task = """\
+{{events}}
+{{summary}}
+{{reasoning}}
+{{tasks}}
+{{current_task}}
+
+Based on the reasoning, should I complete a task, and if so, which one? If I shouldn't cancel the task, respond with 'none', otherwise respond with the name or goal of the task I should cancel."""
+
+
+complete_step = """\
+{{events}}
+{{summary}}
+{{reasoning}}
+{{tasks}}
+{{current_task}}
+
+Based on the reasoning, should I complete a step on the task, and if so, which one? None, respond with 'none' for task and step."""
+
+add_step = """\
+{{events}}
+{{summary}}
+{{reasoning}}
+{{tasks}}
+{{current_task}}
+
+Based on the reasoning, should I add a step to the task, and if so, which task and what step? None, respond with 'none' for task and step."""
+
+cancel_step = """\
+{{events}}
+{{summary}}
+{{reasoning}}
+{{tasks}}
+{{current_task}}
+
+Based on the reasoning, should I cancel a step in the task, and if so, which task and what step? None, respond with 'none' for task and step."""
+
+
 def get_actions():
-    print("**** TASKS")
     return [
-        # {
-        #     "function": {
-        #         "name": "create_task",
-        #         "description": "Create a new task with the given goal.",
-        #         "parameters": {
-        #             "type": "object",
-        #             "properties": {
-        #                 "acknowledgement": {
-        #                     "type": "string",
-        #                     "description": "An acknowledgement to the user and explanation of what you are about to do.",
-        #                 },
-        #                 "goal": {
-        #                     "type": "string",
-        #                     "description": "The goal of the task.",
-        #                 },
-        #             },
-        #             "required": ["acknowledgement", "goal"],
-        #         },
-        #     },
-        #     "prompt": "Respond with the sentence NO PROMPT",
-        #     "suggestion_after_actions": [],
-        #     "never_after_actions": [],
-        #     "handler": create_task_handler,
-        # },
-        # {
-        #     "function": {
-        #         "name": "cancel_task",
-        #         "description": "Cancel a task if it is impossible, redundant or unnecessary.",
-        #         "parameters": {
-        #             "type": "object",
-        #             "properties": {
-        #                 "acknowledgement": {
-        #                     "type": "string",
-        #                     "description": "An acknowledgement to the user and explanation of what you are about to do.",
-        #                 },
-        #                 "goal": {
-        #                     "type": "string",
-        #                     "description": "The goal of the task to cancel.",
-        #                 },
-        #             },
-        #             "required": ["acknowledgement", "goal"],
-        #         },
-        #     },
-        #     "prompt": "Respond with the sentence NO PROMPT",
-        #     "suggestion_after_actions": [],
-        #     "never_after_actions": [],
-        #     "handler": create_task_handler,
-        # },
-        # {
-        #     "function": {
-        #         "name": "complete_task",
-        #         "description": "Mark a task as complete.",
-        #         "parameters": {
-        #             "type": "object",
-        #             "properties": {
-        #                 "acknowledgement": {
-        #                     "type": "string",
-        #                     "description": "An acknowledgement to the user and explanation of what you are about to do.",
-        #                 },
-        #                 "goal": {
-        #                     "type": "string",
-        #                     "description": "The goal of the task to complete.",
-        #                 },
-        #             },
-        #             "required": ["acknowledgement", "goal"],
-        #         },
-        #     },
-        #     "prompt": "Respond with the sentence NO PROMPT",
-        #     "suggestion_after_actions": [],
-        #     "never_after_actions": [],
-        #     "handler": complete_task_handler,
-        # },
-        # {
-        #     "function": {
-        #         "name": "complete_step",
-        #         "description": "Mark a step as complete.",
-        #         "parameters": {
-        #             "type": "object",
-        #             "properties": {
-        #                 "acknowledgement": {
-        #                     "type": "string",
-        #                     "description": "An acknowledgement to the user and explanation of what you are about to do.",
-        #                 },
-        #                 "goal": {
-        #                     "type": "string",
-        #                     "description": "The goal of the task to complete.",
-        #                 },
-        #                 "step": {
-        #                     "type": "string",
-        #                     "description": "The step to complete.",
-        #                 },
-        #             },
-        #             "required": ["acknowledgement", "goal", "step"],
-        #         },
-        #     },
-        #     "prompt": "Respond with the sentence NO PROMPT",
-        #     "suggestion_after_actions": [],
-        #     "never_after_actions": [],
-        #     "handler": complete_step_handler,
-        # },
-        # {
-        #     "function": {
-        #         "name": "add_step",
-        #         "description": "Add a step to a task.",
-        #         "parameters": {
-        #             "type": "object",
-        #             "properties": {
-        #                 "acknowledgement": {
-        #                     "type": "string",
-        #                     "description": "An acknowledgement to the user and explanation of what you are about to do.",
-        #                 },
-        #                 "goal": {
-        #                     "type": "string",
-        #                     "description": "The goal of the task to complete.",
-        #                 },
-        #                 "step": {
-        #                     "type": "string",
-        #                     "description": "The step to complete.",
-        #                 },
-        #             },
-        #             "required": ["acknowledgement", "goal", "step"],
-        #         },
-        #     },
-        #     "suggestion_after_actions": [],
-        #     "never_after_actions": [],
-        #     "prompt": "Respond with the sentence NO PROMPT",
-        #     "handler": add_step_handler,
-        # },
-        # {
-        #     "function": {
-        #         "name": "cancel_step",
-        #         "description": "Cancel a step.",
-        #         "parameters": {
-        #             "type": "object",
-        #             "properties": {
-        #                 "acknowledgement": {
-        #                     "type": "string",
-        #                     "description": "An acknowledgement to the user and explanation of what you are about to do.",
-        #                 },
-        #                 "goal": {
-        #                     "type": "string",
-        #                     "description": "The goal of the task to complete.",
-        #                 },
-        #                 "step": {
-        #                     "type": "string",
-        #                     "description": "The step to complete.",
-        #                 },
-        #             },
-        #             "required": ["acknowlegement", "goal", "step"],
-        #         },
-        #     },
-        #     "suggestion_after_actions": [],
-        #     "never_after_actions": [],
-        #     "handler": cancel_step_handler,
-        # },
+        {
+            "function": {
+                "name": "create_task",
+                "description": "Create a new task with the given goal.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "acknowledgement": {
+                            "type": "string",
+                            "description": "An acknowledgement to the user and explanation of what you are about to do.",
+                        },
+                        "goal": {
+                            "type": "string",
+                            "description": "The goal of the task.",
+                        },
+                    },
+                    "required": ["acknowledgement", "goal"],
+                },
+            },
+            "prompt": create_task,
+            "suggestion_after_actions": [],
+            "never_after_actions": [],
+            "handler": create_task_handler,
+        },
+        {
+            "function": {
+                "name": "cancel_task",
+                "description": "Cancel a task if it is impossible, redundant or unnecessary.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "acknowledgement": {
+                            "type": "string",
+                            "description": "An acknowledgement to the user and explanation of what you are about to do.",
+                        },
+                        "goal": {
+                            "type": "string",
+                            "description": "The goal of the task to cancel.",
+                        },
+                    },
+                    "required": ["acknowledgement", "goal"],
+                },
+            },
+            "prompt": cancel_task,
+            "suggestion_after_actions": [],
+            "never_after_actions": [],
+            "handler": cancel_task_handler,
+        },
+        {
+            "function": {
+                "name": "complete_task",
+                "description": "Mark a task as complete.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "acknowledgement": {
+                            "type": "string",
+                            "description": "An acknowledgement to the user and explanation of what you are about to do.",
+                        },
+                        "goal": {
+                            "type": "string",
+                            "description": "The goal of the task to complete.",
+                        },
+                    },
+                    "required": ["acknowledgement", "goal"],
+                },
+            },
+            "prompt": complete_task,
+            "suggestion_after_actions": [],
+            "never_after_actions": [],
+            "handler": complete_task_handler,
+        },
+        {
+            "function": {
+                "name": "complete_step",
+                "description": "Mark a step as complete.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "acknowledgement": {
+                            "type": "string",
+                            "description": "An acknowledgement to the user and explanation of what you are about to do.",
+                        },
+                        "goal": {
+                            "type": "string",
+                            "description": "The goal of the task to complete.",
+                        },
+                        "step": {
+                            "type": "string",
+                            "description": "The step to complete.",
+                        },
+                    },
+                    "required": ["acknowledgement", "goal", "step"],
+                },
+            },
+            "prompt": complete_step,
+            "suggestion_after_actions": [],
+            "never_after_actions": [],
+            "handler": complete_step_handler,
+        },
+        {
+            "function": {
+                "name": "add_step",
+                "description": "Add a step to a task.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "acknowledgement": {
+                            "type": "string",
+                            "description": "An acknowledgement to the user and explanation of what you are about to do.",
+                        },
+                        "goal": {
+                            "type": "string",
+                            "description": "The goal of the task to complete.",
+                        },
+                        "step": {
+                            "type": "string",
+                            "description": "The step to complete.",
+                        },
+                    },
+                    "required": ["acknowledgement", "goal", "step"],
+                },
+            },
+            "suggestion_after_actions": [],
+            "never_after_actions": [],
+            "prompt": add_step,
+            "handler": add_step_handler,
+        },
+        {
+            "function": {
+                "name": "cancel_step",
+                "description": "Cancel a step.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "acknowledgement": {
+                            "type": "string",
+                            "description": "An acknowledgement to the user and explanation of what you are about to do.",
+                        },
+                        "goal": {
+                            "type": "string",
+                            "description": "The goal of the task to complete.",
+                        },
+                        "step": {
+                            "type": "string",
+                            "description": "The step to complete.",
+                        },
+                    },
+                    "required": ["acknowlegement", "goal", "step"],
+                },
+            },
+            "suggestion_after_actions": [],
+            "never_after_actions": [],
+            "handler": cancel_step_handler,
+            "prompt": cancel_step,
+        },
     ]
