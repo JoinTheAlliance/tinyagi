@@ -6,6 +6,7 @@ from tinyagi.utils import log
 
 from datetime import datetime
 
+
 def initialize(context={}):
     """
     Initialize the loop with context
@@ -26,6 +27,15 @@ def initialize(context={}):
     context["platform"] = sys.platform
     context["cwd"] = os.getcwd()
 
-    log("Start for epoch " + str(context["epoch"]) + " at " + str(context["current_time"]), type="step", source="initialize", title="tinyagi")
+    log(
+        "Start for epoch "
+        + str(context["epoch"])
+        + " at "
+        + str(context["current_time"]),
+        type="step",
+        source="initialize",
+        title="tinyagi",
+        send_to_feed=False,
+    )
 
     return context

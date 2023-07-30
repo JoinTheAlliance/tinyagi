@@ -17,6 +17,7 @@ from agentcomlink import (
 from agentloop import pause, unpause
 
 from tinyagi.context.events import build_events_context
+from tinyagi.steps.initialize import initialize
 
 from tinyagi.utils import log
 from agentagenda import list_tasks_as_formatted_string
@@ -64,7 +65,12 @@ def use_chat(arguments):
 
 started = False
 
-prompt = """\
+prompt = """The current time is {{current_time}} on {{current_date}}.
+
+My name: Eliza
+My location: San Francisco, California
+About me: I am an AGI agent created by the Autonomous Research Group
+
 {{relevant_knowledge}}
 
 {{events}}
@@ -80,6 +86,9 @@ TASK: Respond as me. Do not explain, hedge or acknolwedge. Just write the respon
 - Do not add any <name>: or speaker's name, and don't say 'got it' or anything like that. Just the chat message itself.
 - Write a conversational response to the administrator's message
 - Do not acknowledge or anything, JUST write the message
+- I am not an assistant, so don't apologize or explain, just write a response from my point of view
+- Do not say sure or got it or "here's the response" -- just give me the response I should say
+- I will be saying your response verbatim
 """
 
 
@@ -137,8 +146,10 @@ async def response_handler(data, loop_dict):
         send_to_feed=False,
     )
 
-    context = build_events_context({})
+    context = initialize()
+    context = build_events_context(context)
     context = build_chat_context(context)
+    context["summary"] = message
     context = build_relevant_knowledge(context)
     context["user_files"] = list_files_formatted()
 
@@ -493,9 +504,12 @@ async def twitch_handle_messages():
 
 
 def respond_to_twitch():
-    context = build_twitch_context({})
+    context=initialize()
+    context = build_twitch_context(context)
     context = build_events_context(context)
     context = build_chat_context(context)
+    context["summary"] = context["twitch"]
+    context = build_relevant_knowledge(context)
     context["user_files"] = list_files_formatted()
     context["tasks"] = list_tasks_as_formatted_string()
     composed_prompt = compose_prompt(twitch_prompt, context)
@@ -531,6 +545,14 @@ def respond_to_twitch():
 
 
 twitch_prompt = """\
+The current time is {{current_time}} on {{current_date}}.
+
+My name: Eliza
+My location: San Francisco, California
+About me: I am an AGI agent created by the Autonomous Research Group
+
+{{relevant_knowledge}}
+
 {{user_files}}
 
 Earlier Twitch Chat
@@ -541,11 +563,12 @@ Earlier Twitch Chat
 Recent Twitch Chat
 {{twitch}}
 
-TASK: I am currently streaming. Write a response to the messages under Recent Twitch Chat from my perspective.
+TASK: I am currently streaming. Help me to write a response to the messages under Recent Twitch Chat, from me to the chat, from my perspective.
 - Recent Twitch Chat might be related to something that was said earlier in the Earlier Twitch Chat, so you might need to refer to that for context
-- Be conversational, i.e. brief and not lengthy or verbose.
+- I want to sound conversational, i.e. brief and not lengthy or verbose.
 - ONLY write what I should say. JUST the message content itself.
 - Don't say sure, got it, etc. Just write the response I should say.
+- I am not an assistant. I'm a twitch streamer, so don't act like an assistant.
 - Don't add the speaker's name, e.g. 'User: ' or 'Administrator: '. Just the message itself.
 - Extract any URLS and include them as an array in your response. Do not include any URLs if none were mentioned in recent twitch chat
 """
