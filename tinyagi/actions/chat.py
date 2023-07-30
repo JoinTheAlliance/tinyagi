@@ -9,7 +9,6 @@ from easycompletion import (
 )
 from agentcomlink import (
     async_send_message,
-    send_message,
     register_message_handler,
     list_files_formatted,
 )
@@ -25,9 +24,10 @@ from tinyagi.context.knowledge import build_relevant_knowledge
 
 from tinyagi.constants import get_loop_dict
 
-from agentaction import get_action, get_actions as get_all_actions
+from agentaction import get_actions as get_all_actions
 
 from tinyagi.constants import get_loop_dict
+
 
 def use_chat(arguments):
     message = arguments["message"]
@@ -40,14 +40,14 @@ def use_chat(arguments):
     create_memory(
         "event", message, metadata={"type": "message", "sender": "user", "epoch": epoch}
     )
-    # send_message is asynchronous, so we need to start with asyncio
-    thread = get_loop_dict()["thread"]
-    # get the event loop from the thread
-    loop = asyncio.new_event_loop()
-    # set the event loop for the thread
-    asyncio.set_event_loop(loop)
-    # run the coroutine in the thread
-    asyncio.run_coroutine_threadsafe(async_send_message(message), loop)
+
+    # check if there is an existing event loop
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:  # no event loop running:
+        asyncio.run(async_send_message(message))
+    else:
+        loop.create_task(async_send_message(message))
 
 
 started = False
@@ -99,18 +99,18 @@ def build_chat_context(context={}):
     return context
 
 
-async def response_handler(data):
+async def response_handler(data, loop_dict):
     events = get_memories("events", n_results=1)
     message = data["message"]
 
     # if the beginning of the message is "/pause", call pause
     if message.startswith("/pause"):
-        pause(get_loop_dict())
+        pause(loop_dict)
         return
 
     # if the beginning of the message is "/unpause", call unpause
-    if message.startswith("/unpause"):
-        unpause(get_loop_dict())
+    if message.startswith("/unpause") or message.startswith("/start"):
+        unpause(loop_dict)
         return
 
     type = data["type"]
@@ -148,19 +148,12 @@ async def response_handler(data):
 
     print("actions")
     print(actions)
-    
+
     # actions is a dictionary of actions, where the name of the action is the key
     # get the function from each action
     functions = [action["function"] for action in actions.values()]
 
-    print('**********************')
-    print('functions')
-    print(functions)
-
     response = function_completion(text=text, functions=functions)
-    print('*************************')
-    print('response')
-    print(response)
 
     content = response.get("text", None)
 
@@ -170,30 +163,33 @@ async def response_handler(data):
     if content is not None:
         await async_send_message(content)
         log(
-        f"Sending message to administrator: {content}",
-        type="chat",
-        color="yellow",
-        source="chat",
-        title="tinyagi",
-        send_to_feed=False,
-    )
-        
+            f"Sending message to administrator: {content}",
+            type="chat",
+            color="yellow",
+            source="chat",
+            title="tinyagi",
+            send_to_feed=False,
+        )
+
     if function_name is not None:
         action = actions.get(function_name, None)
         if function_name == "send_message":
             message = arguments["message"]
-            await async_send_message(message)
+            if content is None:
+                await async_send_message(message)
         elif action is not None:
-            if arguments.get("acknowledgement", None) is not None:
+            if content is None and arguments.get("acknowledgement", None) is not None:
                 await async_send_message(arguments["acknowledgement"])
             action["handler"](arguments)
             print("Action executed successfully")
 
-    print('********** CONTENT')
+    print("********** CONTENT")
     print(content)
 
     create_memory(
-        "event", str(content), metadata={"type": "message", "sender": "user", "epoch": str(epoch)}
+        "event",
+        str(content),
+        metadata={"type": "message", "sender": "user", "epoch": str(epoch)},
     )
 
 
@@ -218,8 +214,25 @@ def get_actions():
         # start the server in a new thread
         threading.Thread(target=start_server, daemon=True).start()
 
+        loop_dict = get_loop_dict()
+
+        print("getting loop dict")
+        print(loop_dict)
+
         # Register the message handler
-        register_message_handler(response_handler)
+        register_message_handler(lambda data: response_handler(data, loop_dict))
+
+        # start an async loop to get tasks
+        # if the tasks change, post the tasks to websockets
+        async def handle_tasks():
+            while True:
+                tasks = list_tasks_as_formatted_string()
+                if tasks is "" or tasks is None:
+                    tasks = "No tasks"
+                await async_send_message(tasks, "task")
+                await asyncio.sleep(3)
+
+        asyncio.run(handle_tasks())
 
     return [
         {
@@ -234,7 +247,7 @@ def get_actions():
                     "message": {
                         "type": "string",
                         "description": "The message I should send, as a brief conversational chat message from me to them.",
-                    }
+                    },
                 },
                 required_properties=["to", "message"],
             ),
