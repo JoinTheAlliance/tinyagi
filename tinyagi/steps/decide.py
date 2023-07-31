@@ -59,9 +59,9 @@ def compose_decision_function():
                 "type": "string",
                 "description": "The name of the action to take. Should be one of the available actions, and should not include quotes or any punctuation",
             },
-            "announcement": {
+            "witty_comment": {
                 "type": "string",
-                "description": "I want to what I am thinking and feeling, and what motivations me to do what I'm doing. Write a very brief announcement for me to send to my friends to tell them what I'm about to do,jin why, and how I feel about it.",
+                "description": "Write some witty banter from my perspective about what I'm doing. Can be funny, edgy or dark. Should be from my perspective.",
             },
             "emotion": {
                 "type": "string",
@@ -87,7 +87,7 @@ def compose_decision_function():
         required_properties=[
             "action_name",
             "reasoning",
-            "announcement",
+            "witty_comment",
             "emotion",
             "gesture",
         ],
@@ -120,20 +120,20 @@ def decide(context):
 
     log(log_content, type="step", source="decide", title="tinyagi")
 
-    # send_message(
-    #     {
-    #         "message": response["arguments"]["announcement"],
-    #         "emotion": response["arguments"]["emotion"],
-    #         "gesture": response["arguments"]["gesture"],
-    #     }
-    # )
+    send_message(
+        {
+            "message": response["arguments"]["witty_comment"],
+            "emotion": response["arguments"]["emotion"],
+            "gesture": response["arguments"]["gesture"],
+        }
+    )
 
     create_memory(
         "events", reasoning, metadata={"type": "reasoning", "epoch": context["epoch"]}
     )
 
-    # duration = count_tokens(reasoning) / 2.5
-    # duration = int(duration)
-    # time.sleep(duration)
+    duration = count_tokens(response["arguments"]["witty_comment"]) / 2.5
+    duration = int(duration)
+    time.sleep(duration)
 
     return context

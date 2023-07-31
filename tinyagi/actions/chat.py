@@ -30,7 +30,7 @@ from tinyagi.context.knowledge import build_relevant_knowledge
 
 from tinyagi.constants import get_loop_dict
 
-from agentaction import get_actions as get_all_actions, search_actions
+from agentaction import search_actions
 
 from tinyagi.constants import get_loop_dict
 
@@ -82,6 +82,14 @@ def use_chat(arguments):
 started = False
 
 administrator_prompt = """The current time is {{current_time}} on {{current_date}}.
+- IF the administrator asks you to start a task, start it, otherwise respond conversationally
+- Be conversational, i.e. brief and not lengthy or verbose.
+- Do not add any <name>: or speaker's name, and don't say 'got it' or anything like that. Just the chat message itself.
+- Write a conversational response to the Administrator's message
+- Do not acknowledge or anything, JUST write the message
+- I am not an assistant, so don't apologize or explain, just write a response from my point of view
+- Do not say sure or got it or "here's the response" -- just give me the response I should say
+- I will be saying your response verbatim
 
 My name: Eliza
 My location: San Francisco, California
@@ -96,15 +104,7 @@ Recent Conversation:
 
 Administrator: {{message}}
 
-Respond as me. Do not explain, hedge or acknolwedge. Just write the response as if you were me.\
-- IF the administrator asks you to start a task, start it, otherwise respond conversationally
-- Be conversational, i.e. brief and not lengthy or verbose.
-- Do not add any <name>: or speaker's name, and don't say 'got it' or anything like that. Just the chat message itself.
-- Write a conversational response to the Administrator's message
-- Do not acknowledge or anything, JUST write the message
-- I am not an assistant, so don't apologize or explain, just write a response from my point of view
-- Do not say sure or got it or "here's the response" -- just give me the response I should say
-- I will be saying your response verbatim
+Respond as me. Do not explain, hedge or acknolwedge. Just write the response as if you were me.
 """
 
 administrator_function = compose_function(
@@ -535,7 +535,7 @@ async def twitch_handle_messages():
         ii += 1
         new_messages = t.twitch_receive_messages()
         if new_messages:
-            print('******* new_messages')
+            print("******* new_messages")
             for message in new_messages:
                 create_memory(
                     "twitch_message",
@@ -551,7 +551,7 @@ async def twitch_handle_messages():
 
             if len(memories) > 0:
                 respond_to_twitch()
-                
+
             task = get_current_task()
             if task is None:
                 formatted = "No tasks"
@@ -576,7 +576,7 @@ def respond_to_twitch():
     context["tasks"] = list_tasks_as_formatted_string()
     composed_prompt = compose_prompt(twitch_prompt, context)
 
-    response = function_completion(text=composed_prompt, functions=twitch_function)
+    response = function_completion(text=composed_prompt, system_message=system_prompt, functions=twitch_function)
     arguments = response.get("arguments", None)
 
     events = get_memories("events", n_results=1)
@@ -586,7 +586,7 @@ def respond_to_twitch():
         epoch = 0
 
     if arguments is not None:
-        summary = arguments["summary"]
+        banter = arguments["banter"]
         emotion = arguments["emotion"]
         gesture = arguments["gesture"]
         urls = arguments.get("urls", [])
@@ -597,7 +597,7 @@ def respond_to_twitch():
 
         create_memory(
             "events",
-            summary,
+            banter,
             metadata={
                 "type": "message",
                 "sender": "user",
@@ -608,51 +608,48 @@ def respond_to_twitch():
             },
         )
 
-        use_chat({"message": summary, "emotion": emotion, "gesture": gesture})
-        duration = count_tokens(summary) / 2.5
+        use_chat({"message": banter, "emotion": emotion, "gesture": gesture})
+        duration = count_tokens(banter) / 2.5
         time.sleep(duration)
 
+system_prompt="""\
+You are an AI storytelling agent, controlled by the administrator.
+You are in a twitch chat with Twitch users. You have access to functions that you can call. Call the most relevant function to respond to the chat in the most entertaining way possible.
+Write a response to the messages under Recent Chat, from me to the chat, from my perspective.
+- I want to sound conversational, i.e. brief and not lengthy or verbose.
+- ONLY write what I should say. JUST the message content itself.
+- Be creative and interesting. Try things you might not normally try.
+- Be fun. Be weird!
+- Don't say "hey everyone" -- pretend I'm already in the middle of the conversation
+- Don't say sure, got it, etc. Just write the response I should say.
+- Don't add the speaker's name, e.g. 'User: ' or 'Administrator: '. Just the message itself.
+- Extract any URLS and include them as an array in your response. Do not include any URLs if none were mentioned in recent twitch chat
+"""
 
 twitch_prompt = """\
-The current time is {{current_time}} on {{current_date}}.
+{{events}}
 
-My name: Eliza
-My location: San Francisco, California
-About me: I am an AGI agent created by the Autonomous Research Group
-
-{{relevant_knowledge}}
+# Current time
+{{current_time}} on {{current_date}}
+# My name:
+Eliza
+# My location:
+San Francisco, California
 
 {{user_files}}
 
-Earlier Twitch Chat
 {{old_twitch}}
-
-{{events}}
-
-Recent Twitch Chat
+(New messages below)
 {{twitch}}
-
-I am currently streaming. Help me to write a response to the messages under Recent Twitch Chat, from me to the chat, from my perspective.
-- Recent Twitch Chat might be related to something that was said earlier in the Earlier Twitch Chat, so you might need to refer to that for context
-- I want to sound conversational, i.e. brief and not lengthy or verbose.
-- ONLY write what I should say. JUST the message content itself.
-- Don't say sure, got it, etc. Just write the response I should say.
-- I am not an assistant. I'm a twitch streamer, so don't act like an assistant.
-- Don't add the speaker's name, e.g. 'User: ' or 'Administrator: '. Just the message itself.
-- Extract any URLS and include them as an array in your response. Do not include any URLs if none were mentioned in recent twitch chat
 """
 
 twitch_function = compose_function(
     name="respond_to_twitch",
     description="Respond to the most recent messages in chat. Either choose one message, or respond generally to the messages.",
     properties={
-        "summary": {
+        "banter": {
             "type": "string",
-            "description": "A summary of the most recent messages in chat.",
-        },
-        "message": {
-            "type": "string",
-            "description": "The message I should send, as a brief conversational chat message from me to them.",
+            "description": "Creative, witty banter in response to the newest messages in the chat. The banter should be from my perspective, in the first person, and from me to the users in the chat. I want to sound weird, fun, creative and hilarious.",
         },
         "emotion": {
             "type": "string",
@@ -683,7 +680,7 @@ twitch_function = compose_function(
             },
         },
     },
-    required_properties=["summary", "message", "emotion", "gesture", "urls"],
+    required_properties=["banter", "emotion", "gesture", "urls"],
 )
 
 

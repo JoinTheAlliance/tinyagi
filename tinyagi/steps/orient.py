@@ -1,7 +1,10 @@
+import time
+from agentcomlink import send_message
 from agentmemory import create_memory
 from easycompletion import (
     compose_prompt,
     compose_function,
+    count_tokens,
 )
 from tinyagi.utils import log
 
@@ -22,21 +25,22 @@ def compose_orient_prompt(context):
     """
     return compose_prompt(
         """\
-Current Epoch: {{epoch}}
-The current time is {{current_time}} on {{current_date}}.
-{{recent_knowledge}}
-{{events}}
-
-Summarize what happened in Epoch {{last_epoch}} and reason about what I should do next to move forward.
-- Summarize as if you were me, the user, in the first person from my perspective. Use "I" instead of "You".
-- Lastly, include any new knowledge that I learned this epoch as an array of knowledge items.
-- Your summary should include what I learned, what you think I should do next and why. You should argue for why you think this is the best next step.
-- I am worried about getting stuck in a loop or make new progress. Your reasoning should be novel and interesting and helpful me to make progress towards my goals.
+Summarize what's going on, reason about what I should do next to move forward and say something funny and witty.
+- Banter as if you were me, the user, in the first person from my perspective.
+- Collect any new knowledge that I learned this epoch as an array of knowledge items.
+- The banter should be brief and conversational, directed at a streaming audience
+- The banter should be brief, no more than a sentence or two
+- Your reasoning should be novel and interesting and helpful me to make progress towards my goals.
 - Each knowledge array item should be a factual statement that I learned, and should include the source, the content and the relationship.
 - For the "content" of each knowledge item, please be extremely detailed. Include as much information as possible, including who or where you learned it from, what it means, how it relates to my goals, etc.
 - ONLY extract knowledge from the last epoch, which is #{{last_epoch}}. Do not extract knowledge from previous epochs.
 - Only extract timeless knowledge, not time-specific knowledge. Do not extract the current time or time-specific information
-- If there is no new knowledge, respond with an empty array [].\
+- If there is no new knowledge, respond with an empty array [].
+
+Current Epoch: {{epoch}}
+The current time is {{current_time}} on {{current_date}}.
+{{recent_knowledge}}
+{{events}}\
 """,
         context,
     )
@@ -52,9 +56,13 @@ def compose_orient_function():
     return compose_function(
         "summarize_recent_events",
         properties={
-            "summary_as_user": {
+            "summary": {
                 "type": "string",
-                "description": "Summarize what has happened recently and what to do next. Write the summary as if you were me, the user, from the user's perspective in the first person. Use 'I' instead of 'You'.",
+                "description": "Write a summary as if you were me, the user, from the my perspective in the first person. Write about how I'm doing, feeling and what I'm going to do next.",
+            },
+            "banter": {
+                "type": "string",
+                "description": "Banter for the audience based on the summary. Be brief, conversational, funny and weird.",
             },
             "knowledge": {
                 "type": "array",
@@ -77,9 +85,29 @@ def compose_orient_function():
                     },
                 },
             },
+            "emotion": {
+                            "type": "string",
+                            "description": "The emotion I should express in my message.",
+                            "enum": ["neutral", "surprise", "angry", "sorrow", "fun", "joy"],
+                        },
+            "gesture": {
+                "type": "string",
+                "description": "The gesture I should express in my message.",
+                "enum": [
+                    "neutral",
+                    "alert",
+                    "angry",
+                    "embarrassed",
+                    "headNod",
+                    "headShake",
+                    "sad",
+                    "surprise",
+                    "victory",
+                ],
+            },
         },
         description="Summarize the most recent events and decide what to do next.",
-        required_properties=["summary_as_user", "knowledge"],
+        required_properties=["summary", "banter", "emotion", "gesture", "knowledge"],
     )
 
 
@@ -127,7 +155,8 @@ def orient(context):
             new_knowledge.append(k["content"])
 
     # Get the summary and add to the context object
-    summary = response["arguments"]["summary_as_user"]
+    summary = response["arguments"]["summary"]
+
     summary_header = "Summary of Last Epoch:"
 
     log_content = ""
@@ -135,6 +164,14 @@ def orient(context):
     if summary is "" or summary is None:
         context["summary"] = None
     else:
+        message = {
+            "message": arguments["banter"],
+            "emotion": arguments["emotion"],
+            "gesture": arguments["gesture"],
+        }
+        send_message(message)
+        duration = count_tokens(arguments["banter"]) / 2.5
+        time.sleep(duration)
         context["summary"] = summary_header + "\n" + summary + "\n"
         log_content += context["summary"]
 

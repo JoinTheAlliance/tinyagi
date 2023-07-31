@@ -46,7 +46,7 @@ def get_actions():
                     "properties": {
                         "thought": {
                             "type": "string",
-                            "description": "A thought, described from my perspective (I will be saying it).",
+                            "description": "A thought, described from my perspective (I will be saying it). Should be a very strange thought. Should be short and totally bizarre and random.",
                         },
                         "emotion": {
                             "type": "string",

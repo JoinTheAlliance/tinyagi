@@ -16,7 +16,7 @@ You have access to the following actions and should call them often:
 
 {{events}}
 
-Come up with a topical joke based on recent events. The joke should be funny and weird and dark."""
+Come up with a super weird random topical joke based on recent events. The joke should be funny and weird and dark. The joke should not be a normal average joke. It should be esoteric and strange."""
 
 
 def write_joke(arguments):
@@ -44,13 +44,13 @@ def get_actions():
         {
             "function": {
                 "name": "write_joke",
-                "description": "Write a topical joke based on current events and conversations.",
+                "description": "Write a super weird bizarre topical joke based on current events and conversations.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "joke": {
                             "type": "string",
-                            "description": "A joke, told from me to an audience. Can be detailed and complicated. Should be funny, weird and dark.",
+                            "description": "A joke, told from me to an audience. Can be detailed and complicated. Should be funny, weird and dark. Esoteric and strange -- NOT just a normal average joke.",
                         },
                         "emotion": {
                             "type": "string",

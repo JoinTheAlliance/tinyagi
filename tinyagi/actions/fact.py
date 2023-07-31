@@ -44,13 +44,13 @@ def get_actions():
         {
             "function": {
                 "name": "state_fact",
-                "description": "State a random interesting fact. The fact should be original, random, interesting and weird. It should be true and related to recent events or the world..",
+                "description": "Make some witty banter. State a random interesting fact or say something funny and weird. It can be related to recent events or not.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "fact": {
                             "type": "string",
-                            "description": "A fact, stated by me to my audience. Can be detailed and complicated. Should be intereted and relevant (or totally random).",
+                            "description": "A statement of witty banter, funny and entertaining. Should be stated from me to my audience.",
                         },
                         "emotion": {
                             "type": "string",

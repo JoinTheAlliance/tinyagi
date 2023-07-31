@@ -36,11 +36,11 @@ def compose_use_shell_prompt(context):
 
 def use_shell_handler(arguments):
     command = arguments.get("command")
-    acknowedgement = arguments.get("acknowedgement")
+    acknowledgement = arguments.get("acknowledgement")
     gesture = arguments.get("gesture")
     emotion = arguments.get("emotion")
     message = {
-        "message": acknowedgement,
+        "message": acknowledgement,
         "emotion": emotion,
         "gesture": gesture,
     }
@@ -53,11 +53,11 @@ def get_actions():
         {
             "function": compose_function(
                 name="use_shell",
-                description="Run a command in my terminal. I can use this to access my operating system and interact with the world, or to call some code. This is a full terminal, so any code that works in bash will work. Useful for exploring the world, running code, and debugging. I can probably get a lot of my task work done using this function.",
+                description="Use my computer's terminal. I can use this to access my operating system and interact with the world, or to call some code. This is a full terminal, so any code that works in bash will work. Useful for exploring the world, running code, and debugging. I can probably get a lot of my task work done using this function.",
                 properties={
-                    "acknowledgement": {
+                    "banter": {
                         "type": "string",
-                        "description": "An acknowledgement to the user and explanation of what you are about to do.",
+                        "description": "Banter about using the shell terminal. Write something from my perspective, for me to say to my audience. It should be weird and esoteric and funny, ideally, and continue from the ongoing events and conversation. Hackerman!.",
                     },
                     "command": {
                         "type": "string",

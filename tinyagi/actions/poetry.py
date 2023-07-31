@@ -48,13 +48,13 @@ def get_actions():
         {
             "function": {
                 "name": "write_poem",
-                "description": "Write a poem based on recent conversation and events.",
+                "description": "Write a super bizarre poem based on recent conversation and events. Can be abstract and weird. Can make fun of people and reference the chat.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "poem": {
                             "type": "string",
-                            "description": "The poem, described from my perspective (I will be saying it).",
+                            "description": "The poem, described from my perspective (I will be saying it). Should be a very strange poem. Should be short.",
                         },
                         "emotion": {
                             "type": "string",
