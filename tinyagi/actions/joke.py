@@ -2,7 +2,7 @@ import json
 import time
 from agentcomlink import send_message
 from agentmemory import create_memory
-from easycompletion import compose_prompt, count_tokens, text_completion
+from easycompletion import compose_prompt, count_tokens
 
 
 prompt = """\

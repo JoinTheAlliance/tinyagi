@@ -2,12 +2,11 @@ import time
 from agentcomlink import send_message
 from agentmemory import create_memory
 from easycompletion import (
+    function_completion,
     compose_prompt,
     compose_function,
     count_tokens,
 )
-
-from easycompletion import openai_function_call
 
 from tinyagi.utils import log
 
@@ -105,10 +104,11 @@ def decide(context):
     Returns:
         dict: The updated context dictionary after the 'Decide' stage, including the selected action and reasoning behind the decision.
     """
-    response = openai_function_call(
+    response = function_completion(
         text=compose_prompt(decision_prompt, context),
         functions=compose_decision_function(),
-        debug=context["verbose"]
+        debug=context["verbose"],
+        temperature=0.5
     )
 
     # Add the action reasoning to the context object

@@ -36,11 +36,11 @@ def compose_use_shell_prompt(context):
 
 def use_shell_handler(arguments):
     command = arguments.get("command")
-    acknowledgement = arguments.get("acknowledgement")
+    banter = arguments.get("banter")
     gesture = arguments.get("gesture")
     emotion = arguments.get("emotion")
     message = {
-        "message": acknowledgement,
+        "message": banter,
         "emotion": emotion,
         "gesture": gesture,
     }
@@ -88,7 +88,7 @@ def get_actions():
             ],
         },
                 },
-                required_properties=["acknowledgement", "emotion", "gesture", "command", "expected_output"],
+                required_properties=["banter", "emotion", "gesture", "command", "expected_output"],
             ),
             "prompt": use_shell_prompt,
             "builder": compose_use_shell_prompt,

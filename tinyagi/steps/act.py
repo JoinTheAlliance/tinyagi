@@ -5,7 +5,7 @@ from agentaction import (
 )
 
 from agentmemory import create_memory
-from easycompletion import openai_function_call
+from easycompletion import function_completion
 from tinyagi.utils import log
 
 
@@ -34,8 +34,8 @@ def act(context):
         )
         return {"error": f"Action {action_name} not found"}
 
-    response = openai_function_call(
-        text=compose_action_prompt(action, context), functions=action["function"], debug=context["verbose"]
+    response = function_completion(
+        text=compose_action_prompt(action, context), functions=action["function"], debug=context["verbose"], temperature=0.3
     )
 
     formatted_arguments = ""

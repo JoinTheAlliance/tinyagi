@@ -217,7 +217,7 @@ async def response_handler(data, loop_dict):
     actions = search_actions(message)
 
     # response = function_completion(text=text, functions=functions)
-    response = function_completion(text=text, functions=administrator_function)
+    response = function_completion(text=text, functions=administrator_function, temperature=0.0)
 
     content = response.get("text", None)
 
@@ -266,8 +266,8 @@ async def response_handler(data, loop_dict):
     #         if content is None:
     #             await async_send_message(message)
     #     elif action is not None:
-    #         if content is None and arguments.get("acknowledgement", None) is not None:
-    #             await async_send_message(arguments["acknowledgement"])
+    #         if content is None and arguments.get("banter", None) is not None:
+    #             await async_send_message(arguments["banter"])
     #         action["handler"](arguments)
     #         print("Action executed successfully")
 
@@ -582,7 +582,7 @@ def respond_to_twitch():
     context["tasks"] = list_tasks_as_formatted_string()
     composed_prompt = compose_prompt(twitch_prompt, context)
 
-    response = function_completion(text=composed_prompt, system_message=system_prompt, functions=twitch_function)
+    response = function_completion(text=composed_prompt, system_message=system_prompt, functions=twitch_function, temperature=0.8)
     arguments = response.get("arguments", None)
 
     events = get_memories("events", n_results=1)

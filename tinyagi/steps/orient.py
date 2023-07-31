@@ -2,6 +2,7 @@ import time
 from agentcomlink import send_message
 from agentmemory import create_memory
 from easycompletion import (
+    function_completion,
     compose_prompt,
     compose_function,
     count_tokens,
@@ -9,8 +10,6 @@ from easycompletion import (
 from tinyagi.utils import log
 
 from tinyagi.context.knowledge import add_knowledge
-
-from easycompletion import openai_function_call
 
 
 def compose_orient_prompt(context):
@@ -134,10 +133,11 @@ def orient(context):
     if context.get("recent_knowledge", None) is None:
         context["recent_knowledge"] = ""
 
-    response = openai_function_call(
+    response = function_completion(
         text=compose_orient_prompt(context),
         functions=compose_orient_function(),
         debug=context["verbose"],
+        temperature=0.0
     )
 
     arguments = response["arguments"]

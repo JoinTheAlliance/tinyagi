@@ -2,7 +2,7 @@ import json
 import time
 from agentcomlink import send_message
 from agentmemory import create_memory
-from easycompletion import compose_prompt, count_tokens, text_completion
+from easycompletion import compose_prompt, count_tokens
 
 
 prompt = """
@@ -10,6 +10,7 @@ prompt = """
 
 Come up with a random, highly creative idea or thought for me.
 - Write the thought from my perspective, as the user.
+- The thought should be extremely strange and random, but not offensive, and ideally related to the current events.
 - Please do not acknowledge the request. Just write the thought. Your response should only include the thought."""
 
 
