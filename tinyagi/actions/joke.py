@@ -20,8 +20,6 @@ Come up with a topical joke based on recent events. The joke should be funny and
 
 
 def write_joke(arguments):
-    print('joke arguments are')
-    print(arguments)
     joke = arguments.get("joke", None)
     emotion = arguments["emotion"]
     gesture = arguments["gesture"]

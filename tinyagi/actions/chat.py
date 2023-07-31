@@ -6,6 +6,7 @@ from agentmemory import create_memory, get_memories
 from easycompletion import (
     compose_function,
     compose_prompt,
+    count_tokens,
     function_completion,
 )
 from agentcomlink import (
@@ -49,8 +50,6 @@ def use_chat(arguments):
     message = arguments["message"]
     emotion = arguments["emotion"]
     gesture = arguments["gesture"]
-    print('****** USE CHAT')
-    print(arguments)
     message = json.dumps(
         {
             "message": message,
@@ -588,7 +587,6 @@ def respond_to_twitch():
         epoch = 0
 
     if arguments is not None:
-        content = arguments["message"]
         summary = arguments["summary"]
         emotion = arguments["emotion"]
         gesture = arguments["gesture"]
@@ -611,7 +609,9 @@ def respond_to_twitch():
             },
         )
 
-        use_chat({"message": content, "emotion": emotion, "gesture": gesture})
+        use_chat({"message": summary, "emotion": emotion, "gesture": gesture})
+        duration = count_tokens(summary) / 2.5
+        time.sleep(duration)
 
 
 twitch_prompt = """\
