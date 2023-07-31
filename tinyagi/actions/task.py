@@ -17,6 +17,7 @@ def create_task_handler(arguments):
     goal = arguments["goal"]
     create_task(goal)
     print("created task")
+    return {"success": True, "output": "I created a task with the goal: " + goal, "error": None}
 
 
 def cancel_task_handler(arguments):
@@ -27,6 +28,7 @@ def cancel_task_handler(arguments):
         task = tasks[0]
         cancel_task(task)
     print("canceled task")
+    return {"success": True, "output": "I canceled a task with the goal: " + goal, "error": None}
 
 
 def complete_task_handler(arguments):
@@ -36,6 +38,7 @@ def complete_task_handler(arguments):
         task = tasks[0]
         finish_task(task)
     print("completed task")
+    return {"success": True, "output": "I completed a task with the goal: " + goal, "error": None}
 
 
 def complete_step_handler(arguments):
@@ -51,6 +54,7 @@ def complete_step_handler(arguments):
             if s["name"] == step:
                 finish_step(task, s)
     print("completed step")
+    return {"success": True, "output": "I completed a step in the task with the goal: " + goal, "error": None}
 
 
 def add_step_handler(arguments):
@@ -61,6 +65,7 @@ def add_step_handler(arguments):
         task = tasks[0]
         add_step(task, step)
     print("added step")
+    return {"success": True, "output": "I created added a step to the task with the goal: " + goal, "error": None}
 
 
 def cancel_step_handler(arguments):
@@ -74,6 +79,7 @@ def cancel_step_handler(arguments):
             if s["name"] == step:
                 cancel_step(task, s)
     print("canceled step")
+    return {"success": True, "output": "I canceled a task with the goal: " + goal, "error": None}
 
 
 create_task_prompt = """\
