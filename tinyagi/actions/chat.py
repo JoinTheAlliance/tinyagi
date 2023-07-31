@@ -49,6 +49,8 @@ def use_chat(arguments):
     message = arguments["message"]
     emotion = arguments["emotion"]
     gesture = arguments["gesture"]
+    print('****** USE CHAT')
+    print(arguments)
     message = json.dumps(
         {
             "message": message,
@@ -75,6 +77,7 @@ def use_chat(arguments):
         asyncio.run(async_send_message(message))
     else:
         loop.create_task(async_send_message(message))
+    return {"success": True, "output": message, "error": None}
 
 
 started = False
@@ -322,7 +325,6 @@ def get_actions():
                 required_properties=["to", "message"],
             ),
             "prompt": administrator_prompt,
-            # "builder": compose_chat_prompt,
             "handler": use_chat,
             "suggestion_after_actions": [],
             "never_after_actions": [],
@@ -534,6 +536,7 @@ async def twitch_handle_messages():
         ii += 1
         new_messages = t.twitch_receive_messages()
         if new_messages:
+            print('******* new_messages')
             for message in new_messages:
                 create_memory(
                     "twitch_message",
@@ -541,7 +544,7 @@ async def twitch_handle_messages():
                     metadata={"user": message["username"], "handled": "False"},
                 )
         await asyncio.sleep(1)
-        if ii >= 5:
+        if ii >= 3:
             ii = 0
             memories = get_memories(
                 "twitch_message", filter_metadata={"handled": "False"}
@@ -564,6 +567,7 @@ async def twitch_handle_messages():
 
 
 def respond_to_twitch():
+    print('*** RESPONDING TO TWITCH')
     context = initialize()
     context = build_twitch_context(context)
     context = build_events_context(context)
@@ -574,15 +578,12 @@ def respond_to_twitch():
     context["tasks"] = list_tasks_as_formatted_string()
     composed_prompt = compose_prompt(twitch_prompt, context)
 
-    print("******")
-    print(composed_prompt)
-
     response = function_completion(text=composed_prompt, functions=twitch_function)
     arguments = response.get("arguments", None)
 
     events = get_memories("events", n_results=1)
     if len(events) > 0:
-        epoch = events[0]["metadata"]["epoch"]
+        epoch = events[0]["metadata"].get("epoch", 0)
     else:
         epoch = 0
 

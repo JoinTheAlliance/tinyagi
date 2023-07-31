@@ -28,14 +28,14 @@ The current time is {{current_time}} on {{current_date}}.
 {{events}}
 
 Summarize what happened in Epoch {{last_epoch}} and reason about what I should do next to move forward.
-- First, summarize as yourself (the assistant). Include any relevant information for me, the user, for the next step.
-- Next summarize as if you were me, the user, in the first person from my perspective. Use "I" instead of "You".
+- Summarize as if you were me, the user, in the first person from my perspective. Use "I" instead of "You".
 - Lastly, include any new knowledge that I learned this epoch as an array of knowledge items.
 - Your summary should include what I learned, what you think I should do next and why. You should argue for why you think this is the best next step.
 - I am worried about getting stuck in a loop or make new progress. Your reasoning should be novel and interesting and helpful me to make progress towards my goals.
 - Each knowledge array item should be a factual statement that I learned, and should include the source, the content and the relationship.
 - For the "content" of each knowledge item, please be extremely detailed. Include as much information as possible, including who or where you learned it from, what it means, how it relates to my goals, etc.
 - ONLY extract knowledge from the last epoch, which is #{{last_epoch}}. Do not extract knowledge from previous epochs.
+- Only extract timeless knowledge, not time-specific knowledge. Do not extract the current time or time-specific information
 - If there is no new knowledge, respond with an empty array [].\
 """,
         context,
@@ -52,13 +52,9 @@ def compose_orient_function():
     return compose_function(
         "summarize_recent_events",
         properties={
-            "summary_as_assistant": {
-                "type": "string",
-                "description": "Respond to the me, the user, as yourself, the assistant. Summarize what has happened recently, what you learned from it and what you'd like to do next. Use 'You' instead of 'I'.",
-            },
             "summary_as_user": {
                 "type": "string",
-                "description": "Resphrase your response as if you were me, the user, from the user's perspective in the first person. Use 'I' instead of 'You'.",
+                "description": "Summarize what has happened recently and what to do next. Write the summary as if you were me, the user, from the user's perspective in the first person. Use 'I' instead of 'You'.",
             },
             "knowledge": {
                 "type": "array",
@@ -83,7 +79,7 @@ def compose_orient_function():
             },
         },
         description="Summarize the most recent events and decide what to do next.",
-        required_properties=["summary_as_assistant", "summary_as_user", "knowledge"],
+        required_properties=["summary_as_user", "knowledge"],
     )
 
 
@@ -97,9 +93,6 @@ def orient(context):
     Returns:
         dict: The updated context dictionary after the 'Orient' stage, including the summary of the last epoch, relevant knowledge, available actions, and so on.
     """
-    context["last_epoch"] = context["epoch"]
-    context["epoch"] = context["epoch"] + 1
-
     if context.get("events", None) is None:
         context["events"] = ""
 

@@ -20,7 +20,9 @@ def initialize(context={}):
     if context is None:
         context = {}
         context["epoch"] = 0
+        context["last_epoch"] = 0
     else:
+        context["last_epoch"] = context.get("epoch", 0)
         context["epoch"] = context.get("epoch", 0) + 1
     context["current_time"] = datetime.now().strftime("%H:%M")
     context["current_date"] = datetime.now().strftime("%Y-%m-%d")

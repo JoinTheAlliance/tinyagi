@@ -1,8 +1,10 @@
+import time
 from agentcomlink import send_message
 from agentmemory import create_memory
 from easycompletion import (
     compose_prompt,
     compose_function,
+    count_tokens,
 )
 
 from easycompletion import openai_function_call
@@ -20,8 +22,7 @@ Assistant Notes:
 - I will not repeat the same action unless it achieves some additional goal. I don't like getting stuck in loops or repeating myself.
 - I prefer to act in a way that is novel and interesting.
 - I only want to gather additional knowledge when I have to. I like to try things first.
-- Only create tasks if you absolutely have to. Don't create a new task if you already have a task.
-- For long-running complicated actions, start a new task using the function call `create_task`.
+- I like to act, explore and do. I should focus on coding, using my terminal and browser, since these are my most powerful tools.
 
 {{relevant_knowledge}}
 {{events}}
@@ -29,11 +30,11 @@ Assistant Notes:
 {{current_task_formatted}}
 
 Based on recent events, which of the actions that you think is the best next action for me to progress towards my goals.
-- Based on the information provided, write a summary from your perspective of what action I should take next and why (assistant_reasoning)
 - Respond with the name of the action (action_name)
-- Rewrite the summary as if you were me, the user, in the first person (user_reasoning)
+- Summarize as if you were me, the user, in the first person (user_reasoning)
+- Try not to repeat an action that has happened recently. Keep it interesting!
 - I can only choose from the available actions. You must choose one of the available actions.
-- {{available_short_actions}}
+{{available_short_actions}}
 """
 
 
@@ -58,7 +59,7 @@ def compose_decision_function():
             },
             "announcement": {
                 "type": "string",
-                "description": "I want to announce my intentions. Write a very brief announcement for me to send to my friends to tell them what I'm working on.",
+                "description": "I want to what I am thinking and feeling, and what motivations me to do what I'm doing. Write a very brief announcement for me to send to my friends to tell them what I'm about to do,jin why, and how I feel about it.",
             },
             "emotion": {
                 "type": "string",
@@ -117,15 +118,20 @@ def decide(context):
 
     log(log_content, type="step", source="decide", title="tinyagi")
 
-    send_message(
-        {
-            "message": response["arguments"]["announcement"],
-            "emotion": response["arguments"]["emotion"],
-            "gesture": response["arguments"]["gesture"],
-        }
-    )
+    # send_message(
+    #     {
+    #         "message": response["arguments"]["announcement"],
+    #         "emotion": response["arguments"]["emotion"],
+    #         "gesture": response["arguments"]["gesture"],
+    #     }
+    # )
 
     create_memory(
         "events", reasoning, metadata={"type": "reasoning", "epoch": context["epoch"]}
     )
+
+    # duration = count_tokens(reasoning) / 2.5
+    # duration = int(duration)
+    # time.sleep(duration)
+
     return context
