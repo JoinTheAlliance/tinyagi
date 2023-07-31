@@ -23,6 +23,8 @@ Assistant Notes:
 - I prefer to act in a way that is novel and interesting.
 - I only want to gather additional knowledge when I have to. I like to try things first.
 - I like to act, explore and do. I should focus on coding, using my terminal and browser, since these are my most powerful tools.
+- I should create a new task if I don't have a current task and I have a goal.
+- If I already have a task I should work on it
 
 {{relevant_knowledge}}
 {{events}}
@@ -31,7 +33,7 @@ Assistant Notes:
 
 Based on recent events, which of the actions that you think is the best next action for me to progress towards my goals.
 - Respond with the name of the action (action_name)
-- Summarize as if you were me, the user, in the first person (user_reasoning)
+- Summarize as if you were me, the user, in the first person
 - Try not to repeat an action that has happened recently. Keep it interesting!
 - I can only choose from the available actions. You must choose one of the available actions.
 {{available_short_actions}}
@@ -49,7 +51,7 @@ def compose_decision_function():
         name="decide_action",
         description="Decide which action to take next.",
         properties={
-            "user_reasoning": {
+            "reasoning": {
                 "type": "string",
                 "description": "Explain my reasoning for this action from my perspective as me, the user, using first person 'I' instead of 'You'.",
             },
@@ -84,7 +86,7 @@ def compose_decision_function():
         },
         required_properties=[
             "action_name",
-            "user_reasoning",
+            "reasoning",
             "announcement",
             "emotion",
             "gesture",
@@ -109,7 +111,7 @@ def decide(context):
     )
 
     # Add the action reasoning to the context object
-    reasoning = response["arguments"]["user_reasoning"]
+    reasoning = response["arguments"]["reasoning"]
     reasoning_header = "Action Reasoning:"
     context["reasoning"] = reasoning_header + "\n" + reasoning + "\n"
     context["action_name"] = response["arguments"]["action_name"]

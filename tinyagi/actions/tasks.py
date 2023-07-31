@@ -137,8 +137,8 @@ def get_actions():
     return [
         {
             "function": {
-                "name": "create_task",
-                "description": "Create and start a new task with the given goal.",
+                "name": "start_task",
+                "description": "Start a new task with the given goal. This is a good option for complex and multi-step actions.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -156,7 +156,7 @@ def get_actions():
             },
             "prompt": create_task_prompt,
             "suggestion_after_actions": [],
-            "never_after_actions": [],
+            "never_after_actions": ["start_task"],
             "handler": create_task_handler,
         },
         {
