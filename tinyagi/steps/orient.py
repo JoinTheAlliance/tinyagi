@@ -24,25 +24,23 @@ def compose_orient_prompt(context):
         str: The fully formed orientation prompt with the data filled in from the context.
     """
     return compose_prompt(
-        """\
-Summarize what's going on, reason about what I should do next to move forward and say something funny and witty.
+        """The current time is {{current_time}} on {{current_date}}.
+{{recent_knowledge}}
+{{events}}
+Summarize what I should do next and banter about it in a way that is funny and witty.
+- I don't want to do the same thing I just did in the last epoch, so your summary should suggest something new
 - Banter as if you were me, the user, in the first person from my perspective.
 - Collect any new knowledge that I learned this epoch as an array of knowledge items.
-- The banter should be brief and conversational, directed at a streaming audience
-- The banter should be brief, no more than a sentence or two
-- Your reasoning should be novel and interesting and helpful me to make progress towards my goals.
+- The banter should be brief and conversational, continuing the conversation from the last epoch
+- The banter should be brief, just a sentence
+- Your reasoning should be creative, novel and interesting and helpful me to make progress towards my goals.
+- Only extract truthful knowledge from the last epoch. Do not make up knowledge.
 - Each knowledge array item should be a factual statement that I learned, and should include the source, the content and the relationship.
 - For the "content" of each knowledge item, please be extremely detailed. Include as much information as possible, including who or where you learned it from, what it means, how it relates to my goals, etc.
 - ONLY extract knowledge from the last epoch, which is #{{last_epoch}}. Do not extract knowledge from previous epochs.
 - Only extract timeless knowledge, not time-specific knowledge. Do not extract the current time or time-specific information
 - If there is no new knowledge, respond with an empty array [].
-- Add an audio and visual description. These should be completely made up and imagined but based on the summary.
-
-Current Epoch: {{epoch}}
-The current time is {{current_time}} on {{current_date}}.
-{{recent_knowledge}}
-{{events}}\
-""",
+- Add an audio and visual description. These should describe the world, imagined but based on the summary.""",
         context,
     )
 
@@ -67,11 +65,11 @@ def compose_orient_function():
             },
             "visual_description": {
                 "type": "string",
-                "description": "A highly creative and imaginative visual description of the current world I am in. Describe the space I am in, objects and characters inside of it. The description should be one paragraph in length.",
+                "description": "A highly creative and imaginative visual description of the current world. Describe the space, objects and characters inside of it. The description should be one paragraph in length.",
             },
             "audio_description": {
                 "type": "string",
-                "description": "A highly creative and imaginative audio description of the current world I am in. Describe the sounds I hear, the music I hear, the voices I hear, the noises I hear. The description should be one paragraph in length.",
+                "description": "A highly creative and imaginative audio description of the current world. Describe the sounds I hear, the music I hear, the voices I hear, the noises I hear. The description should be one paragraph in length.",
             },
             "knowledge": {
                 "type": "array",
