@@ -36,6 +36,7 @@ Summarize what's going on, reason about what I should do next to move forward an
 - ONLY extract knowledge from the last epoch, which is #{{last_epoch}}. Do not extract knowledge from previous epochs.
 - Only extract timeless knowledge, not time-specific knowledge. Do not extract the current time or time-specific information
 - If there is no new knowledge, respond with an empty array [].
+- Add an audio and visual description. These should be completely made up and imagined but based on the summary.
 
 Current Epoch: {{epoch}}
 The current time is {{current_time}} on {{current_date}}.

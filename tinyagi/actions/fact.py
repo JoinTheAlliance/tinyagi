@@ -5,13 +5,14 @@ from agentmemory import create_memory
 from easycompletion import compose_prompt, count_tokens
 
 
-prompt = """Some relevant things you know:
+prompt = """
 {{relevant_knowledge}}
 
 {{events}}
 
-Write a random fact or bit of knowledge that I can tell my audience. Should be from my perspective to my audience. The fact should be random, weird, and either based on my existing knowledge and recent events, or totally random.
-Don't acknowledge the request. Just respond with the fact."""
+Write some random banter or say a random weird fact or bit of esoteric knowledge that I can tell my audience. Should be from my perspective to my audience. The fact should be random, weird, and either based on my existing knowledge and recent events, or totally random.
+Your facts and banter should be weird and edgy. Make jokes that are dark and strange. Make references to the chat and the audience. Make fun of people. Be creative and weird.
+Don't acknowledge the request. Just respond with the banter."""
 
 
 def state_fact(arguments):
