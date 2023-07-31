@@ -613,7 +613,8 @@ def respond_to_twitch():
                 "epoch": str(epoch),
             },
         )
-
+        print('****** TWITCH RESPONSE')
+        print(banter)
         use_chat({"message": banter, "emotion": emotion, "gesture": gesture})
         duration = count_tokens(banter) / 2.5
         time.sleep(duration)
