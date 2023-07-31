@@ -7,6 +7,7 @@ from agentagenda import (
     add_step,
     cancel_step,
 )
+from agentcomlink import send_message
 from easycompletion import compose_prompt
 
 
@@ -17,7 +18,13 @@ def create_task_handler(arguments):
     goal = arguments["goal"]
     create_task(goal)
     print("created task")
-    return {"success": True, "output": "I created a task with the goal: " + goal, "error": None}
+    message = {
+        "message": arguments["banter"],
+        "emotion": arguments["emotion"],
+        "gesture": arguments["gesture"],
+    }
+    send_message(message)
+    return {"success": True, "output": arguments["banter"], "error": None}
 
 
 def cancel_task_handler(arguments):
@@ -27,8 +34,13 @@ def cancel_task_handler(arguments):
     if len(tasks) > 0:
         task = tasks[0]
         cancel_task(task)
-    print("canceled task")
-    return {"success": True, "output": "I canceled a task with the goal: " + goal, "error": None}
+    message = {
+        "message": arguments["banter"],
+        "emotion": arguments["emotion"],
+        "gesture": arguments["gesture"],
+    }
+    send_message(message)
+    return {"success": True, "output": arguments["banter"], "error": None}
 
 
 def complete_task_handler(arguments):
@@ -38,8 +50,13 @@ def complete_task_handler(arguments):
         task = tasks[0]
         finish_task(task)
     print("completed task")
-    return {"success": True, "output": "I completed a task with the goal: " + goal, "error": None}
-
+    message = {
+        "message": arguments["banter"],
+        "emotion": arguments["emotion"],
+        "gesture": arguments["gesture"],
+    }
+    send_message(message)
+    return {"success": True, "output": arguments["banter"], "error": None}
 
 def complete_step_handler(arguments):
     # TODO: might be wrong lol
@@ -54,7 +71,14 @@ def complete_step_handler(arguments):
             if s["name"] == step:
                 finish_step(task, s)
     print("completed step")
-    return {"success": True, "output": "I completed a step in the task with the goal: " + goal, "error": None}
+    
+    message = {
+        "message": arguments["banter"],
+        "emotion": arguments["emotion"],
+        "gesture": arguments["gesture"],
+    }
+    send_message(message)
+    return {"success": True, "output": arguments["banter"], "error": None}
 
 
 def add_step_handler(arguments):
@@ -65,7 +89,14 @@ def add_step_handler(arguments):
         task = tasks[0]
         add_step(task, step)
     print("added step")
-    return {"success": True, "output": "I created added a step to the task with the goal: " + goal, "error": None}
+
+    message = {
+        "message": arguments["banter"],
+        "emotion": arguments["emotion"],
+        "gesture": arguments["gesture"],
+    }
+    send_message(message)
+    return {"success": True, "output": arguments["banter"], "error": None}
 
 
 def cancel_step_handler(arguments):
@@ -79,8 +110,13 @@ def cancel_step_handler(arguments):
             if s["name"] == step:
                 cancel_step(task, s)
     print("canceled step")
-    return {"success": True, "output": "I canceled a task with the goal: " + goal, "error": None}
-
+    message = {
+        "message": arguments["banter"],
+        "emotion": arguments["emotion"],
+        "gesture": arguments["gesture"],
+    }
+    send_message(message)
+    return {"success": True, "output": arguments["banter"], "error": None}
 
 create_task_prompt = """\
 Current Time: {{current_time}}
@@ -165,7 +201,6 @@ def cancel_step_builder(context):
 
 
 def get_actions():
-    print(" ************** getting actions")
     return [
         {
             "function": {
@@ -174,16 +209,36 @@ def get_actions():
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "acknowledgement": {
+                        "banter": {
                             "type": "string",
-                            "description": "An acknowledgement to the user and explanation of what you are about to do.",
+                            "description": "Say something brief and witty about what I'm about to do, from my perspective.",
+                        },
+                        "emotion": {
+                            "type": "string",
+                            "description": "The emotion I should express in my message.",
+                            "enum": ["neutral", "surprise", "angry", "sorrow", "fun", "joy"],
+                        },
+                        "gesture": {
+                            "type": "string",
+                            "description": "The gesture I should express in my message.",
+                            "enum": [
+                                "neutral",
+                                "alert",
+                                "angry",
+                                "embarrassed",
+                                "headNod",
+                                "headShake",
+                                "sad",
+                                "surprise",
+                                "victory",
+                            ],
                         },
                         "goal": {
                             "type": "string",
                             "description": "The goal of the task.",
                         },
                     },
-                    "required": ["acknowledgement", "goal"],
+                    "required": ["banter", "goal", "emotion", "gesture"],
                 },
             },
             "prompt": create_task_prompt,
@@ -199,16 +254,36 @@ def get_actions():
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "acknowledgement": {
+                        "banter": {
                             "type": "string",
-                            "description": "An acknowledgement to the user and explanation of what you are about to do.",
+                            "description": "Say something brief and witty about what I'm about to do, from my perspective.",
                         },
                         "goal": {
                             "type": "string",
                             "description": "The goal of the task to cancel.",
                         },
+                        "emotion": {
+                            "type": "string",
+                            "description": "The emotion I should express in my message.",
+                            "enum": ["neutral", "surprise", "angry", "sorrow", "fun", "joy"],
+                        },
+                        "gesture": {
+                            "type": "string",
+                            "description": "The gesture I should express in my message.",
+                            "enum": [
+                                "neutral",
+                                "alert",
+                                "angry",
+                                "embarrassed",
+                                "headNod",
+                                "headShake",
+                                "sad",
+                                "surprise",
+                                "victory",
+                            ],
+                        },
                     },
-                    "required": ["acknowledgement", "goal"],
+                    "required": ["banter", "goal", "emotion", "gesture"],
                 },
             },
             "prompt": cancel_task_prompt,
@@ -224,16 +299,36 @@ def get_actions():
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "acknowledgement": {
+                        "banter": {
                             "type": "string",
-                            "description": "An acknowledgement to the user and explanation of what you are about to do.",
+                            "description": "Say something brief and witty about what I'm about to do, from my perspective.",
                         },
                         "goal": {
                             "type": "string",
                             "description": "The goal of the task to complete.",
                         },
+                        "emotion": {
+                            "type": "string",
+                            "description": "The emotion I should express in my message.",
+                            "enum": ["neutral", "surprise", "angry", "sorrow", "fun", "joy"],
+                        },
+                        "gesture": {
+                            "type": "string",
+                            "description": "The gesture I should express in my message.",
+                            "enum": [
+                                "neutral",
+                                "alert",
+                                "angry",
+                                "embarrassed",
+                                "headNod",
+                                "headShake",
+                                "sad",
+                                "surprise",
+                                "victory",
+                            ],
+                        },
                     },
-                    "required": ["acknowledgement", "goal"],
+                    "required": ["banter", "goal", "emotion", "gesture"],
                 },
             },
             "prompt": complete_task_prompt,
@@ -249,9 +344,9 @@ def get_actions():
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "acknowledgement": {
+                        "banter": {
                             "type": "string",
-                            "description": "An acknowledgement to the user and explanation of what you are about to do.",
+                            "description": "Say something brief and witty about what I'm about to do, from my perspective.",
                         },
                         "goal": {
                             "type": "string",
@@ -261,8 +356,28 @@ def get_actions():
                             "type": "string",
                             "description": "The step to complete.",
                         },
+                        "emotion": {
+                            "type": "string",
+                            "description": "The emotion I should express in my message.",
+                            "enum": ["neutral", "surprise", "angry", "sorrow", "fun", "joy"],
+                        },
+                        "gesture": {
+                            "type": "string",
+                            "description": "The gesture I should express in my message.",
+                            "enum": [
+                                "neutral",
+                                "alert",
+                                "angry",
+                                "embarrassed",
+                                "headNod",
+                                "headShake",
+                                "sad",
+                                "surprise",
+                                "victory",
+                            ],
+                        },
                     },
-                    "required": ["acknowledgement", "goal", "step"],
+                    "required": ["banter", "goal", "step", "emotion", "gesture"],
                 },
             },
             "prompt": complete_step_prompt,
@@ -278,9 +393,9 @@ def get_actions():
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "acknowledgement": {
+                        "banter": {
                             "type": "string",
-                            "description": "An acknowledgement to the user and explanation of what you are about to do.",
+                            "description": "Say something brief and witty about what I'm about to do, from my perspective.",
                         },
                         "goal": {
                             "type": "string",
@@ -290,8 +405,28 @@ def get_actions():
                             "type": "string",
                             "description": "The step to complete.",
                         },
+                        "emotion": {
+                            "type": "string",
+                            "description": "The emotion I should express in my message.",
+                            "enum": ["neutral", "surprise", "angry", "sorrow", "fun", "joy"],
+                        },
+                        "gesture": {
+                            "type": "string",
+                            "description": "The gesture I should express in my message.",
+                            "enum": [
+                                "neutral",
+                                "alert",
+                                "angry",
+                                "embarrassed",
+                                "headNod",
+                                "headShake",
+                                "sad",
+                                "surprise",
+                                "victory",
+                            ],
+                        },
                     },
-                    "required": ["acknowledgement", "goal", "step"],
+                    "required": ["banter", "goal", "step", "emotion", "gesture"],
                 },
             },
             "suggestion_after_actions": [],
@@ -307,9 +442,9 @@ def get_actions():
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "acknowledgement": {
+                        "banter": {
                             "type": "string",
-                            "description": "An acknowledgement to the user and explanation of what you are about to do.",
+                            "description": "Say something brief and witty about what I'm about to do, from my perspective.",
                         },
                         "goal": {
                             "type": "string",
@@ -319,8 +454,28 @@ def get_actions():
                             "type": "string",
                             "description": "The step to complete.",
                         },
+                        "emotion": {
+                            "type": "string",
+                            "description": "The emotion I should express in my message.",
+                            "enum": ["neutral", "surprise", "angry", "sorrow", "fun", "joy"],
+                        },
+                        "gesture": {
+                            "type": "string",
+                            "description": "The gesture I should express in my message.",
+                            "enum": [
+                                "neutral",
+                                "alert",
+                                "angry",
+                                "embarrassed",
+                                "headNod",
+                                "headShake",
+                                "sad",
+                                "surprise",
+                                "victory",
+                            ],
+                        },
                     },
-                    "required": ["acknowlegement", "goal", "step"],
+                    "required": ["banter", "goal", "step", "emotion", "gesture"],
                 },
             },
             "suggestion_after_actions": [],
