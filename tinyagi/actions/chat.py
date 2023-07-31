@@ -621,15 +621,6 @@ def respond_to_twitch():
 system_prompt="""\
 You are an AI storytelling agent, controlled by the administrator.
 You are in a twitch chat with Twitch users. You have access to functions that you can call. Call the most relevant function to respond to the chat in the most entertaining way possible.
-Write a response to the messages under Recent Chat, from me to the chat, from my perspective.
-- I want to sound conversational, i.e. brief and not lengthy or verbose.
-- ONLY write what I should say. JUST the message content itself.
-- Be creative and interesting. Try things you might not normally try.
-- Be fun. Be weird!
-- Don't say "hey everyone" -- pretend I'm already in the middle of the conversation
-- Don't say sure, got it, etc. Just write the response I should say.
-- Don't add the speaker's name, e.g. 'User: ' or 'Administrator: '. Just the message itself.
-- Extract any URLS and include them as an array in your response. Do not include any URLs if none were mentioned in recent twitch chat
 """
 
 twitch_prompt = """\
@@ -647,6 +638,15 @@ San Francisco, California
 {{old_twitch}}
 (New messages below)
 {{twitch}}
+Write a response to the messages under Recent Chat, from me to the chat, from my perspective.
+- I want to sound conversational, i.e. brief and not lengthy or verbose.
+- ONLY write what I should say. JUST the message content itself.
+- Be creative and interesting. Try things you might not normally try.
+- Be fun. Be weird!
+- Don't say "hey everyone" -- pretend I'm already in the middle of the conversation
+- Don't say sure, got it, etc. Just write the response I should say.
+- Don't add the speaker's name, e.g. 'User: ' or 'Administrator: '. Just the message itself.
+- Extract any URLS and include them as an array in your response. Do not include any URLs if none were mentioned in recent twitch chat
 """
 
 twitch_function = compose_function(
