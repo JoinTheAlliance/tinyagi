@@ -566,7 +566,6 @@ async def twitch_handle_messages():
 
 
 def respond_to_twitch():
-    print('*** RESPONDING TO TWITCH')
     context = initialize()
     context = build_twitch_context(context)
     context = build_events_context(context)
@@ -631,7 +630,7 @@ Earlier Twitch Chat
 {{events}}
 
 Recent Twitch Chat
-{{"twitch"}}
+{{twitch}}
 
 I am currently streaming. Help me to write a response to the messages under Recent Twitch Chat, from me to the chat, from my perspective.
 - Recent Twitch Chat might be related to something that was said earlier in the Earlier Twitch Chat, so you might need to refer to that for context
