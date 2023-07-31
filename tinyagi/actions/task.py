@@ -66,7 +66,7 @@ def complete_step_handler(arguments):
     if len(tasks) > 0:
         # search for steps
         task = tasks[0]
-        steps = task["steps"]
+        steps = task.get("steps", [])
         for s in steps:
             if s["name"] == step:
                 finish_step(task, s)
