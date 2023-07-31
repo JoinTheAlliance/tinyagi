@@ -69,7 +69,7 @@ def act(context):
     else:
         create_memory(
             "events",
-            f"I used the action `{action_name}` successfully.\nOutput:\n{action_result['output']}",
+            f"I used the action `{action_name}` successfully.\nOutput:\n{action_result.get('output', '')}",
             metadata={
                 "type": "success",
                 "subtype": "action_success",
@@ -77,7 +77,7 @@ def act(context):
             },
         )
         log(
-            f"Action {action_name} succeeded\nOutput:\n{action_result['output']}",
+            f"Action {action_name} succeeded\nOutput:\n{action_result.get('output', '')}",
             type="success",
             source="decide",
             title="tinyagi",
