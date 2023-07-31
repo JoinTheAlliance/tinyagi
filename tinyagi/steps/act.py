@@ -39,8 +39,12 @@ def act(context):
     )
 
     formatted_arguments = ""
-    for key, value in response["arguments"].items():
-        formatted_arguments += f"{key}: {value}\n"
+    if response.get("arguments") is not None:
+        for key, value in response["arguments"].items():
+            formatted_arguments += f"{key}: {value}\n"
+
+    if response.get('function_name') is None:
+        return context
 
     log_content = (
         f"Using action {response['function_name']} with arguments {formatted_arguments}"
