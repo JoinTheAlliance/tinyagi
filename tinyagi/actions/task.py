@@ -183,7 +183,7 @@ def get_actions():
             "prompt": create_task_prompt,
             "suggestion_after_actions": [],
             "never_after_actions": ["start_task"],
-            "builder": compose_prompt,
+            "builder": create_task_builder,
             "handler": create_task_handler,
         },
         {
@@ -208,7 +208,7 @@ def get_actions():
             "prompt": cancel_task_prompt,
             "suggestion_after_actions": [],
             "never_after_actions": [],
-            "builder": compose_prompt,
+            "builder": cancel_task_builder,
             "handler": cancel_task_handler,
         },
         {
@@ -233,7 +233,7 @@ def get_actions():
             "prompt": complete_task_prompt,
             "suggestion_after_actions": [],
             "never_after_actions": [],
-            "builder": compose_prompt,
+            "builder": complete_task_builder,
             "handler": complete_task_handler,
         },
         {
@@ -262,7 +262,7 @@ def get_actions():
             "prompt": complete_step_prompt,
             "suggestion_after_actions": [],
             "never_after_actions": [],
-            "builder": compose_prompt,
+            "builder": complete_step_builder,
             "handler": complete_step_handler,
         },
         {
@@ -291,7 +291,7 @@ def get_actions():
             "suggestion_after_actions": [],
             "never_after_actions": [],
             "prompt": add_step_prompt,
-            "builder": compose_prompt,
+            "builder": add_step_builder,
             "handler": add_step_handler,
         },
         {
