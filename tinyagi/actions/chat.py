@@ -7,13 +7,14 @@ from easycompletion import (
     compose_function,
     compose_prompt,
     function_completion,
-    text_completion,
 )
 from agentcomlink import (
     async_send_message,
     register_message_handler,
     list_files_formatted,
 )
+
+from agentagenda import get_current_task, get_task_as_formatted_string
 
 from agentloop import pause, unpause
 
@@ -47,11 +48,13 @@ def use_chat(arguments):
     message = arguments["message"]
     emotion = arguments["emotion"]
     gesture = arguments["gesture"]
-    message = json.dumps({
-        "message": message,
-        "emotion": emotion,
-        "gesture": gesture,
-    })
+    message = json.dumps(
+        {
+            "message": message,
+            "emotion": emotion,
+            "gesture": gesture,
+        }
+    )
     # TODO: simplify epoch
     events = get_memories("events", n_results=1)
     if len(events) > 0:
@@ -94,7 +97,7 @@ Respond as me. Do not explain, hedge or acknolwedge. Just write the response as 
 - IF the administrator asks you to start a task, start it, otherwise respond conversationally
 - Be conversational, i.e. brief and not lengthy or verbose.
 - Do not add any <name>: or speaker's name, and don't say 'got it' or anything like that. Just the chat message itself.
-- Write a conversational response to the administrator's message
+- Write a conversational response to the Administrator's message
 - Do not acknowledge or anything, JUST write the message
 - I am not an assistant, so don't apologize or explain, just write a response from my point of view
 - Do not say sure or got it or "here's the response" -- just give me the response I should say
@@ -213,48 +216,49 @@ async def response_handler(data, loop_dict):
     # response = function_completion(text=text, functions=functions)
     response = function_completion(text=text, functions=administrator_function)
 
-    # content = response.get("text", None)
+    content = response.get("text", None)
 
-    # function_name = response.get("function_name", None)
+    function_name = response.get("function_name", None)
     arguments = response.get("arguments", None)
-    message = json.dumps({
-        "message": arguments["message"],
-        "emotion": arguments["emotion"],
-        "gesture": arguments["gesture"],
-    })
-    await async_send_message(message)
+    message = json.dumps(
+        {
+            "message": arguments["message"],
+            "emotion": arguments["emotion"],
+            "gesture": arguments["gesture"],
+        }
+    )
 
-    # if content is not None:
-    #     await async_send_message(content)
-    #     log(
-    #         f"Sending message to administrator: {content}",
-    #         type="chat",
-    #         color="yellow",
-    #         source="chat",
-    #         title="tinyagi",
-    #         send_to_feed=False,
-    #     )
+    if content is not None:
+        await async_send_message(content)
+        log(
+            f"Sending message to administrator: {content}",
+            type="chat",
+            color="yellow",
+            source="chat",
+            title="tinyagi",
+            send_to_feed=False,
+        )
 
-    # if function_name is not None:
-    #     arguments = response.get("arguments", None)
-    #     log(
-    #         f"Calling function: {function_name}",
-    #         type="chat",
-    #         color="yellow",
-    #         source="chat",
-    #         title="tinyagi",
-    #         send_to_feed=False,
-    #     )
-    #     action = actions.get(function_name, None)
-    #     if function_name == "send_message":
-    #         message = arguments["message"]
-    #         if content is None:
-    #             await async_send_message(message)
-    #     elif action is not None:
-    #         if content is None and arguments.get("acknowledgement", None) is not None:
-    #             await async_send_message(arguments["acknowledgement"])
-    #         action["handler"](arguments)
-    #         print("Action executed successfully")
+    if function_name is not None:
+        arguments = response.get("arguments", None)
+        log(
+            f"Calling function: {function_name}",
+            type="chat",
+            color="yellow",
+            source="chat",
+            title="tinyagi",
+            send_to_feed=False,
+        )
+        action = actions.get(function_name, None)
+        if function_name == "send_message":
+            message = arguments["message"]
+            if content is None:
+                await async_send_message(message)
+        elif action is not None:
+            if content is None and arguments.get("acknowledgement", None) is not None:
+                await async_send_message(arguments["acknowledgement"])
+            action["handler"](arguments)
+            print("Action executed successfully")
 
     create_memory(
         "event",
@@ -295,10 +299,17 @@ def get_actions():
         # if the tasks change, post the tasks to websockets
         async def handle_tasks():
             while True:
-                tasks = list_tasks_as_formatted_string()
-                if tasks == "" or tasks is None:
-                    tasks = "No tasks"
-                await async_send_message(tasks, "task")
+                task = get_current_task()
+                if task is None:
+                    formatted = "No tasks"
+                else:
+                    formatted = get_task_as_formatted_string(
+                        task,
+                        include_plan=False,
+                        include_status=False,
+                        include_steps=False,
+                    )
+                await async_send_message(formatted, "task")
                 await asyncio.sleep(3)
 
         asyncio.run(handle_tasks())
@@ -320,7 +331,7 @@ def get_actions():
                 },
                 required_properties=["to", "message"],
             ),
-            "prompt": prompt,
+            "prompt": administrator_prompt,
             # "builder": compose_chat_prompt,
             "handler": use_chat,
             "suggestion_after_actions": [],
@@ -686,13 +697,11 @@ def build_twitch_context(context={}):
     old_memories = old_memories[::-1]
 
     # annotated events
-    context["twitch"] = (
-        "\n".join(
-            [
-                (memory["metadata"]["user"] + ": " + memory["document"])
-                for memory in memories
-            ]
-        )
+    context["twitch"] = "\n".join(
+        [
+            (memory["metadata"]["user"] + ": " + memory["document"])
+            for memory in memories
+        ]
     )
 
     context["old_twitch"] = "\n".join(

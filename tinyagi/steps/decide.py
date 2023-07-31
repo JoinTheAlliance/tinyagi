@@ -24,7 +24,7 @@ Assistant Notes:
 {{relevant_knowledge}}
 {{events}}
 {{available_actions}}
-{{current_tasks}}
+{{current_task_formatted}}
 
 Based on recent events, which of the actions that you think is the best next action for me to progress towards my goals.
 - Based on the information provided, write a summary from your perspective of what action I should take next and why (assistant_reasoning)

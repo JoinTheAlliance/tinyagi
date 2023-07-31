@@ -90,10 +90,8 @@ cancel_task_prompt = """\
 {{events}}
 {{summary}}
 {{reasoning}}
-
-{{tasks}}
-
-{{current_task}}
+{{formatted_tasks}}
+{{current_task_formatted}}
 
 Based on the reasoning, should I cancel a task, and if so, which one? If you don't want to cancel the task, respond with 'none', otherwise respond with the name or goal of the task you want to cancel."""
 
@@ -101,8 +99,8 @@ complete_task_prompt = """\
 {{events}}
 {{summary}}
 {{reasoning}}
-{{tasks}}
-{{current_task}}
+{{formatted_tasks}}
+{{current_task_formatted}}
 
 Based on the reasoning, should I complete a task, and if so, which one? If I shouldn't cancel the task, respond with 'none', otherwise respond with the name or goal of the task I should cancel."""
 
@@ -111,8 +109,8 @@ complete_step_prompt = """\
 {{events}}
 {{summary}}
 {{reasoning}}
-{{tasks}}
-{{current_task}}
+{{formatted_tasks}}
+{{current_task_formatted}}
 
 Based on the reasoning, should I complete a step on the task, and if so, which one? None, respond with 'none' for task and step."""
 
@@ -120,8 +118,8 @@ add_step_prompt = """\
 {{events}}
 {{summary}}
 {{reasoning}}
-{{tasks}}
-{{current_task}}
+{{formatted_tasks}}
+{{current_task_formatted}}
 
 Based on the reasoning, should I add a step to the task, and if so, which task and what step? None, respond with 'none' for task and step."""
 
@@ -129,8 +127,8 @@ cancel_step_prompt = """\
 {{events}}
 {{summary}}
 {{reasoning}}
-{{tasks}}
-{{current_task}}
+{{formatted_tasks}}
+{{current_task_formatted}}
 
 Based on the reasoning, should I cancel a step in the task, and if so, which task and what step? None, respond with 'none' for task and step."""
 
