@@ -54,7 +54,11 @@ def build_relevant_knowledge(context):
         # remove the last event
         knowledge = knowledge[:-1]
         formatted_knowledge = "\n".join([k["document"] for k in knowledge])
-    context["relevant_knowledge"] = header_text + "\n" + formatted_knowledge + "\n"
+
+    if formatted_knowledge == "":
+        context["relevant_knowledge"] = ""
+    else:
+        context["relevant_knowledge"] = header_text + "\n" + formatted_knowledge + "\n"
     return context
 
 

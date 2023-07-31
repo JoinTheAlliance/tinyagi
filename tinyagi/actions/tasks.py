@@ -97,7 +97,7 @@ cancel_task_prompt = """\
 
 Based on the reasoning, should I cancel a task, and if so, which one? If you don't want to cancel the task, respond with 'none', otherwise respond with the name or goal of the task you want to cancel."""
 
-complete_task = """\
+complete_task_prompt = """\
 {{events}}
 {{summary}}
 {{reasoning}}
@@ -107,7 +107,7 @@ complete_task = """\
 Based on the reasoning, should I complete a task, and if so, which one? If I shouldn't cancel the task, respond with 'none', otherwise respond with the name or goal of the task I should cancel."""
 
 
-complete_step = """\
+complete_step_prompt = """\
 {{events}}
 {{summary}}
 {{reasoning}}
@@ -116,7 +116,7 @@ complete_step = """\
 
 Based on the reasoning, should I complete a step on the task, and if so, which one? None, respond with 'none' for task and step."""
 
-add_step = """\
+add_step_prompt = """\
 {{events}}
 {{summary}}
 {{reasoning}}
@@ -125,7 +125,7 @@ add_step = """\
 
 Based on the reasoning, should I add a step to the task, and if so, which task and what step? None, respond with 'none' for task and step."""
 
-cancel_step = """\
+cancel_step_prompt = """\
 {{events}}
 {{summary}}
 {{reasoning}}
@@ -156,7 +156,7 @@ def get_actions():
                     "required": ["acknowledgement", "goal"],
                 },
             },
-            "prompt": create_task,
+            "prompt": create_task_prompt,
             "suggestion_after_actions": [],
             "never_after_actions": [],
             "handler": create_task_handler,
@@ -180,7 +180,7 @@ def get_actions():
                     "required": ["acknowledgement", "goal"],
                 },
             },
-            "prompt": cancel_task,
+            "prompt": cancel_task_prompt,
             "suggestion_after_actions": [],
             "never_after_actions": [],
             "handler": cancel_task_handler,
@@ -204,7 +204,7 @@ def get_actions():
                     "required": ["acknowledgement", "goal"],
                 },
             },
-            "prompt": complete_task,
+            "prompt": complete_task_prompt,
             "suggestion_after_actions": [],
             "never_after_actions": [],
             "handler": complete_task_handler,
@@ -232,7 +232,7 @@ def get_actions():
                     "required": ["acknowledgement", "goal", "step"],
                 },
             },
-            "prompt": complete_step,
+            "prompt": complete_step_prompt,
             "suggestion_after_actions": [],
             "never_after_actions": [],
             "handler": complete_step_handler,
@@ -262,7 +262,7 @@ def get_actions():
             },
             "suggestion_after_actions": [],
             "never_after_actions": [],
-            "prompt": add_step,
+            "prompt": add_step_prompt,
             "handler": add_step_handler,
         },
         {

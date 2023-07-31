@@ -617,7 +617,7 @@ Earlier Twitch Chat
 {{events}}
 
 Recent Twitch Chat
-{{twitch}}
+{{"twitch"}}
 
 I am currently streaming. Help me to write a response to the messages under Recent Twitch Chat, from me to the chat, from my perspective.
 - Recent Twitch Chat might be related to something that was said earlier in the Earlier Twitch Chat, so you might need to refer to that for context
@@ -693,7 +693,6 @@ def build_twitch_context(context={}):
                 for memory in memories
             ]
         )
-        + "\n"
     )
 
     context["old_twitch"] = "\n".join(

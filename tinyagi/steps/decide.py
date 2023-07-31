@@ -31,7 +31,7 @@ Based on recent events, which of the actions that you think is the best next act
 - Respond with the name of the action (action_name)
 - Rewrite the summary as if you were me, the user, in the first person (user_reasoning)
 - I can only choose from the available actions. You must choose one of the available actions.
-- {{available_actions_short}}
+- {{available_short_actions}}
 """
 
 

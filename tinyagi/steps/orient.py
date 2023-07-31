@@ -26,8 +26,8 @@ Current Epoch: {{epoch}}
 The current time is {{current_time}} on {{current_date}}.
 {{recent_knowledge}}
 {{events}}
-# Assistant Task
-- Summarize what happened in Epoch {{last_epoch}} and reason about what I should do next to move forward.
+
+Summarize what happened in Epoch {{last_epoch}} and reason about what I should do next to move forward.
 - First, summarize as yourself (the assistant). Include any relevant information for me, the user, for the next step.
 - Next summarize as if you were me, the user, in the first person from my perspective. Use "I" instead of "You".
 - Lastly, include any new knowledge that I learned this epoch as an array of knowledge items.
@@ -99,6 +99,12 @@ def orient(context):
     """
     context["last_epoch"] = context["epoch"]
     context["epoch"] = context["epoch"] + 1
+
+    if context.get("events", None) is None:
+        context["events"] = ""
+
+    if context.get("recent_knowledge", None) is None:
+        context["recent_knowledge"] = "" 
 
     response = openai_function_call(
         text=compose_orient_prompt(context), functions=compose_orient_function()

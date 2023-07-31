@@ -70,7 +70,10 @@ Epoch # | <Type>::<Subtype> (Creator): <Event>
         events = events[1:]
         event_strings = [event_to_string(event) for event in events]
         annotated_events = "\n".join(event_strings)
-    context["events"] = events_header + "\n" + annotated_events + "\n"
+    if annotated_events is not None and annotated_events != "":
+        context["events"] = events_header + "\n" + annotated_events + "\n"
+    else:
+        context["events"] = ""
     return context
 
 
