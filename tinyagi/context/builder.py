@@ -3,7 +3,7 @@ import importlib
 import os
 import sys
 
-def create_context_builders(context_dir):
+def create_context_builders(context_dir, verbose=False):
     """
     Build a context step function from the context builders in the given directory
 
@@ -26,9 +26,6 @@ def create_context_builders(context_dir):
     sys.path.remove(context_dir)
 
     def build_context(context={}):
-        if context is None:
-            context = {}
-
         for context_builder in context_builders:
             context = context_builder(context)
         return context

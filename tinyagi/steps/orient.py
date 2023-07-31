@@ -104,10 +104,12 @@ def orient(context):
         context["events"] = ""
 
     if context.get("recent_knowledge", None) is None:
-        context["recent_knowledge"] = "" 
+        context["recent_knowledge"] = ""
 
     response = openai_function_call(
-        text=compose_orient_prompt(context), functions=compose_orient_function()
+        text=compose_orient_prompt(context),
+        functions=compose_orient_function(),
+        debug=context["verbose"],
     )
 
     arguments = response["arguments"]
@@ -145,7 +147,7 @@ def orient(context):
 
     if len(new_knowledge) > 0:
         log_content += "\nNew Knowledge:\n" + "\n".join(new_knowledge)
-    
+
     if len(log_content) > 0:
         log(log_content, source="orient", type="step", title="tinyagi")
 

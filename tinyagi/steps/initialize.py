@@ -27,6 +27,10 @@ def initialize(context={}):
     context["platform"] = sys.platform
     context["cwd"] = os.getcwd()
 
+    context["verbose"]="--verbose" in os.sys.argv
+
+
+
     log(
         "Start for epoch "
         + str(context["epoch"])

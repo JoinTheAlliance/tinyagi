@@ -39,12 +39,13 @@ def start(
     context_dir="./tinyagi/context",
     seed_data=None,
     reset=False,
-    paused=False
+    paused=False,
+    verbose=False
 ):
     print_logo()
 
     if steps is None:
-        context_step = create_context_builders(context_dir)
+        context_step = create_context_builders(context_dir, verbose)
         steps = [
             initialize,
             orient,

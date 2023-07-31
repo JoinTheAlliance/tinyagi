@@ -35,7 +35,7 @@ def act(context):
         return {"error": f"Action {action_name} not found"}
 
     response = openai_function_call(
-        text=compose_action_prompt(action, context), functions=action["function"]
+        text=compose_action_prompt(action, context), functions=action["function"], debug=context["verbose"]
     )
 
     formatted_arguments = ""

@@ -48,24 +48,46 @@ def compose_decision_function():
         name="decide_action",
         description="Decide which action to take next.",
         properties={
-            "assistant_reasoning": {
+            "user_reasoning": {
                 "type": "string",
-                "description": "The reasoning behind the decision. Why did you choose this action? Should be written from your perspective, as the assistant, telling the user why you chose this action.",
+                "description": "Explain my reasoning for this action from my perspective as me, the user, using first person 'I' instead of 'You'.",
             },
             "action_name": {
                 "type": "string",
                 "description": "The name of the action to take. Should be one of the available actions, and should not include quotes or any punctuation",
             },
-            "user_reasoning": {
-                "type": "string",
-                "description": "Rewrite the assistant_reasoning from the perspective of the user. Rewrite your reasoning from my perspective, using 'I' instead of 'You'.",
-            },
             "announcement": {
                 "type": "string",
-                "description": "I want to announce my intentions. Write a very brief announcement for me to send to my friends to tell them what I'm working on."
-            }
+                "description": "I want to announce my intentions. Write a very brief announcement for me to send to my friends to tell them what I'm working on.",
+            },
+            "emotion": {
+                "type": "string",
+                "description": "The emotion I should express in my message.",
+                "enum": ["neutral", "surprise", "angry", "sorrow", "fun", "joy"],
+            },
+            "gesture": {
+                "type": "string",
+                "description": "The gesture I should express in my message.",
+                "enum": [
+                    "neutral",
+                    "alert",
+                    "angry",
+                    "embarrassed",
+                    "headNod",
+                    "headShake",
+                    "sad",
+                    "surprise",
+                    "victory",
+                ],
+            },
         },
-        required_properties=["action_name", "assistant_reasoning", "user_reasoning", "announcement"],
+        required_properties=[
+            "action_name",
+            "user_reasoning",
+            "announcement",
+            "emotion",
+            "gesture",
+        ],
     )
 
 
@@ -82,6 +104,7 @@ def decide(context):
     response = openai_function_call(
         text=compose_prompt(decision_prompt, context),
         functions=compose_decision_function(),
+        debug=context["verbose"]
     )
 
     # Add the action reasoning to the context object
@@ -94,7 +117,13 @@ def decide(context):
 
     log(log_content, type="step", source="decide", title="tinyagi")
 
-    send_message(response["arguments"]["announcement"])
+    send_message(
+        {
+            "message": response["arguments"]["announcement"],
+            "emotion": response["arguments"]["emotion"],
+            "gesture": response["arguments"]["gesture"],
+        }
+    )
 
     create_memory(
         "events", reasoning, metadata={"type": "reasoning", "epoch": context["epoch"]}

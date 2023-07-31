@@ -56,4 +56,5 @@ start(
     reset="--reset" in os.sys.argv,
     seed_data="--seed" in os.sys.argv,
     paused="--stepped" in os.sys.argv,
+    verbose="--verbose" in os.sys.argv,
 )
