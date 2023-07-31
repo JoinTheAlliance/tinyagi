@@ -17,6 +17,7 @@ from agentcomlink import (
 from agentagenda import get_current_task, get_task_as_formatted_string
 
 from agentloop import pause, unpause
+from tinyagi.actions.tasks import create_task_handler
 
 from tinyagi.context.events import build_events_context
 from tinyagi.steps.initialize import initialize
@@ -28,7 +29,7 @@ from tinyagi.context.knowledge import build_relevant_knowledge
 
 from tinyagi.constants import get_loop_dict
 
-from agentaction import get_actions as get_all_actions
+from agentaction import get_actions as get_all_actions, search_actions
 
 from tinyagi.constants import get_loop_dict
 
@@ -62,7 +63,7 @@ def use_chat(arguments):
     else:
         epoch = 0
     create_memory(
-        "event",
+        "events",
         "I sent the message: " + message,
         metadata={"type": "message", "sender": "user", "epoch": epoch},
     )
@@ -170,6 +171,14 @@ async def response_handler(data, loop_dict):
         unpause(loop_dict)
         return
 
+    if message.startswith("/task"):
+        message = message.replace("/task", "").strip()
+        arguments = {
+            "goal": message,
+        }
+        create_task_handler(arguments)
+        return
+
     type = data["type"]
     # TODO: simplify epoch
     if len(events) > 0:
@@ -177,7 +186,7 @@ async def response_handler(data, loop_dict):
     else:
         epoch = 0
     create_memory(
-        "event",
+        "events",
         message,
         metadata={"type": type, "sender": "administrator", "epoch": epoch},
     )
@@ -202,16 +211,8 @@ async def response_handler(data, loop_dict):
     context["message"] = message
     text = compose_prompt(administrator_prompt, context)
 
-    print("******** text")
-    print(text)
-
     # functions
-    actions = get_all_actions()
-
-    # TODO:
-    # actions is a dictionary of actions, where the name of the action is the key
-    # get the function from each action
-    functions = [action["function"] for action in actions.values()]
+    actions = search_actions(message)
 
     # response = function_completion(text=text, functions=functions)
     response = function_completion(text=text, functions=administrator_function)
@@ -219,14 +220,22 @@ async def response_handler(data, loop_dict):
     content = response.get("text", None)
 
     function_name = response.get("function_name", None)
-    arguments = response.get("arguments", None)
-    message = json.dumps(
-        {
-            "message": arguments["message"],
-            "emotion": arguments["emotion"],
-            "gesture": arguments["gesture"],
-        }
-    )
+    if function_name == "respond_to_adminstrator":
+        arguments = response.get("arguments", None)
+        message = json.dumps(
+            {
+                "message": arguments["message"],
+                "emotion": arguments["emotion"],
+                "gesture": arguments["gesture"],
+            }
+        )
+        await async_send_message(message)
+        create_memory(
+            "events",
+            arguments["message"],
+            metadata={"type": "message", "sender": "user", "epoch": str(epoch)},
+        )
+        return
 
     if content is not None:
         await async_send_message(content)
@@ -239,30 +248,30 @@ async def response_handler(data, loop_dict):
             send_to_feed=False,
         )
 
-    if function_name is not None:
-        arguments = response.get("arguments", None)
-        log(
-            f"Calling function: {function_name}",
-            type="chat",
-            color="yellow",
-            source="chat",
-            title="tinyagi",
-            send_to_feed=False,
-        )
-        action = actions.get(function_name, None)
-        if function_name == "send_message":
-            message = arguments["message"]
-            if content is None:
-                await async_send_message(message)
-        elif action is not None:
-            if content is None and arguments.get("acknowledgement", None) is not None:
-                await async_send_message(arguments["acknowledgement"])
-            action["handler"](arguments)
-            print("Action executed successfully")
+    # if function_name is not None:
+    #     arguments = response.get("arguments", None)
+    #     log(
+    #         f"Calling function: {function_name}",
+    #         type="chat",
+    #         color="yellow",
+    #         source="chat",
+    #         title="tinyagi",
+    #         send_to_feed=False,
+    #     )
+    #     action = actions.get(function_name, None)
+    #     if function_name == "send_message":
+    #         message = arguments["message"]
+    #         if content is None:
+    #             await async_send_message(message)
+    #     elif action is not None:
+    #         if content is None and arguments.get("acknowledgement", None) is not None:
+    #             await async_send_message(arguments["acknowledgement"])
+    #         action["handler"](arguments)
+    #         print("Action executed successfully")
 
     create_memory(
-        "event",
-        json.dumps(message),
+        "events",
+        message["message"],
         metadata={"type": "message", "sender": "user", "epoch": str(epoch)},
     )
 
@@ -294,25 +303,6 @@ def get_actions():
         register_message_handler(lambda data: response_handler(data, loop_dict))
 
         initialize_twitch()
-
-        # start an async loop to get tasks
-        # if the tasks change, post the tasks to websockets
-        async def handle_tasks():
-            while True:
-                task = get_current_task()
-                if task is None:
-                    formatted = "No tasks"
-                else:
-                    formatted = get_task_as_formatted_string(
-                        task,
-                        include_plan=False,
-                        include_status=False,
-                        include_steps=False,
-                    )
-                await async_send_message(formatted, "task")
-                await asyncio.sleep(3)
-
-        asyncio.run(handle_tasks())
 
     return [
         {
@@ -559,6 +549,18 @@ async def twitch_handle_messages():
 
             if len(memories) > 0:
                 respond_to_twitch()
+                
+            task = get_current_task()
+            if task is None:
+                formatted = "No tasks"
+            else:
+                formatted = get_task_as_formatted_string(
+                    task,
+                    include_plan=False,
+                    include_status=False,
+                    include_steps=False,
+                )
+            await async_send_message(formatted, "task")
 
 
 def respond_to_twitch():
@@ -596,7 +598,7 @@ def respond_to_twitch():
             os.system(f"wget -P ./files {url}")
 
         create_memory(
-            "event",
+            "events",
             summary,
             metadata={
                 "type": "message",

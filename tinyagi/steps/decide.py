@@ -1,3 +1,4 @@
+from agentcomlink import send_message
 from agentmemory import create_memory
 from easycompletion import (
     compose_prompt,
@@ -19,7 +20,8 @@ Assistant Notes:
 - I will not repeat the same action unless it achieves some additional goal. I don't like getting stuck in loops or repeating myself.
 - I prefer to act in a way that is novel and interesting.
 - I only want to gather additional knowledge when I have to. I like to try things first.
-- Only create tasks if you absolutely have to. Don't crtaete tasks if you already have a task.
+- Only create tasks if you absolutely have to. Don't create a new task if you already have a task.
+- For long-running complicated actions, start a new task using the function call `create_task`.
 
 {{relevant_knowledge}}
 {{events}}
@@ -58,8 +60,12 @@ def compose_decision_function():
                 "type": "string",
                 "description": "Rewrite the assistant_reasoning from the perspective of the user. Rewrite your reasoning from my perspective, using 'I' instead of 'You'.",
             },
+            "announcement": {
+                "type": "string",
+                "description": "I want to announce my intentions. Write a very brief announcement for me to send to my friends to tell them what I'm working on."
+            }
         },
-        required_properties=["action_name", "assistant_reasoning", "user_reasoning"],
+        required_properties=["action_name", "assistant_reasoning", "user_reasoning", "announcement"],
     )
 
 
@@ -87,6 +93,8 @@ def decide(context):
     log_content = f"Action: {context['action_name']}\nReasoning: {context['reasoning']}"
 
     log(log_content, type="step", source="decide", title="tinyagi")
+
+    send_message(response["arguments"]["announcement"])
 
     create_memory(
         "events", reasoning, metadata={"type": "reasoning", "epoch": context["epoch"]}

@@ -138,7 +138,7 @@ def get_actions():
         {
             "function": {
                 "name": "create_task",
-                "description": "Create a new task with the given goal.",
+                "description": "Create and start a new task with the given goal.",
                 "parameters": {
                     "type": "object",
                     "properties": {
