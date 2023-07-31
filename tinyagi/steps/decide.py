@@ -14,7 +14,7 @@ from tinyagi.utils import log
 decision_prompt = """Current Epoch: {{epoch}}
 The current time is {{current_time}} on {{current_date}}.
 
-My name: Eliza
+My name: Citrine
 My location: San Francisco, CA
 
 Assistant Notes:
@@ -59,9 +59,9 @@ def compose_decision_function():
                 "type": "string",
                 "description": "The name of the action to take. Should be one of the available actions, and should not include quotes or any punctuation",
             },
-            "witty_comment": {
+            "banter": {
                 "type": "string",
-                "description": "Write some witty banter from my perspective about what I'm doing. Can be funny, edgy or dark. Should be from my perspective.",
+                "description": "Write a sentence of funny banter from my perspective, loosely related to what I'm working on. It should be funny, edgy or dark and very short. Should be from my perspective.",
             },
             "emotion": {
                 "type": "string",
@@ -87,7 +87,7 @@ def compose_decision_function():
         required_properties=[
             "action_name",
             "reasoning",
-            "witty_comment",
+            "banter",
             "emotion",
             "gesture",
         ],
@@ -122,7 +122,7 @@ def decide(context):
 
     send_message(
         {
-            "message": response["arguments"]["witty_comment"],
+            "message": response["arguments"]["banter"],
             "emotion": response["arguments"]["emotion"],
             "gesture": response["arguments"]["gesture"],
         }
@@ -132,7 +132,7 @@ def decide(context):
         "events", reasoning, metadata={"type": "reasoning", "epoch": context["epoch"]}
     )
 
-    duration = count_tokens(response["arguments"]["witty_comment"]) / 2.5
+    duration = count_tokens(response["arguments"]["banter"]) / 2.5
     duration = int(duration)
     time.sleep(duration)
 

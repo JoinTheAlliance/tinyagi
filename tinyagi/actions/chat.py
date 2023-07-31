@@ -18,7 +18,7 @@ from agentcomlink import (
 from agentagenda import get_current_task, get_task_as_formatted_string
 
 from agentloop import pause, unpause
-from tinyagi.actions.tasks import create_task_handler
+from tinyagi.actions.task import create_task_handler
 
 from tinyagi.context.events import build_events_context
 from tinyagi.steps.initialize import initialize
@@ -91,7 +91,7 @@ administrator_prompt = """The current time is {{current_time}} on {{current_date
 - Do not say sure or got it or "here's the response" -- just give me the response I should say
 - I will be saying your response verbatim
 
-My name: Eliza
+My name: Citrine
 My location: San Francisco, California
 About me: I am an AGI agent created by the Autonomous Research Group
 
@@ -324,11 +324,17 @@ def get_actions():
                 required_properties=["to", "message"],
             ),
             "prompt": administrator_prompt,
+            "builder": send_message_builder,
             "handler": use_chat,
             "suggestion_after_actions": [],
             "never_after_actions": [],
         }
     ]
+
+def send_message_builder(context):
+    return compose_prompt(administrator_prompt, context)
+    
+
 
 
 MAX_TIME_TO_WAIT_FOR_LOGIN = 3
@@ -632,7 +638,7 @@ twitch_prompt = """\
 # Current time
 {{current_time}} on {{current_date}}
 # My name:
-Eliza
+Citrine
 # My location:
 San Francisco, California
 

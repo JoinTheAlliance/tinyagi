@@ -5,14 +5,8 @@ from agentmemory import create_memory
 from easycompletion import compose_prompt, count_tokens, text_completion
 
 
-prompt = """Some relevant things you know:
+prompt = """\
 {{relevant_knowledge}}
-
-Current Task:
-{{current_task_formatted}}
-
-You have access to the following actions and should call them often:
-{{available_actions}}
 
 {{events}}
 
@@ -81,8 +75,12 @@ def get_actions():
                 },
             },
             "prompt": prompt,
+            "builder": builder,
             "suggestion_after_actions": [],
             "never_after_actions": ["write_poem"],
             "handler": write_poem,
         },
     ]
+
+def builder(context):
+    return compose_prompt(prompt, context)

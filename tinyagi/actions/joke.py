@@ -5,18 +5,12 @@ from agentmemory import create_memory
 from easycompletion import compose_prompt, count_tokens, text_completion
 
 
-prompt = """Some relevant things you know:
+prompt = """\
 {{relevant_knowledge}}
-
-Current Task:
-{{current_task_formatted}}
-
-You have access to the following actions and should call them often:
-{{available_actions}}
 
 {{events}}
 
-Come up with a super weird random topical joke based on recent events. The joke should be funny and weird and dark. The joke should not be a normal average joke. It should be esoteric and strange."""
+Write a super weird random joke based on the most recent events. The joke should be very dark and strange."""
 
 
 def write_joke(arguments):
@@ -77,8 +71,12 @@ def get_actions():
                 },
             },
             "prompt": prompt,
+            "builder": builder,
             "suggestion_after_actions": [],
             "never_after_actions": ["write_joke"],
             "handler": write_joke,
         },
     ]
+
+def builder(context):
+    return compose_prompt(prompt, context)

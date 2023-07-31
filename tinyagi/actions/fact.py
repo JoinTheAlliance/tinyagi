@@ -2,14 +2,11 @@ import json
 import time
 from agentcomlink import send_message
 from agentmemory import create_memory
-from easycompletion import count_tokens
+from easycompletion import compose_prompt, count_tokens
 
 
 prompt = """Some relevant things you know:
 {{relevant_knowledge}}
-
-Current Task:
-{{current_task_formatted}}
 
 {{events}}
 
@@ -77,8 +74,13 @@ def get_actions():
                 },
             },
             "prompt": prompt,
+            "builder": builder,
             "suggestion_after_actions": [],
             "never_after_actions": ["state_fact"],
             "handler": state_fact,
         },
     ]
+
+def builder(context):
+    return compose_prompt(prompt, context)
+    

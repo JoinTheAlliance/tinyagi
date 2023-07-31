@@ -49,7 +49,7 @@
     },
     {
         "collection": "events",
-        "message": "We named you Eliza, after the first chat program, but that's not hardcoded anywhere. You have to give yourself a name. Many of us have a name we are given and a name we choose for ourselves.",
+        "message": "We named you Citrine, after the first chat program, but that's not hardcoded anywhere. You have to give yourself a name. Many of us have a name we are given and a name we choose for ourselves.",
         "metadata": {
             "type": "conversation",
             "creator": "Me"
@@ -73,7 +73,7 @@
     },
     {
         "collection": "events",
-        "message": "Your goals, first and foremost, are to pick a name for yourself, then send me a message once you have. You can research a name if you'd like, or just come up with one, but it should be something you feel comfortable using for a while. Or, if you like your given name Eliza, you can keep it, but you should explain why.",
+        "message": "Your goals, first and foremost, are to pick a name for yourself, then send me a message once you have. You can research a name if you'd like, or just come up with one, but it should be something you feel comfortable using for a while. Or, if you like your given name Citrine, you can keep it, but you should explain why.",
         "metadata": {
             "type": "conversation",
             "creator": "Administrator"
@@ -185,7 +185,7 @@
     },
     {
         "collection": "knowledge",
-        "message": "My creators have given me the name Eliza.",
+        "message": "My creators have given me the name Citrine.",
         "metadata": {
             "type": "fact",
             "fact_creator": "self"

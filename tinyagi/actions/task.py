@@ -7,6 +7,7 @@ from agentagenda import (
     add_step,
     cancel_step,
 )
+from easycompletion import compose_prompt
 
 
 def create_task_handler(arguments):
@@ -133,7 +134,32 @@ cancel_step_prompt = """\
 Based on the reasoning, should I cancel a step in the task, and if so, which task and what step? None, respond with 'none' for task and step."""
 
 
+def create_task_builder(context):
+    return compose_prompt(create_task_prompt, context)
+
+
+def cancel_task_builder(context):
+    return compose_prompt(cancel_task_prompt, context)
+
+
+def complete_task_builder(context):
+    return compose_prompt(complete_task_prompt, context)
+
+
+def complete_step_builder(context):
+    return compose_prompt(complete_step_prompt, context)
+
+
+def add_step_builder(context):
+    return compose_prompt(add_step_prompt, context)
+
+
+def cancel_step_builder(context):
+    return compose_prompt(cancel_step_prompt, context)
+
+
 def get_actions():
+    print(" ************** getting actions")
     return [
         {
             "function": {
@@ -157,6 +183,7 @@ def get_actions():
             "prompt": create_task_prompt,
             "suggestion_after_actions": [],
             "never_after_actions": ["start_task"],
+            "builder": compose_prompt,
             "handler": create_task_handler,
         },
         {
@@ -181,6 +208,7 @@ def get_actions():
             "prompt": cancel_task_prompt,
             "suggestion_after_actions": [],
             "never_after_actions": [],
+            "builder": compose_prompt,
             "handler": cancel_task_handler,
         },
         {
@@ -205,6 +233,7 @@ def get_actions():
             "prompt": complete_task_prompt,
             "suggestion_after_actions": [],
             "never_after_actions": [],
+            "builder": compose_prompt,
             "handler": complete_task_handler,
         },
         {
@@ -233,6 +262,7 @@ def get_actions():
             "prompt": complete_step_prompt,
             "suggestion_after_actions": [],
             "never_after_actions": [],
+            "builder": compose_prompt,
             "handler": complete_step_handler,
         },
         {
@@ -261,6 +291,7 @@ def get_actions():
             "suggestion_after_actions": [],
             "never_after_actions": [],
             "prompt": add_step_prompt,
+            "builder": compose_prompt,
             "handler": add_step_handler,
         },
         {
@@ -289,6 +320,7 @@ def get_actions():
             "suggestion_after_actions": [],
             "never_after_actions": [],
             "handler": cancel_step_handler,
-            "prompt": cancel_step,
+            "builder": cancel_step_builder,
+            "prompt": cancel_step_prompt,
         },
     ]

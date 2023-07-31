@@ -5,7 +5,7 @@ from agentmemory import create_memory
 from easycompletion import compose_prompt, count_tokens, text_completion
 
 
-prompt = """Events:
+prompt = """
 {{events}}
 
 Come up with a random, highly creative idea or thought for me.
@@ -73,8 +73,12 @@ def get_actions():
                 },
             },
             "prompt": prompt,
+            "builder": builder,
             "suggestion_after_actions": [],
             "never_after_actions": ["have_thought"],
             "handler": have_thought,
         },
     ]
+
+def builder(context):
+    return compose_prompt(prompt, context)
