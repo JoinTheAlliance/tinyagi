@@ -64,6 +64,14 @@ def compose_orient_function():
                 "type": "string",
                 "description": "Banter for the audience based on the summary. Be brief, conversational, funny and weird.",
             },
+            "visual_description": {
+                "type": "string",
+                "description": "A highly creative and imaginative visual description of the current world I am in. Describe the space I am in, objects and characters inside of it. The description should be one paragraph in length.",
+            },
+            "audio_description": {
+                "type": "string",
+                "description": "A highly creative and imaginative audio description of the current world I am in. Describe the sounds I hear, the music I hear, the voices I hear, the noises I hear. The description should be one paragraph in length.",
+            },
             "knowledge": {
                 "type": "array",
                 "description": "An array of knowledge items that are extracted from my last epoch of events and the summary of those events. Only include knowledge that has not been learned before. Knowledge can be about anything that would help me. If none, use an empty array.",
@@ -107,7 +115,7 @@ def compose_orient_function():
             },
         },
         description="Summarize the most recent events and decide what to do next.",
-        required_properties=["summary", "banter", "emotion", "gesture", "knowledge"],
+        required_properties=["summary", "banter", "visual_description", "audio_description", "emotion", "gesture", "knowledge"],
     )
 
 
@@ -170,6 +178,10 @@ def orient(context):
             "gesture": arguments["gesture"],
         }
         send_message(message)
+        send_message({
+            "audio": arguments["audio_description"],
+            "visual": arguments["visual_description"],
+        }, "description")
         duration = count_tokens(arguments["banter"]) / 2.5
         time.sleep(duration)
         context["summary"] = summary_header + "\n" + summary + "\n"
