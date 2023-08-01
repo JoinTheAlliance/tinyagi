@@ -113,7 +113,11 @@ def decide(context):
     context["banter"] = response["arguments"]["banter"]
 
     create_memory(
-        "events", reasoning, metadata={"type": "reasoning", "epoch": context["epoch"]}
+        "events", "Here is my reasoning for the next step: " + reasoning, metadata={"type": "reasoning", "epoch": context["epoch"]}
+    )
+
+    create_memory(
+        "events", "I bantered to chat: " + response["arguments"]["banter"], metadata={"type": "banter", "epoch": context["epoch"]}
     )
 
     duration = count_tokens(response["arguments"]["banter"]) / 3.0

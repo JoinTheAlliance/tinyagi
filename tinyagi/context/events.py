@@ -1,3 +1,4 @@
+import json
 from agentmemory import get_memories
 from tinyagi.constants import (
     MAX_PROMPT_LIST_ITEMS,
@@ -50,6 +51,13 @@ Epoch # | <Type>::<Subtype> (Creator): <Event>
 ============================================"""
 
     events = get_memories("events", n_results=MAX_PROMPT_LIST_ITEMS)
+
+    # get the 'document' from all events and make an array
+    event_documents = [{ "document": event["document"], "metadata": event["metadata"] } for event in events]
+
+    # format events with pretty json to view
+    events_to_print = json.dumps(event_documents, indent=4, sort_keys=True)
+    print(events_to_print)
 
     # reverse events
     events = events[::-1]

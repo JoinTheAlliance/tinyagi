@@ -1,5 +1,6 @@
 import sys
 from agentcomlink import send_message
+from agentmemory import create_memory
 from easycompletion import compose_function, compose_prompt
 
 from agentshell.main import get_files_in_cwd, run_command
@@ -46,6 +47,7 @@ def use_shell_handler(arguments):
         "gesture": gesture,
     }
     send_message(message, "chat", source="shell")
+    create_memory("events", "I ran a command in my shell:\n" + command)
     return run_command(command)
 
 

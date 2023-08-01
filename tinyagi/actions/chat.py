@@ -210,7 +210,7 @@ async def response_handler(data, loop_dict):
         await async_send_message(message, source="chat_response")
         create_memory(
             "events",
-            arguments["message"],
+            "I responded to the administrator: " + arguments["message"],
             metadata={"type": "message", "sender": "user", "epoch": str(epoch)},
         )
         return
@@ -581,7 +581,7 @@ def respond_to_twitch():
 
         create_memory(
             "events",
-            banter,
+            "I responded to the Twitch chat: " + banter,
             metadata={
                 "type": "message",
                 "sender": "user",

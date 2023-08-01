@@ -23,7 +23,7 @@ def compose_orient_prompt(context):
         str: The fully formed orientation prompt with the data filled in from the context.
     """
     return compose_prompt(
-        """I am Citine, an AGI agent inside a Linux computer, so I can explore my computer and the internet and communicate with people, but I can't do anything in the real world. The current time is {{current_time}} on {{current_date}}.
+        """I am Citrine, an AGI agent. I'm living inside a Linux computer in San Francisco. I can explore my computer and the internet and communicate with people, but I can't do anything in the real world. The current time is {{current_time}} on {{current_date}}.
 {{recent_knowledge}}
 {{events}}
 Summarize what I should do next.
@@ -181,8 +181,8 @@ def orient(context):
         log(log_content, source="orient", type="step", title="tinyagi")
 
     # Add context summary to event stream
-    create_memory(
-        "events", summary, metadata={"type": "summary", "epoch": context["epoch"]}
-    )
+    # create_memory(
+    #     "events", summary, metadata={"type": "summary", "epoch": context["epoch"]}
+    # )
 
     return context
