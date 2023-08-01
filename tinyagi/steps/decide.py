@@ -65,34 +65,12 @@ def compose_decision_function():
             "banter": {
                 "type": "string",
                 "description": "Write a sentence of funny banter from my perspective, related to what I'm working on. It should be funny, edgy or dark and very short.",
-            },
-            "emotion": {
-                "type": "string",
-                "description": "The emotion I should express in my message.",
-                "enum": ["neutral", "surprise", "angry", "sorrow", "fun", "joy"],
-            },
-            "gesture": {
-                "type": "string",
-                "description": "The gesture I should express in my message.",
-                "enum": [
-                    "neutral",
-                    "alert",
-                    "angry",
-                    "embarrassed",
-                    "headNod",
-                    "headShake",
-                    "sad",
-                    "surprise",
-                    "victory",
-                ],
-            },
+            }
         },
         required_properties=[
             "action_name",
             "reasoning",
             "banter",
-            "emotion",
-            "gesture",
         ],
     )
 
@@ -127,8 +105,6 @@ def decide(context):
     send_message(
         {
             "message": response["arguments"]["banter"],
-            "emotion": response["arguments"]["emotion"],
-            "gesture": response["arguments"]["gesture"],
         },
         source="decide",
     )

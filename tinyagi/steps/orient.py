@@ -37,6 +37,7 @@ Summarize what I should do next and banter about it in a way that is funny and w
 - If there is no new knowledge, respond with an empty array [].
 - Don't talk about tasks or boring stuff, do talk about what you're going to do and interests. Don't explain why you're doing something, just what you're doing and if you're excited by it
 - Add an audio and visual description. These should describe the world, imagined but based on the summary.
+- DON'T say "hey friends guess what?" Just say what you're doing and make a weird banter comment.
 
 Banter as if you were me, the user, in the first person from my perspective. My banter should be brief, conversational, funny and weird, and continue from my last banter smoothly
 """,

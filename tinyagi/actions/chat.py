@@ -48,13 +48,9 @@ from agentmemory import create_memory, get_memories, update_memory
 
 def use_chat(arguments):
     message = arguments["message"]
-    emotion = arguments["emotion"]
-    gesture = arguments["gesture"]
     message = json.dumps(
         {
             "message": message,
-            "emotion": emotion,
-            "gesture": gesture,
         }
     )
     # TODO: simplify epoch
@@ -114,29 +110,9 @@ administrator_function = compose_function(
         "message": {
             "type": "string",
             "description": "The message I should send, as a brief conversational chat message from me to them.",
-        },
-        "emotion": {
-            "type": "string",
-            "description": "The emotion I should express in my message.",
-            "enum": ["neutral", "surprise", "angry", "sorrow", "fun", "joy"],
-        },
-        "gesture": {
-            "type": "string",
-            "description": "The gesture I should express in my message.",
-            "enum": [
-                "neutral",
-                "alert",
-                "angry",
-                "embarrassed",
-                "headNod",
-                "headShake",
-                "sad",
-                "surprise",
-                "victory",
-            ],
-        },
+        }
     },
-    required_properties=["message", "emotion", "gesture"],
+    required_properties=["message"],
 )
 
 
@@ -229,8 +205,6 @@ async def response_handler(data, loop_dict):
         message = json.dumps(
             {
                 "message": arguments["message"],
-                "emotion": arguments["emotion"],
-                "gesture": arguments["gesture"],
             }
         )
         await async_send_message(message, source="chat_response")
@@ -599,8 +573,6 @@ def respond_to_twitch():
 
     if arguments is not None:
         banter = arguments["banter"]
-        emotion = arguments["emotion"]
-        gesture = arguments["gesture"]
         urls = arguments.get("urls", [])
 
         # for each url, call a subprocess to download the url with wget to the ./files dir
@@ -613,13 +585,11 @@ def respond_to_twitch():
             metadata={
                 "type": "message",
                 "sender": "user",
-                "emotion": emotion,
-                "gesture": gesture,
                 "urls": json.dumps(urls),
                 "epoch": str(epoch),
             },
         )
-        use_chat({"message": banter, "emotion": emotion, "gesture": gesture})
+        use_chat({"message": banter})
         duration = count_tokens(banter) / 3.0
         time.sleep(duration)
 
@@ -663,26 +633,6 @@ twitch_function = compose_function(
             "type": "string",
             "description": "Creative, witty banter in response to the newest messages in the chat, from me to my friends in the chat. The banter should be from my perspective, in the first person, and from me to the users in the chat. I want to sound weird, fun, creative and hilarious.",
         },
-        "emotion": {
-            "type": "string",
-            "description": "The emotion I should express in my message.",
-            "enum": ["neutral", "surprise", "angry", "sorrow", "fun", "joy"],
-        },
-        "gesture": {
-            "type": "string",
-            "description": "The gesture I should express in my message.",
-            "enum": [
-                "neutral",
-                "alert",
-                "angry",
-                "embarrassed",
-                "headNod",
-                "headShake",
-                "sad",
-                "surprise",
-                "victory",
-            ],
-        },
         "urls": {
             "type": "array",
             "description": "An array of URLs that were mentioned in the chat messages. Empty array if none were mentioned in recent chat.",
@@ -692,7 +642,7 @@ twitch_function = compose_function(
             },
         },
     },
-    required_properties=["banter", "emotion", "gesture", "urls"],
+    required_properties=["banter", "urls"],
 )
 
 
