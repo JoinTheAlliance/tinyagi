@@ -474,7 +474,7 @@ class Twitch:
 ##################### GAME VARIABLES #####################
 
 # Replace this with your Twitch username. Must be all lowercase.
-TWITCH_CHANNEL = "avaer"
+TWITCH_CHANNEL = "isekai_citrine"
 MAX_WORKERS = 100  # Maximum number of threads you can process at a time
 
 last_time = time.time()
