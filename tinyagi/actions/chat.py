@@ -574,7 +574,7 @@ def respond_to_twitch():
 
         create_memory(
             "events",
-            "Me: " + banter,
+            banter,
             metadata={
                 "type": "message",
                 "sender": "user",

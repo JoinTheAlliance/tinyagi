@@ -118,7 +118,7 @@ def decide(context):
     )
 
     create_memory(
-        "events", "Me: " + response["arguments"]["banter"], metadata={"type": "banter", "epoch": get_current_epoch()}
+        "events", response["arguments"]["banter"], metadata={"type": "banter", "epoch": get_current_epoch()}
     )
 
     duration = count_tokens(response["arguments"]["banter"]) / 3.0

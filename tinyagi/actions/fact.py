@@ -35,7 +35,7 @@ def state_fact(arguments):
         }
     )
     send_message(message, "chat", source="fact")
-    create_memory("events", "Me: " + fact, metadata={"type": "fact", "fact": fact, "emotion": emotion, "gesture": gesture, "epoch": get_current_epoch()})
+    create_memory("events", fact, metadata={"type": "fact", "fact": fact, "emotion": emotion, "gesture": gesture, "epoch": get_current_epoch()})
     
     duration = count_tokens(fact) / 3.0
     duration = int(duration)
