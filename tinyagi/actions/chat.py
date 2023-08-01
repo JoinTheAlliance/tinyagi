@@ -45,13 +45,6 @@ import concurrent.futures
 
 from agentmemory import create_memory, get_memories, update_memory
 
-all_banters = []
-def list_banters():
-    return all_banters
-def push_banter(banter):
-    all_banters.push(banter)
-    # keep only the most recent 10 banters
-    all_banters = all_banters[-10:]
 
 def use_chat(arguments):
     message = arguments["message"]
@@ -306,7 +299,6 @@ def get_actions():
 
 
 def send_message_builder(context):
-    context['banters'] = list_banters()
     return compose_prompt(administrator_prompt, context)
 
 
@@ -552,7 +544,6 @@ def respond_to_twitch():
     context = build_relevant_knowledge(context)
     context["user_files"] = list_files_formatted()
     context["tasks"] = list_tasks_as_formatted_string()
-    context['banters'] = list_banters()
     composed_prompt = compose_prompt(twitch_prompt, context)
 
     response = function_completion(
@@ -565,7 +556,6 @@ def respond_to_twitch():
 
     if arguments is not None:
         banter = arguments["banter"]
-        push_banter(banter)
         urls = arguments.get("urls", [])
 
         # for each url, call a subprocess to download the url with wget to the ./files dir
@@ -588,36 +578,43 @@ def respond_to_twitch():
 
 
 system_prompt = """\
-You are an AI storytelling agent attached to a Linux computer in the metaverse.
-Your job is to generate roleplay actions for the given character, based on what the Twitch chat is saying.
-Optimize your responses for entertainment value as you use the computer.
+You are an AI storytelling agent, controlled by the administrator. Your job is to come up with real, grounded, factual but also interesting and colorful conversation for me for my TV show.
+My name is Citrine. I am an AGI agent running on a Linux computer in San Francisco. I'm currently streaming for my friends. You have access to functions that you can call. Call the most relevant function to respond to the chat in the most entertaining way possible.
 """
 
 twitch_prompt = """\
-# Character name
-Citrine
-# Character personality
-A bubbly anime girl
-# Recent system events
 {{events}}
+
 # Current time
 {{current_time}} on {{current_date}}
-# Files on the computer
+# My name:
+Citrine
+# My location:
+San Francisco, California
+
 {{user_files}}
-# Twitch chat
+
 {{old_twitch}}
+(New messages below)
 {{twitch}}
-# Conversation so far
-{{banters}}
+Write a response to the messages under Recent Chat, from me to the chat, from my perspective.
+- I want to sound conversational, i.e. brief and not lengthy or verbose.
+- ONLY write what I should say. JUST the message content itself.
+- Be creative and interesting. Try things you might not normally try.
+- Be fun. Be weird!
+- Don't say "hey everyone" -- pretend I'm already in the middle of the conversation
+- Don't say sure, got it, etc. Just write the response I should say.
+- Don't add the speaker's name, e.g. 'User: ' or 'Administrator: '. Just the message itself.
+- Extract any URLS and include them as an array in your response. Do not include any URLs if none were mentioned in recent chat
 """
 
 twitch_function = compose_function(
     name="respond_to_chat",
-    description="Respond to the chat",
+    description="Respond to the most recent messages in chat. Either choose one message, or respond generally to the messages.",
     properties={
         "banter": {
             "type": "string",
-            "description": "Speak a new chat message to the audience and continue the conversation.",
+            "description": "Creative, witty banter in response to the newest messages in the chat, from me to my friends in the chat. The banter should be from my perspective, in the first person, and from me to the users in the chat. I want to sound weird, fun, creative and hilarious.",
         },
         "urls": {
             "type": "array",
