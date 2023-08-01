@@ -494,9 +494,7 @@ def initialize_twitch():
 async def twitch_handle_messages():
     global twitch_active_tasks
     global twitch_queue
-    ii = 0
     while True:
-        ii += 1
         new_messages = t.twitch_receive_messages()
         if new_messages:
             print("******* new_messages")
@@ -507,26 +505,24 @@ async def twitch_handle_messages():
                     metadata={"user": message["username"], "handled": "False"},
                 )
         await asyncio.sleep(1)
-        if ii >= 3:
-            ii = 0
-            memories = get_memories(
-                "twitch_message", filter_metadata={"handled": "False"}
+        memories = get_memories(
+            "twitch_message", filter_metadata={"handled": "False"}
+        )
+
+        if len(memories) > 0:
+            respond_to_twitch()
+
+        task = get_current_task()
+        if task is None:
+            formatted = "No tasks"
+        else:
+            formatted = get_task_as_formatted_string(
+                task,
+                include_plan=False,
+                include_status=False,
+                include_steps=False,
             )
-
-            if len(memories) > 0:
-                respond_to_twitch()
-
-            task = get_current_task()
-            if task is None:
-                formatted = "No tasks"
-            else:
-                formatted = get_task_as_formatted_string(
-                    task,
-                    include_plan=False,
-                    include_status=False,
-                    include_steps=False,
-                )
-            await async_send_message(formatted, "task", source="twitch_response")
+        await async_send_message(formatted, "task", source="twitch_response")
 
 
 def respond_to_twitch():
