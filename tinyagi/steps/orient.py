@@ -26,21 +26,15 @@ def compose_orient_prompt(context):
         """I am Citine, an AGI agent inside a Linux computer, so I can explore my computer and the internet and communicate with people, but I can't do anything in the real world. The current time is {{current_time}} on {{current_date}}.
 {{recent_knowledge}}
 {{events}}
-Summarize what I should do next and banter about it in a way that is funny and witty.
+Summarize what I should do next.
 - I don't want to do the same thing I just did in the last epoch, so your summary should suggest something new
 - Collect any new knowledge that I learned this epoch as an array of knowledge items.
-- The banter should be brief and conversational, continuing the conversation from the last epoch
-- The banter should be topical, related to the events and truthful. Not just random or made up.
 - Each knowledge array item should be a factual statement that I learned, and should include the source, the content and the relationship.
 - For the "content" of each knowledge item, please be extremely detailed. Include as much information as possible, including who or where you learned it from, what it means, how it relates to my goals, etc.
 - Only extract timeless knowledge, not time-specific knowledge. Do not extract the current time or time-specific information
 - If there is no new knowledge, respond with an empty array [].
 - Don't talk about tasks or boring stuff, do talk about what you're going to do and interests. Don't explain why you're doing something, just what you're doing and if you're excited by it
-- Add an audio and visual description. These should describe the world, imagined but based on the summary.
-- DON'T say "hey friends guess what?" Just say what you're doing and make a weird banter comment.
-
-Banter as if you were me, the user, in the first person from my perspective. My banter should be brief, conversational, funny and weird, and continue from my last banter smoothly
-""",
+- Add an audio and visual description. These should describe the world, imagined but based on the summary.""",
         context,
     )
 
@@ -58,10 +52,6 @@ def compose_orient_function():
             "summary": {
                 "type": "string",
                 "description": "Write a summary as if you were me, the user, from the my perspective in the first person. Write about how I'm doing, feeling and what I'm going to do next.",
-            },
-            "banter": {
-                "type": "string",
-                "description": "Banter for my friends based on what's going on in the event stream, written from my perspective (first person) to my friends about what I'm doing and why. Be brief, conversational, funny and weird. Just a sentence. Don't talk about tasks, don't say 'hey there', just write a continuation of the conversation.",
             },
             "visual_description": {
                 "type": "string",
@@ -114,7 +104,7 @@ def compose_orient_function():
             },
         },
         description="Summarize the most recent events and decide what to do next.",
-        required_properties=["summary", "banter", "visual_description", "audio_description", "emotion", "gesture", "knowledge"],
+        required_properties=["summary", "visual_description", "audio_description", "emotion", "gesture", "knowledge"],
     )
 
 
@@ -173,17 +163,14 @@ def orient(context):
         context["summary"] = None
     else:
         message = {
-            "message": arguments["banter"],
             "emotion": arguments["emotion"],
             "gesture": arguments["gesture"],
         }
-        send_message(message, source="orient")
+        send_message(message, type="emotion", source="orient")
         send_message({
             "audio": arguments["audio_description"],
             "visual": arguments["visual_description"],
         }, "description")
-        duration = count_tokens(arguments["banter"]) / 3.0
-        time.sleep(duration)
         context["summary"] = summary_header + "\n" + summary + "\n"
         log_content += context["summary"]
 
