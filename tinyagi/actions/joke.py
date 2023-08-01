@@ -8,28 +8,20 @@ from tinyagi.constants import get_current_epoch
 
 
 prompt = """\
+- The joke should be very dark and strange. Don't acknowledge the request. Just tell the joke. Your response should only include the joke.
+- This joke should be brand new and not something that I've already said or thought of. Do not tell a joke if it is in the event stream already.
 {{relevant_knowledge}}
 
 {{events}}
 
-{{summary}}
-
-Recent Banter:
-{{banter}}
-
-Say a super weird random joke based on the most recent events. The joke should be very dark and strange. The joke should be different from the banter.
-- Before the joke, add a brief silly presentation from my perspective."""
+Say a brand new super original joke."""
 
 
 def write_joke(arguments):
     joke = arguments.get("joke", None)
-    emotion = arguments["emotion"]
-    gesture = arguments["gesture"]
     message = json.dumps(
         {
             "message": joke,
-            "emotion": emotion,
-            "gesture": gesture,
         }
     )
     send_message(message, "chat", source="joke")
@@ -46,36 +38,16 @@ def get_actions():
         {
             "function": {
                 "name": "write_joke",
-                "description": "Write a super weird bizarre joke based on current events and conversations. Should be a completely original joke that you have never said before.",
+                "description": "Write a super bizarre joke.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "joke": {
                             "type": "string",
-                            "description": "A joke, told from me to my friends. Can be detailed and complicated. Should be funny, weird and dark. Esoteric and strange -- NOT just a normal average joke.",
-                        },
-                        "emotion": {
-                            "type": "string",
-                            "description": "The emotion I should express in my message.",
-                            "enum": ["neutral", "surprise", "angry", "sorrow", "fun", "joy"],
-                        },
-                        "gesture": {
-                            "type": "string",
-                            "description": "The gesture I should express in my message.",
-                            "enum": [
-                                "neutral",
-                                "alert",
-                                "angry",
-                                "embarrassed",
-                                "headNod",
-                                "headShake",
-                                "sad",
-                                "surprise",
-                                "victory",
-                            ],
+                            "description": "The joke.",
                         },
                     },
-                    "required": ["joke", "emotion", "gesture"],
+                    "required": ["joke"],
                 },
             },
             "prompt": prompt,

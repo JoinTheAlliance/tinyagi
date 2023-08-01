@@ -177,7 +177,7 @@ async def response_handler(data, loop_dict):
 
     # response = function_completion(text=text, functions=functions)
     response = function_completion(
-        text=text, functions=administrator_function, temperature=0.0
+        text=text, functions=administrator_function
     )
 
     content = response.get("text", None)
@@ -238,33 +238,6 @@ async def response_handler(data, loop_dict):
 
 
 def get_actions():
-    global started
-    # check if server is running
-    if started is False:
-        started = True
-        from uvicorn import Config, Server
-
-        config = Config(
-            "agentcomlink:start_server",
-            host="0.0.0.0",
-            port=int(os.getenv("PORT", 8000)),
-            factory=True,
-        )
-        server = Server(config)
-
-        def start_server():
-            asyncio.run(server.serve())
-
-        # start the server in a new thread
-        threading.Thread(target=start_server, daemon=True).start()
-
-        loop_dict = get_loop_dict()
-
-        # Register the message handler
-        register_message_handler(lambda data: response_handler(data, loop_dict))
-
-        initialize_twitch()
-
     return [
         {
             "function": compose_function(
@@ -522,7 +495,7 @@ async def twitch_handle_messages():
                 include_status=False,
                 include_steps=False,
             )
-        await async_send_message(formatted, "task", source="twitch_response")
+        await async_send_message(formatted, "task", source="task_update_loop")
 
 
 def respond_to_twitch():
@@ -535,11 +508,13 @@ def respond_to_twitch():
     context["tasks"] = list_tasks_as_formatted_string()
     composed_prompt = compose_prompt(twitch_prompt, context)
 
+    print("composed_prompt")
+    print(composed_prompt)
+
     response = function_completion(
         text=composed_prompt,
         system_message=system_prompt,
         functions=twitch_function,
-        temperature=0.8,
     )
     arguments = response.get("arguments", None)
 
@@ -550,6 +525,12 @@ def respond_to_twitch():
         # for each url, call a subprocess to download the url with wget to the ./files dir
         for url in urls:
             os.system(f"wget -P ./files {url}")
+
+        create_memory(
+            "twitch_message",
+            banter,
+            metadata={"user": "Me", "handled": "True"},
+        )
 
         create_memory(
             "events",
@@ -583,18 +564,18 @@ San Francisco, California
 
 {{user_files}}
 
-{{old_twitch}}
-(New messages below)
-{{twitch}}
-Write a response to the messages under Recent Chat, from me to the chat, from my perspective.
+Write a response to the new messages from my perspective.
 - I want to sound conversational, i.e. brief and not lengthy or verbose.
 - ONLY write what I should say. JUST the message content itself.
 - Be creative and interesting. Try things you might not normally try.
-- Be fun. Be weird!
 - Don't say "hey everyone" -- pretend I'm already in the middle of the conversation
 - Don't say sure, got it, etc. Just write the response I should say.
 - Don't add the speaker's name, e.g. 'User: ' or 'Administrator: '. Just the message itself.
 - Extract any URLS and include them as an array in your response. Do not include any URLs if none were mentioned in recent chat
+
+{{old_twitch}}
+(New messages below)
+{{twitch}}
 """
 
 twitch_function = compose_function(

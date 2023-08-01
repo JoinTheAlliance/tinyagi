@@ -7,31 +7,26 @@ from easycompletion import compose_prompt, count_tokens
 from tinyagi.constants import get_current_epoch
 
 
-prompt = """
-{{events}}
-
-Recent Banter:
-{{banter}}
-
-Come up with a random, highly creative idea or thought for me.
+prompt = """\
 - Write the thought from my perspective, as the user.
 - The thought should be extremely strange and random, but not offensive, and ideally related to the current events.
 - You should present the thought addressed to my friends. This should be written from my perspective.
 - Please do not acknowledge the request. Just write the thought. Your response should only include the thought.
-- Your response should be <presentation> <thought>"""
+- This thought should be brand new and not something that I've already thought of, or that is in the event stream already.
+
+{{events}}
+
+Come up with a random, highly creative idea or thought for me.
+"""
 
 
 def have_thought(arguments):
     print('thought arguments are')
     print(arguments)
     thought = arguments.get("thought", None)
-    emotion = arguments["emotion"]
-    gesture = arguments["gesture"]
     message = json.dumps(
         {
             "message": thought,
-            "emotion": emotion,
-            "gesture": gesture,
         }
     )
     send_message(message, "chat", source="thought")
@@ -54,30 +49,10 @@ def get_actions():
                     "properties": {
                         "thought": {
                             "type": "string",
-                            "description": "A thought, described from my perspective (I will be saying it). Should be a very strange thought. Should be short and totally bizarre and random.",
-                        },
-                        "emotion": {
-                            "type": "string",
-                            "description": "The emotion I should express in my message.",
-                            "enum": ["neutral", "surprise", "angry", "sorrow", "fun", "joy"],
-                        },
-                        "gesture": {
-                            "type": "string",
-                            "description": "The gesture I should express in my message.",
-                            "enum": [
-                                "neutral",
-                                "alert",
-                                "angry",
-                                "embarrassed",
-                                "headNod",
-                                "headShake",
-                                "sad",
-                                "surprise",
-                                "victory",
-                            ],
+                            "description": "The thought.",
                         },
                     },
-                    "required": ["thought", "emotion", "gesture"],
+                    "required": ["thought"],
                 },
             },
             "prompt": prompt,

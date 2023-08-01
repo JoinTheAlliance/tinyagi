@@ -128,7 +128,6 @@ def orient(context):
         text=compose_orient_prompt(context),
         functions=compose_orient_function(),
         debug=context["verbose"],
-        temperature=0.0
     )
 
     arguments = response["arguments"]

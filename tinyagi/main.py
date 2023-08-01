@@ -1,6 +1,10 @@
+import asyncio
 import os
+import threading
+from agentcomlink import register_message_handler
 from dotenv import load_dotenv
 from agentlogger import print_header
+from tinyagi.actions.chat import initialize_twitch, response_handler
 from tinyagi.constants import set_loop_dict
 from tinyagi.utils import log
 
@@ -57,15 +61,37 @@ def start(
     if reset:
         wipe_all_memories()
 
-    # if seed_data is not None:
-    #     import_file_to_memory(seed_data)
-
-    loop_dict = start_loop(steps, paused=paused)
-    set_loop_dict(loop_dict)
-
     if actions_dir is not None:
         print("Imported actions from " + actions_dir)
         import_actions(actions_dir)
     else:
         print("No actions directory provided, skipping import")
+
+    # if seed_data is not None:
+    #     import_file_to_memory(seed_data)
+    print("Starting loop...")
+    loop_dict = start_loop(steps, paused=paused)
+    set_loop_dict(loop_dict)
+
+    from uvicorn import Config, Server
+
+    config = Config(
+        "agentcomlink:start_server",
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", 8000)),
+        factory=True,
+    )
+    server = Server(config)
+
+    def start_server():
+        asyncio.run(server.serve())
+
+    # start the server in a new thread
+    threading.Thread(target=start_server, daemon=True).start()
+
+    # Register the message handler
+    register_message_handler(lambda data: response_handler(data, loop_dict))
+
+    initialize_twitch()
+
     return loop_dict

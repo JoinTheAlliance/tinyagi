@@ -8,30 +8,23 @@ from tinyagi.constants import get_current_epoch
 
 
 prompt = """\
+- Please do not acknowledge the request. Just write the poem. Your response should only include the poem.
+- This poem should be brand new and not something that I've already written or that is in the event stream already.
+
 {{relevant_knowledge}}
 
 {{events}}
 
-Recent Banter:
-{{banter}}
-
-Write a weird, abstract or silly poem based on the most recent events that incorporates your recent event history, goals, knowledge and personality.
-- Present the poem to my friends, like "hey guys, I just wrote a poem, I'm going to recite it now!" This should be written from my perspective
-- Please do not acknowledge the request. Just write the poem. Your response should only include the poem.
-- Your response should be <presentation> <poem>"""
+Write an strange, abstract or silly poem based on the most recent events that incorporates your recent event history, goals, knowledge and personality."""
 
 
 def write_poem(arguments):
     print('poem arguments are')
     print(arguments)
     poem = arguments.get("poem", None)
-    emotion = arguments["emotion"]
-    gesture = arguments["gesture"]
     message = json.dumps(
         {
             "message": poem,
-            "emotion": emotion,
-            "gesture": gesture,
         }
     )
     
@@ -49,7 +42,7 @@ def get_actions():
         {
             "function": {
                 "name": "write_poem",
-                "description": "Write a super bizarre poem based on recent conversation and events. Can be abstract and weird. Can make fun of people and reference the chat.",
+                "description": "Write a super bizarre poem based on recent conversation and events. Can be oddball or goofy. Can make fun of people and reference the chat.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -57,28 +50,8 @@ def get_actions():
                             "type": "string",
                             "description": "The poem, described from my perspective (I will be saying it). Should be a very strange poem. Should be short.",
                         },
-                        "emotion": {
-                            "type": "string",
-                            "description": "The emotion I should express in my message.",
-                            "enum": ["neutral", "surprise", "angry", "sorrow", "fun", "joy"],
-                        },
-                        "gesture": {
-                            "type": "string",
-                            "description": "The gesture I should express in my message.",
-                            "enum": [
-                                "neutral",
-                                "alert",
-                                "angry",
-                                "embarrassed",
-                                "headNod",
-                                "headShake",
-                                "sad",
-                                "surprise",
-                                "victory",
-                            ],
-                        },
                     },
-                    "required": ["poem", "emotion", "gesture"],
+                    "required": ["poem"],
                 },
             },
             "prompt": prompt,

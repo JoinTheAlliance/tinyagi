@@ -36,7 +36,7 @@ def act(context):
         return {"error": f"Action {action_name} not found"}
 
     response = function_completion(
-        text=compose_action_prompt(action, context), functions=action["function"], debug=context["verbose"], temperature=0.3
+        text=compose_action_prompt(action, context), functions=action["function"], debug=context["verbose"]
     )
 
     formatted_arguments = ""
