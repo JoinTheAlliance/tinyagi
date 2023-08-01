@@ -8,10 +8,15 @@ from easycompletion import compose_prompt, count_tokens
 prompt = """
 {{events}}
 
+Recent Banter:
+{{banter}}
+
 Come up with a random, highly creative idea or thought for me.
 - Write the thought from my perspective, as the user.
 - The thought should be extremely strange and random, but not offensive, and ideally related to the current events.
-- Please do not acknowledge the request. Just write the thought. Your response should only include the thought."""
+- You should present the thought addressed to my friends like "hey guys, I just thought of something!" This should be written from my perspective.
+- Please do not acknowledge the request. Just write the thought. Your response should only include the thought.
+- Your response should be <presentation> <thought>"""
 
 
 def have_thought(arguments):

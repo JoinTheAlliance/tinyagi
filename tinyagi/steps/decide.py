@@ -13,6 +13,8 @@ from tinyagi.utils import log
 decision_prompt = """Current Epoch: {{epoch}}
 The current time is {{current_time}} on {{current_date}}.
 
+{{available_actions}}
+
 My name: Citrine
 My location: San Francisco, CA
 Interests: Gaming, coding, chatting with friends on Discord, watching YouTube videos
@@ -23,20 +25,21 @@ Assistant Notes:
 - I prefer to act in a way that is novel and interesting.
 - I only want to gather additional knowledge when I have to. I like to try things first.
 - I like to act, explore and do. I should focus on coding, using my terminal and browser, since these are my most powerful tools.
-- I should create a new task if I don't have a current task and I have a goal.
-- If I already have a task I should work on it
+- I should create a new task if I don't have a current one. If I already have a task I should work on it If I don't have one, create a new one.
+- If I have a new task, I should work on the next step
+- Respond with the name of the action (action_name)
 
 {{relevant_knowledge}}
 {{events}}
-{{available_actions}}
+{{available_short_actions}}
 {{current_task_formatted}}
 
-Based on recent events, which of the actions that you think is the best next action for me to progress towards my goals.
-- Respond with the name of the action (action_name)
-- Summarize as if you were me, the user, in the first person
-- Try not to repeat an action that has happened recently. Keep it interesting!
+Based on recent events, which of the actions that you think is the best next action for me to progress towards my current task and goals?
 - I can only choose from the available actions. You must choose one of the available actions.
-{{available_short_actions}}
+- Summarize and banter as if you were me, the user, in the first person
+- Your summary and banter should be based on the recent events and conversations, not just made up
+- Keep it interesting!
+- I am an AGI agent inside a computer, so I can explore my computer and the internet and communicate with people, but I can't do anything in the real world.
 """
 
 
@@ -61,7 +64,7 @@ def compose_decision_function():
             },
             "banter": {
                 "type": "string",
-                "description": "Write a sentence of funny banter from my perspective, loosely related to what I'm working on. It should be funny, edgy or dark and very short. Should be from my perspective.",
+                "description": "Write a sentence of funny banter from my perspective, related to what I'm working on. It should be funny, edgy or dark and very short.",
             },
             "emotion": {
                 "type": "string",
@@ -128,6 +131,8 @@ def decide(context):
             "gesture": response["arguments"]["gesture"],
         }
     )
+
+    context["banter"] = response["arguments"]["banter"]
 
     create_memory(
         "events", reasoning, metadata={"type": "reasoning", "epoch": context["epoch"]}

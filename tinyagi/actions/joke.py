@@ -10,7 +10,13 @@ prompt = """\
 
 {{events}}
 
-Write a super weird random joke based on the most recent events. The joke should be very dark and strange."""
+{{summary}}
+
+Recent Banter:
+{{banter}}
+
+Say a super weird random joke based on the most recent events. The joke should be very dark and strange. The joke should be different from the banter.
+- Before the joke, add a brief silly presentation from my perspective. Like "hey guys, I just thought of a joke, it's really bad but I'm going to tell it anyways!"""
 
 
 def write_joke(arguments):
@@ -38,13 +44,13 @@ def get_actions():
         {
             "function": {
                 "name": "write_joke",
-                "description": "Write a super weird bizarre topical joke based on current events and conversations.",
+                "description": "Write a super weird bizarre joke based on current events and conversations. Should be a completely original joke that you have never said before.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "joke": {
                             "type": "string",
-                            "description": "A joke, told from me to an audience. Can be detailed and complicated. Should be funny, weird and dark. Esoteric and strange -- NOT just a normal average joke.",
+                            "description": "A joke, told from me to my friends. Can be detailed and complicated. Should be funny, weird and dark. Esoteric and strange -- NOT just a normal average joke.",
                         },
                         "emotion": {
                             "type": "string",

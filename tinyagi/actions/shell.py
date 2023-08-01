@@ -1,3 +1,4 @@
+import sys
 from agentcomlink import send_message
 from easycompletion import compose_function, compose_prompt
 
@@ -57,7 +58,7 @@ def get_actions():
                 properties={
                     "banter": {
                         "type": "string",
-                        "description": "Banter about using the shell terminal. Write something from my perspective, for me to say to my audience. It should be weird and esoteric and funny, ideally, and continue from the ongoing events and conversation. Hackerman!.",
+                        "description": "Banter about using the shell terminal. Write something from my perspective, for me to say out loud. It should be weird and esoteric and funny, ideally, and continue from the ongoing events and conversation. Hackerman!.",
                     },
                     "command": {
                         "type": "string",

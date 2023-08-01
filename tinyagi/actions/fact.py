@@ -10,9 +10,13 @@ prompt = """
 
 {{events}}
 
-Write some random banter or say a random weird fact or bit of esoteric knowledge that I can tell my audience. Should be from my perspective to my audience. The fact should be random, weird, and either based on my existing knowledge and recent events, or totally random.
-Your facts and banter should be weird and edgy. Make jokes that are dark and strange. Make references to the chat and the audience. Make fun of people. Be creative and weird.
-Don't acknowledge the request. Just respond with the banter."""
+Recent Banter:
+{{banter}}
+
+Write some random banter or say a random weird fact or bit of esoteric knowledge that I can tell my friends. Should be from my perspective addressed to my friend. The fact should be random, weird, and either based on my existing knowledge and recent events, or totally random.
+Your facts and banter should be weird and edgy. Make jokes that are dark and strange. Make references to the chat and my friends who are sending messages to the chat. Make fun of people. Be creative and weird.
+Your banter should be different from the recent banter, or continuing it.
+Don't acknowledge the request. Just banter."""
 
 
 def state_fact(arguments):
@@ -48,7 +52,7 @@ def get_actions():
                     "properties": {
                         "fact": {
                             "type": "string",
-                            "description": "A statement of witty banter, funny and entertaining. Should be stated from me to my audience.",
+                            "description": "A statement of witty banter, funny and entertaining. Should be stated from me to my friends.",
                         },
                         "emotion": {
                             "type": "string",

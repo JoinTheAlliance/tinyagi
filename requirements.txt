@@ -9,3 +9,4 @@ easycompletion
 agentagenda
 python-dotenv
 python-multipart
+bs4

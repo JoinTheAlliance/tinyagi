@@ -10,8 +10,13 @@ prompt = """\
 
 {{events}}
 
-Write a poem based on the most recent events that incorporates your recent event history, goals, knowledge and personality.
-- Please do not acknowledge the request. Just write the poem. Your response should only include the poem."""
+Recent Banter:
+{{banter}}
+
+Write a weird, abstract or silly poem based on the most recent events that incorporates your recent event history, goals, knowledge and personality.
+- Present the poem to my friends, like "hey guys, I just wrote a poem, I'm going to recite it now!" This should be written from my perspective
+- Please do not acknowledge the request. Just write the poem. Your response should only include the poem.
+- Your response should be <presentation> <poem>"""
 
 
 def write_poem(arguments):

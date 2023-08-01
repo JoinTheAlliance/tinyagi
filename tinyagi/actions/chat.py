@@ -613,15 +613,13 @@ def respond_to_twitch():
                 "epoch": str(epoch),
             },
         )
-        print('****** TWITCH RESPONSE')
-        print(banter)
         use_chat({"message": banter, "emotion": emotion, "gesture": gesture})
         duration = count_tokens(banter) / 2.5
         time.sleep(duration)
 
 system_prompt="""\
-You are an AI storytelling agent, controlled by the administrator.
-You are in a twitch chat with Twitch users. You have access to functions that you can call. Call the most relevant function to respond to the chat in the most entertaining way possible.
+You are an AI storytelling agent, controlled by the administrator. Your job is to come up with real, grounded, factual but also interesting and colorful conversation for me for my TV show.
+My name is Citrine. I am an AGI agent running on a Linux computer in San Francisco. I'm currently streaming for my friends. You have access to functions that you can call. Call the most relevant function to respond to the chat in the most entertaining way possible.
 """
 
 twitch_prompt = """\
@@ -647,11 +645,11 @@ Write a response to the messages under Recent Chat, from me to the chat, from my
 - Don't say "hey everyone" -- pretend I'm already in the middle of the conversation
 - Don't say sure, got it, etc. Just write the response I should say.
 - Don't add the speaker's name, e.g. 'User: ' or 'Administrator: '. Just the message itself.
-- Extract any URLS and include them as an array in your response. Do not include any URLs if none were mentioned in recent twitch chat
+- Extract any URLS and include them as an array in your response. Do not include any URLs if none were mentioned in recent chat
 """
 
 twitch_function = compose_function(
-    name="respond_to_twitch",
+    name="respond_to_chat",
     description="Respond to the most recent messages in chat. Either choose one message, or respond generally to the messages.",
     properties={
         "banter": {
@@ -680,7 +678,7 @@ twitch_function = compose_function(
         },
         "urls": {
             "type": "array",
-            "description": "An array of URLs that were mentioned in the chat messages. Empty array if none were mentioned by twitch chat.",
+            "description": "An array of URLs that were mentioned in the chat messages. Empty array if none were mentioned in recent chat.",
             "items": {
                 "type": "string",
                 "description": "A URL that was mentioned in the chat messages.",

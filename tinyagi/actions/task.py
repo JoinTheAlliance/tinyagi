@@ -211,7 +211,7 @@ def get_actions():
                     "properties": {
                         "banter": {
                             "type": "string",
-                            "description": "Say something brief and witty about what I'm about to do, from my perspective.",
+                            "description": "Say something brief and witty about what I'm about to do, from my perspective. Don't use the word task. Mention what I'm going to do.",
                         },
                         "emotion": {
                             "type": "string",
@@ -256,7 +256,7 @@ def get_actions():
                     "properties": {
                         "banter": {
                             "type": "string",
-                            "description": "Say something brief and witty about what I'm about to do, from my perspective.",
+                            "description": "Say something brief and witty about what I'm about to do, from my perspective, addressed from me to my friends. Don't use the word task. Mention what I'm going to do.",
                         },
                         "goal": {
                             "type": "string",
@@ -301,7 +301,7 @@ def get_actions():
                     "properties": {
                         "banter": {
                             "type": "string",
-                            "description": "Say something brief and witty about what I'm about to do, from my perspective.",
+                            "description": "Say something brief and witty about what I'm about to do, from my perspective. Don't use the word task. Just banter about what I actually did.",
                         },
                         "goal": {
                             "type": "string",
@@ -346,7 +346,7 @@ def get_actions():
                     "properties": {
                         "banter": {
                             "type": "string",
-                            "description": "Say something brief and witty about what I'm about to do, from my perspective.",
+                            "description": "Say something brief and witty about what I'm about to do, from my perspective. Don't use the word step or task, just talk about what the actual step is.",
                         },
                         "goal": {
                             "type": "string",
@@ -395,7 +395,7 @@ def get_actions():
                     "properties": {
                         "banter": {
                             "type": "string",
-                            "description": "Say something brief and witty about what I'm about to do, from my perspective.",
+                            "description": "Say something brief and witty about what I'm about to do, from my perspective, addressed to my friends. Don't use the word step or task, just talk about what the actual step is, from my perspective.",
                         },
                         "goal": {
                             "type": "string",
@@ -444,7 +444,7 @@ def get_actions():
                     "properties": {
                         "banter": {
                             "type": "string",
-                            "description": "Say something brief and witty about what I'm about to do, from my perspective.",
+                            "description": "Say something brief and witty about what I'm about to do, from my perspective. Banter about what I'm canceling the step, but don't say 'step' or 'task'.",
                         },
                         "goal": {
                             "type": "string",
