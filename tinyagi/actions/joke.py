@@ -18,7 +18,7 @@ Recent Banter:
 {{banter}}
 
 Say a super weird random joke based on the most recent events. The joke should be very dark and strange. The joke should be different from the banter.
-- Before the joke, add a brief silly presentation from my perspective. Like "hey guys, I just thought of a joke, it's really bad but I'm going to tell it anyways!"""
+- Before the joke, add a brief silly presentation from my perspective."""
 
 
 def write_joke(arguments):
