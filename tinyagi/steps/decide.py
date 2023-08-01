@@ -35,7 +35,7 @@ Assistant Notes:
 {{events}}
 {{available_short_actions}}
 
-Based on recent events, which of the actions that you think is the best next action for me to progress towards my current task and goals?
+Come up with the next action, summar and banter about it. Decide what the actions that you think is the best next action for me to progress towards my current task and goals?
 - I can only choose from the available actions. You must choose one of the available actions.
 - Summarize and banter as if you were me, the user, in the first person
 - Your summary and banter should be based on the recent events and conversations, not just made up
