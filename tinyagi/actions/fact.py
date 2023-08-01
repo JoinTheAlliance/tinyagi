@@ -32,10 +32,10 @@ def state_fact(arguments):
             "gesture": gesture,
         }
     )
-    send_message(message, "chat")
+    send_message(message, "chat", source="fact")
     create_memory("events", "I stated a fact:\n" + fact, metadata={"type": "fact", "fact": fact, "emotion": emotion, "gesture": gesture})
     
-    duration = count_tokens(fact) / 2.5
+    duration = count_tokens(fact) / 3.0
     duration = int(duration)
 
     time.sleep(duration)

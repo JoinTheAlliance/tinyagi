@@ -18,7 +18,7 @@ from agentcomlink import (
 from agentagenda import get_current_task, get_task_as_formatted_string
 
 from agentloop import pause, unpause
-from tinyagi.actions.task import create_task_handler
+# from tinyagi.actions.task import create_task_handler
 
 from tinyagi.context.events import build_events_context
 from tinyagi.steps.initialize import initialize
@@ -73,9 +73,9 @@ def use_chat(arguments):
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:  # no event loop running:
-        asyncio.run(async_send_message(message))
+        asyncio.run(async_send_message(message, source="use_chat"))
     else:
-        loop.create_task(async_send_message(message))
+        loop.create_task(async_send_message(message, source="use_chat"))
     return {"success": True, "output": message, "error": None}
 
 
@@ -178,7 +178,7 @@ async def response_handler(data, loop_dict):
         arguments = {
             "goal": message,
         }
-        create_task_handler(arguments)
+        # create_task_handler(arguments)
         return
 
     type = data["type"]
@@ -217,7 +217,9 @@ async def response_handler(data, loop_dict):
     actions = search_actions(message)
 
     # response = function_completion(text=text, functions=functions)
-    response = function_completion(text=text, functions=administrator_function, temperature=0.0)
+    response = function_completion(
+        text=text, functions=administrator_function, temperature=0.0
+    )
 
     content = response.get("text", None)
 
@@ -231,7 +233,7 @@ async def response_handler(data, loop_dict):
                 "gesture": arguments["gesture"],
             }
         )
-        await async_send_message(message)
+        await async_send_message(message, source="chat_response")
         create_memory(
             "events",
             arguments["message"],
@@ -240,7 +242,7 @@ async def response_handler(data, loop_dict):
         return
 
     if content is not None:
-        await async_send_message(content)
+        await async_send_message(content, source="chat_response_content")
         log(
             f"Sending message to administrator: {content}",
             type="chat",
@@ -331,10 +333,9 @@ def get_actions():
         }
     ]
 
+
 def send_message_builder(context):
     return compose_prompt(administrator_prompt, context)
-    
-
 
 
 MAX_TIME_TO_WAIT_FOR_LOGIN = 3
@@ -568,7 +569,7 @@ async def twitch_handle_messages():
                     include_status=False,
                     include_steps=False,
                 )
-            await async_send_message(formatted, "task")
+            await async_send_message(formatted, "task", source="twitch_response")
 
 
 def respond_to_twitch():
@@ -582,7 +583,12 @@ def respond_to_twitch():
     context["tasks"] = list_tasks_as_formatted_string()
     composed_prompt = compose_prompt(twitch_prompt, context)
 
-    response = function_completion(text=composed_prompt, system_message=system_prompt, functions=twitch_function, temperature=0.8)
+    response = function_completion(
+        text=composed_prompt,
+        system_message=system_prompt,
+        functions=twitch_function,
+        temperature=0.8,
+    )
     arguments = response.get("arguments", None)
 
     events = get_memories("events", n_results=1)
@@ -614,10 +620,11 @@ def respond_to_twitch():
             },
         )
         use_chat({"message": banter, "emotion": emotion, "gesture": gesture})
-        duration = count_tokens(banter) / 2.5
+        duration = count_tokens(banter) / 3.0
         time.sleep(duration)
 
-system_prompt="""\
+
+system_prompt = """\
 You are an AI storytelling agent, controlled by the administrator. Your job is to come up with real, grounded, factual but also interesting and colorful conversation for me for my TV show.
 My name is Citrine. I am an AGI agent running on a Linux computer in San Francisco. I'm currently streaming for my friends. You have access to functions that you can call. Call the most relevant function to respond to the chat in the most entertaining way possible.
 """
@@ -654,7 +661,7 @@ twitch_function = compose_function(
     properties={
         "banter": {
             "type": "string",
-            "description": "Creative, witty banter in response to the newest messages in the chat. The banter should be from my perspective, in the first person, and from me to the users in the chat. I want to sound weird, fun, creative and hilarious.",
+            "description": "Creative, witty banter in response to the newest messages in the chat, from me to my friends in the chat. The banter should be from my perspective, in the first person, and from me to the users in the chat. I want to sound weird, fun, creative and hilarious.",
         },
         "emotion": {
             "type": "string",

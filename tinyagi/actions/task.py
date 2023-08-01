@@ -23,7 +23,7 @@ def create_task_handler(arguments):
         "emotion": arguments["emotion"],
         "gesture": arguments["gesture"],
     }
-    send_message(message)
+    send_message(message, source="create_task")
     return {"success": True, "output": arguments["banter"], "error": None}
 
 
@@ -39,7 +39,7 @@ def cancel_task_handler(arguments):
         "emotion": arguments["emotion"],
         "gesture": arguments["gesture"],
     }
-    send_message(message)
+    send_message(message, source="cancel_task")
     return {"success": True, "output": arguments["banter"], "error": None}
 
 
@@ -55,7 +55,7 @@ def complete_task_handler(arguments):
         "emotion": arguments["emotion"],
         "gesture": arguments["gesture"],
     }
-    send_message(message)
+    send_message(message, source="complete_task")
     return {"success": True, "output": arguments["banter"], "error": None}
 
 def complete_step_handler(arguments):
@@ -77,7 +77,7 @@ def complete_step_handler(arguments):
         "emotion": arguments["emotion"],
         "gesture": arguments["gesture"],
     }
-    send_message(message)
+    send_message(message, source="complete_step")
     return {"success": True, "output": arguments["banter"], "error": None}
 
 
@@ -95,7 +95,7 @@ def add_step_handler(arguments):
         "emotion": arguments["emotion"],
         "gesture": arguments["gesture"],
     }
-    send_message(message)
+    send_message(message, source="add_step")
     return {"success": True, "output": arguments["banter"], "error": None}
 
 
@@ -115,7 +115,7 @@ def cancel_step_handler(arguments):
         "emotion": arguments["emotion"],
         "gesture": arguments["gesture"],
     }
-    send_message(message)
+    send_message(message, source="cancel_step")
     return {"success": True, "output": arguments["banter"], "error": None}
 
 create_task_prompt = """\

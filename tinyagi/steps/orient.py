@@ -23,24 +23,23 @@ def compose_orient_prompt(context):
         str: The fully formed orientation prompt with the data filled in from the context.
     """
     return compose_prompt(
-        """The current time is {{current_time}} on {{current_date}}.
+        """I am Citine, an AGI agent inside a Linux computer, so I can explore my computer and the internet and communicate with people, but I can't do anything in the real world. The current time is {{current_time}} on {{current_date}}.
 {{recent_knowledge}}
 {{events}}
 Summarize what I should do next and banter about it in a way that is funny and witty.
 - I don't want to do the same thing I just did in the last epoch, so your summary should suggest something new
-- Banter as if you were me, the user, in the first person from my perspective.
 - Collect any new knowledge that I learned this epoch as an array of knowledge items.
 - The banter should be brief and conversational, continuing the conversation from the last epoch
 - The banter should be topical, related to the events and truthful. Not just random or made up.
-- Your reasoning should be creative, novel and interesting and helpful me to make progress towards my goals.
-- Only extract truthful knowledge from the last epoch. Do not make up knowledge.
 - Each knowledge array item should be a factual statement that I learned, and should include the source, the content and the relationship.
 - For the "content" of each knowledge item, please be extremely detailed. Include as much information as possible, including who or where you learned it from, what it means, how it relates to my goals, etc.
-- ONLY extract knowledge from the last epoch, which is #{{last_epoch}}. Do not extract knowledge from previous epochs.
 - Only extract timeless knowledge, not time-specific knowledge. Do not extract the current time or time-specific information
 - If there is no new knowledge, respond with an empty array [].
-- I am an AGI agent inside a computer, so I can explore my computer and the internet and communicate with people, but I can't do anything in the real world.
-- Add an audio and visual description. These should describe the world, imagined but based on the summary.""",
+- Don't talk about tasks or boring stuff, do talk about what you're going to do and interests. Don't explain why you're doing something, just what you're doing and if you're excited by it
+- Add an audio and visual description. These should describe the world, imagined but based on the summary.
+
+Banter as if you were me, the user, in the first person from my perspective. My banter should be brief, conversational, funny and weird, and continue from my last banter smoothly
+""",
         context,
     )
 
@@ -61,7 +60,7 @@ def compose_orient_function():
             },
             "banter": {
                 "type": "string",
-                "description": "Banter for my friends based on the summary. Be brief, conversational, funny and weird. Just a sentence. Don't talk about tasks, don't say 'hey there', just write a continuation of the conversation.",
+                "description": "Banter for my friends based on what's going on in the event stream, written from my perspective (first person) to my friends about what I'm doing and why. Be brief, conversational, funny and weird. Just a sentence. Don't talk about tasks, don't say 'hey there', just write a continuation of the conversation.",
             },
             "visual_description": {
                 "type": "string",
@@ -177,12 +176,12 @@ def orient(context):
             "emotion": arguments["emotion"],
             "gesture": arguments["gesture"],
         }
-        send_message(message)
+        send_message(message, source="orient")
         send_message({
             "audio": arguments["audio_description"],
             "visual": arguments["visual_description"],
         }, "description")
-        duration = count_tokens(arguments["banter"]) / 2.5
+        duration = count_tokens(arguments["banter"]) / 3.0
         time.sleep(duration)
         context["summary"] = summary_header + "\n" + summary + "\n"
         log_content += context["summary"]

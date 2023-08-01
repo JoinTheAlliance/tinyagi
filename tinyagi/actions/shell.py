@@ -45,7 +45,7 @@ def use_shell_handler(arguments):
         "emotion": emotion,
         "gesture": gesture,
     }
-    send_message(message, "chat")
+    send_message(message, "chat", source="shell")
     return run_command(command)
 
 

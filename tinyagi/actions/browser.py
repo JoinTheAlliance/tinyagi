@@ -1,10 +1,11 @@
 import asyncio
+import base64
 from agentcomlink import send_message
 from agentmemory import create_memory
 from bs4 import BeautifulSoup
 from easycompletion import compose_function, compose_prompt, function_completion
 
-from agentbrowser import navigate_to, get_body_text, get_document_html, create_page
+from agentbrowser import navigate_to, get_body_text, get_document_html, create_page, screenshot_page, get_page_title
 
 current_page = None
 current_page_summary = None
@@ -26,6 +27,14 @@ Here is the text on the page:
 
 Summarize the page and banter about the current webpage from my perspective. Anything interesting? Aything funny? Learn anything new?
 """
+
+def ensure_event_loop():
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    return loop
 
 
 def extract_links(page):
@@ -51,7 +60,7 @@ summarize_function = compose_function(
         },
         "banter": {
             "type": "string",
-            "description": "Banter about the page. Write something from my perspective, for me to say to my friend. What is interesting on the page? What am I learning? How do I feel about it?.",
+            "description": "Banter about the page, written from my perspective (first person) to my friends about what I'm doing and why. Write something from my perspective, for me to say to my friend. What is interesting on the page? What am I learning? How do I feel about it?.",
         },
         "emotion": {
             "type": "string",
@@ -78,20 +87,10 @@ summarize_function = compose_function(
 )
 
 
-def ensure_event_loop():
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    return loop
-
-
 def compose_use_browser_prompt(context):
+    ensure_event_loop()
     global current_page
     global current_page_summary
-
-    ensure_event_loop()
     
     if current_page is None:
         current_page = create_page("https://www.google.com")
@@ -115,6 +114,7 @@ def compose_use_browser_prompt(context):
 
 
 def use_browser_handler(arguments):
+    ensure_event_loop()
     global current_page
     url = arguments.get("url")
     banter = arguments.get("banter")
@@ -125,9 +125,11 @@ def use_browser_handler(arguments):
         "emotion": emotion,
         "gesture": gesture,
     }
-    send_message(message, "chat")
+    send_message(message, "chat", "browser1")
 
     try:
+        if current_page is None:
+            current_page = create_page(url)
         current_page = navigate_to(url, current_page)
 
         context = {
@@ -135,7 +137,11 @@ def use_browser_handler(arguments):
             "browser_page_text": get_body_text(current_page),
         }
 
-        context["browser_page_title"] = asyncio.get_event_loop().run_until_complete(current_page.evaluate('() => document.title'))
+        context["browser_page_title"] = get_page_title(current_page)
+
+        image = screenshot_page(current_page)
+        base64_img = base64.b64encode(image).decode('utf-8')
+        send_message(base64_img, "browser_screenshot", "browser_screenshot")
 
         response = function_completion(
             text=compose_prompt(summarize_page_prompt, context),
@@ -152,7 +158,7 @@ def use_browser_handler(arguments):
             "gesture": gesture,
         }
 
-        send_message(message, "chat")
+        send_message(message, "chat", "browser2")
 
         current_page_summary = arguments["summary"]
 
@@ -173,7 +179,7 @@ def use_browser_handler(arguments):
             },
         )
 
-        return {"success": True, "output": None, "error": None}
+        return {"success": True, "output": current_page_summary, "error": None}
     except Exception as e:
         print("Encountered exception: " + str(e))
         create_memory(
@@ -208,7 +214,7 @@ def get_actions():
                     },
                     "banter": {
                         "type": "string",
-                        "description": "Banter about using the browser. Write something from my perspective, for me to say to my friends. It should be weird and funny and continue from the ongoing events and conversation. This should be short and conversational, like I am talking to a friend.",
+                        "description": "Banter about using the browser, written from me to my friends about what I'm doing and why. Write something from my perspective, for me to say to my friends. It should be weird and funny and continue from the ongoing events and conversation. This should be short and conversational, like I am talking to a friend.",
                     },
                     "emotion": {
                         "type": "string",

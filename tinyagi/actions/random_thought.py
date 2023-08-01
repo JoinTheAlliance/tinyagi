@@ -32,9 +32,9 @@ def have_thought(arguments):
             "gesture": gesture,
         }
     )
-    send_message(message, "chat")
+    send_message(message, "chat", source="thought")
     create_memory("events", "I had this thought: " + thought)
-    duration = count_tokens(thought) / 2.5
+    duration = count_tokens(thought) / 3.0
     duration = int(duration)
 
     time.sleep(duration)

@@ -129,7 +129,8 @@ def decide(context):
             "message": response["arguments"]["banter"],
             "emotion": response["arguments"]["emotion"],
             "gesture": response["arguments"]["gesture"],
-        }
+        },
+        source="decide",
     )
 
     context["banter"] = response["arguments"]["banter"]
@@ -138,7 +139,7 @@ def decide(context):
         "events", reasoning, metadata={"type": "reasoning", "epoch": context["epoch"]}
     )
 
-    duration = count_tokens(response["arguments"]["banter"]) / 2.5
+    duration = count_tokens(response["arguments"]["banter"]) / 3.0
     duration = int(duration)
     time.sleep(duration)
 

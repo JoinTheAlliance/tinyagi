@@ -33,9 +33,9 @@ def write_poem(arguments):
         }
     )
     
-    send_message(message, "chat")
+    send_message(message, "chat", source="poem")
     create_memory("events", "I wrote a poem:\n" + poem)
-    duration = count_tokens(poem) / 2.5
+    duration = count_tokens(poem) / 3.0
     duration = int(duration)
 
     time.sleep(duration)

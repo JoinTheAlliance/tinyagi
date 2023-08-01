@@ -30,9 +30,9 @@ def write_joke(arguments):
             "gesture": gesture,
         }
     )
-    send_message(message, "chat")
+    send_message(message, "chat", source="joke")
     create_memory("events", "I told a joke:\n" + joke)
-    duration = count_tokens(joke) / 2.5
+    duration = count_tokens(joke) / 3.0
     duration = int(duration)
 
     time.sleep(duration)
