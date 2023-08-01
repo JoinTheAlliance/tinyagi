@@ -53,13 +53,6 @@ def use_chat(arguments):
             "message": message,
         }
     )
-    # TODO: simplify epoch
-    events = get_memories("events", n_results=1)
-    create_memory(
-        "events",
-        "I sent the message: " + message,
-        metadata={"type": "message", "sender": "user", "epoch": get_current_epoch()},
-    )
 
     # check if there is an existing event loop
     try:
