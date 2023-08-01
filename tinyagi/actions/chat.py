@@ -28,7 +28,7 @@ from agentagenda import list_tasks_as_formatted_string
 
 from tinyagi.context.knowledge import build_relevant_knowledge
 
-from tinyagi.constants import get_loop_dict
+from tinyagi.constants import get_current_epoch, get_loop_dict
 
 from agentaction import search_actions
 
@@ -55,14 +55,10 @@ def use_chat(arguments):
     )
     # TODO: simplify epoch
     events = get_memories("events", n_results=1)
-    if len(events) > 0:
-        epoch = events[0]["metadata"]["epoch"]
-    else:
-        epoch = 0
     create_memory(
         "events",
         "I sent the message: " + message,
-        metadata={"type": "message", "sender": "user", "epoch": epoch},
+        metadata={"type": "message", "sender": "user", "epoch": get_current_epoch()},
     )
 
     # check if there is an existing event loop
@@ -158,15 +154,10 @@ async def response_handler(data, loop_dict):
         return
 
     type = data["type"]
-    # TODO: simplify epoch
-    if len(events) > 0:
-        epoch = events[0]["metadata"]["epoch"]
-    else:
-        epoch = 0
     create_memory(
         "events",
         message,
-        metadata={"type": type, "sender": "administrator", "epoch": epoch},
+        metadata={"type": type, "sender": "administrator", "epoch": get_current_epoch()},
     )
 
     log(
@@ -181,7 +172,6 @@ async def response_handler(data, loop_dict):
     context = initialize()
     context = build_events_context(context)
     context = build_chat_context(context)
-    context["summary"] = message
     context = build_relevant_knowledge(context)
     context["user_files"] = list_files_formatted()
 
@@ -211,7 +201,7 @@ async def response_handler(data, loop_dict):
         create_memory(
             "events",
             "I responded to the administrator: " + arguments["message"],
-            metadata={"type": "message", "sender": "user", "epoch": str(epoch)},
+            metadata={"type": "message", "sender": "user", "epoch": get_current_epoch()},
         )
         return
 
@@ -250,7 +240,7 @@ async def response_handler(data, loop_dict):
     create_memory(
         "events",
         message["message"],
-        metadata={"type": "message", "sender": "user", "epoch": str(epoch)},
+        metadata={"type": "message", "sender": "user", "epoch": get_current_epoch()},
     )
 
 
@@ -551,7 +541,6 @@ def respond_to_twitch():
     context = build_twitch_context(context)
     context = build_events_context(context)
     context = build_chat_context(context)
-    context["summary"] = context["twitch"]
     context = build_relevant_knowledge(context)
     context["user_files"] = list_files_formatted()
     context["tasks"] = list_tasks_as_formatted_string()
@@ -565,12 +554,6 @@ def respond_to_twitch():
     )
     arguments = response.get("arguments", None)
 
-    events = get_memories("events", n_results=1)
-    if len(events) > 0:
-        epoch = events[0]["metadata"].get("epoch", 0)
-    else:
-        epoch = 0
-
     if arguments is not None:
         banter = arguments["banter"]
         urls = arguments.get("urls", [])
@@ -581,12 +564,12 @@ def respond_to_twitch():
 
         create_memory(
             "events",
-            "I responded to the Twitch chat: " + banter,
+            "Me: " + banter,
             metadata={
                 "type": "message",
                 "sender": "user",
                 "urls": json.dumps(urls),
-                "epoch": str(epoch),
+                "epoch": get_current_epoch(),
             },
         )
         use_chat({"message": banter})

@@ -10,3 +10,12 @@ def set_loop_dict(new_dict):
 def get_loop_dict():
     global loop_dict
     return loop_dict
+
+current_epoch = 0
+
+def get_current_epoch():
+    return current_epoch
+
+def set_current_epoch(new_epoch):
+    global current_epoch
+    current_epoch = new_epoch

@@ -6,6 +6,7 @@ from agentaction import (
 
 from agentmemory import create_memory
 from easycompletion import function_completion
+from tinyagi.constants import get_current_epoch
 from tinyagi.utils import log
 
 
@@ -29,7 +30,7 @@ def act(context):
             metadata={
                 "type": "error",
                 "subtype": "action_not_found",
-                "epoch": context["epoch"],
+                "epoch": get_current_epoch(),
             },
         )
         return {"error": f"Action {action_name} not found"}
@@ -61,7 +62,7 @@ def act(context):
             metadata={
                 "type": "error",
                 "subtype": "action_failed",
-                "epoch": context["epoch"],
+                "epoch": get_current_epoch(),
             },
         )
         log(
@@ -77,7 +78,7 @@ def act(context):
             metadata={
                 "type": "success",
                 "subtype": "action_success",
-                "epoch": context["epoch"],
+                "epoch": get_current_epoch(),
             },
         )
         log(

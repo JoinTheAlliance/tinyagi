@@ -7,6 +7,7 @@ from easycompletion import (
     compose_function,
     count_tokens,
 )
+from tinyagi.constants import get_current_epoch
 
 from tinyagi.utils import log
 
@@ -113,11 +114,11 @@ def decide(context):
     context["banter"] = response["arguments"]["banter"]
 
     create_memory(
-        "events", "Here is my reasoning for the next step: " + reasoning, metadata={"type": "reasoning", "epoch": context["epoch"]}
+        "events", "Here is my reasoning for the next step: " + reasoning, metadata={"type": "reasoning", "epoch": get_current_epoch()}
     )
 
     create_memory(
-        "events", "I bantered to chat: " + response["arguments"]["banter"], metadata={"type": "banter", "epoch": context["epoch"]}
+        "events", "Me: " + response["arguments"]["banter"], metadata={"type": "banter", "epoch": get_current_epoch()}
     )
 
     duration = count_tokens(response["arguments"]["banter"]) / 3.0

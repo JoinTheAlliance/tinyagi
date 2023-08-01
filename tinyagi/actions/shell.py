@@ -5,6 +5,8 @@ from easycompletion import compose_function, compose_prompt
 
 from agentshell.main import get_files_in_cwd, run_command
 
+from tinyagi.constants import get_current_epoch
+
 
 use_shell_prompt = """TIME: {{current_time}}
 DATE: {{current_date}}
@@ -47,7 +49,7 @@ def use_shell_handler(arguments):
         "gesture": gesture,
     }
     send_message(message, "chat", source="shell")
-    create_memory("events", "I ran a command in my shell:\n" + command)
+    create_memory("events", "I ran a command in my shell:\n" + command, metadata={"epoch": get_current_epoch()})
     return run_command(command)
 
 

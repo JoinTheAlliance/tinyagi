@@ -4,6 +4,8 @@ from agentcomlink import send_message
 from agentmemory import create_memory
 from easycompletion import compose_prompt, count_tokens
 
+from tinyagi.constants import get_current_epoch
+
 
 prompt = """
 {{events}}
@@ -33,7 +35,7 @@ def have_thought(arguments):
         }
     )
     send_message(message, "chat", source="thought")
-    create_memory("events", "I had this thought: " + thought)
+    create_memory("events", "I had this thought: " + thought, metadata={"epoch": get_current_epoch()})
     duration = count_tokens(thought) / 3.0
     duration = int(duration)
 

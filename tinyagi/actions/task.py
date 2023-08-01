@@ -11,6 +11,8 @@ from agentcomlink import send_message
 from agentmemory import create_memory
 from easycompletion import compose_prompt
 
+from tinyagi.constants import get_current_epoch
+
 
 def create_task_handler(arguments):
     """
@@ -25,7 +27,7 @@ def create_task_handler(arguments):
         "gesture": arguments["gesture"],
     }
     send_message(message, source="create_task")
-    create_memory("events", "I created a new task:\n" + goal)
+    create_memory("events", "I created a new task:\n" + goal, metadata={"epoch": get_current_epoch()})
     return {"success": True, "output": arguments["banter"], "error": None}
 
 
@@ -42,7 +44,7 @@ def cancel_task_handler(arguments):
         "gesture": arguments["gesture"],
     }
     send_message(message, source="cancel_task")
-    create_memory("events", "I canceled a task:\n" + goal)
+    create_memory("events", "I canceled a task:\n" + goal, metadata={"epoch": get_current_epoch()})
     return {"success": True, "output": arguments["banter"], "error": None}
 
 
@@ -59,7 +61,7 @@ def complete_task_handler(arguments):
         "gesture": arguments["gesture"],
     }
     send_message(message, source="complete_task")
-    create_memory("events", "I completed a task:\n" + goal)
+    create_memory("events", "I completed a task:\n" + goal, metadata={"epoch": get_current_epoch()})
     return {"success": True, "output": arguments["banter"], "error": None}
 
 def complete_step_handler(arguments):
@@ -82,7 +84,7 @@ def complete_step_handler(arguments):
         "gesture": arguments["gesture"],
     }
     send_message(message, source="complete_step")
-    create_memory("events", "I completed a step:\n" + step)
+    create_memory("events", "I completed a step:\n" + step, metadata={"epoch": get_current_epoch()})
     return {"success": True, "output": arguments["banter"], "error": None}
 
 
@@ -101,7 +103,7 @@ def add_step_handler(arguments):
         "gesture": arguments["gesture"],
     }
     send_message(message, source="add_step")
-    create_memory("events", "I added a step:\n" + step)
+    create_memory("events", "I added a step:\n" + step, metadata={"epoch": get_current_epoch()})
     return {"success": True, "output": arguments["banter"], "error": None}
 
 
@@ -122,7 +124,7 @@ def cancel_step_handler(arguments):
         "gesture": arguments["gesture"],
     }
     send_message(message, source="cancel_step")
-    create_memory("events", "I canceled a step:\n" + step)
+    create_memory("events", "I canceled a step:\n" + step, metadata={"epoch": get_current_epoch()})
     return {"success": True, "output": arguments["banter"], "error": None}
 
 create_task_prompt = """\

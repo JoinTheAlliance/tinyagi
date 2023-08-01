@@ -10,6 +10,8 @@ from agentmemory import (
     search_memory,
 )
 
+from tinyagi.constants import get_current_epoch
+
 MAX_PROMPT_LIST_TOKENS = 1536  # 2048 - 512
 MAX_PROMPT_TOKENS = 3072  # 4096 - 1024
 DEFAULT_SIMILARY_THRESHOLD = 0.92  # used for detecting if things are the similar
@@ -71,7 +73,7 @@ def build_recent_knowledge(context):
     Returns: str - A string containing the formatted recent knowledge.
     """
     recent_knowledge = get_memories(
-        "knowledge", filter_metadata={"epoch": context["epoch"] - 1}
+        "knowledge", filter_metadata={"epoch": get_current_epoch() - 1}
     )
 
     # trim any individual knowledge, just in case

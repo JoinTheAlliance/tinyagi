@@ -4,6 +4,8 @@ from agentcomlink import send_message
 from agentmemory import create_memory
 from easycompletion import compose_prompt, count_tokens
 
+from tinyagi.constants import get_current_epoch
+
 
 prompt = """\
 {{relevant_knowledge}}
@@ -34,7 +36,7 @@ def write_poem(arguments):
     )
     
     send_message(message, "chat", source="poem")
-    create_memory("events", "I wrote a poem:\n" + poem)
+    create_memory("events", "I wrote a poem:\n" + poem, metadata={"epoch": get_current_epoch()})
     duration = count_tokens(poem) / 3.0
     duration = int(duration)
 
