@@ -30,9 +30,10 @@ Assistant Notes:
 - Respond with the name of the action (action_name)
 
 {{relevant_knowledge}}
+{{current_task_formatted}}
+
 {{events}}
 {{available_short_actions}}
-{{current_task_formatted}}
 
 Based on recent events, which of the actions that you think is the best next action for me to progress towards my current task and goals?
 - I can only choose from the available actions. You must choose one of the available actions.
