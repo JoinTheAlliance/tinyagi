@@ -7,6 +7,8 @@ from easycompletion import compose_function, compose_prompt, function_completion
 
 from agentbrowser import navigate_to, get_body_text, get_document_html, create_page, screenshot_page, get_page_title
 
+from tinyagi.constants import get_current_epoch
+
 current_page = None
 current_page_summary = None
 use_browser_prompt = """
@@ -104,23 +106,21 @@ def use_browser_handler(arguments):
     send_message(message, "chat", "browser1")
 
     try:
-        print('******** BROWSER!!!!!!')
         if current_page is None:
             current_page = create_page(url)
         else:
-            current_page = navigate_to(url, current_page, wait_until="domcontentloaded")
+            current_page = navigate_to(url, current_page, wait_until="networkidle")
+
+        body_text = get_body_text(current_page)
 
         context = {
             "browser_page_url": current_page.url,
-            "browser_page_text": get_body_text(current_page),
+            "browser_page_text": body_text,
         }
 
         context["browser_page_title"] = get_page_title(current_page)
 
-        print('************** SCREENSHOT PAGE')
-        print('image')
         image = screenshot_page(current_page)
-        print(image)
         base64_img = base64.b64encode(image).decode('utf-8')
         send_message(base64_img, "browser_screenshot", "browser_screenshot")
 
@@ -151,6 +151,7 @@ def use_browser_handler(arguments):
             metadata={
                 "type": "visit_webpage",
                 "url": url,
+                "epoch": get_current_epoch(),
             },
         )
 
@@ -169,6 +170,7 @@ def use_browser_handler(arguments):
             metadata={
                 "type": "visit_webpage",
                 "url": url,
+                "epoch": get_current_epoch(),
             },
         )
         return {"success": False, "output": None, "error": str(e)}

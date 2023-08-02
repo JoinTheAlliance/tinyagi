@@ -101,7 +101,7 @@ def decide(context):
     context["reasoning"] = reasoning_header + "\n" + reasoning + "\n"
     context["action_name"] = response["arguments"]["action_name"]
 
-    log_content = f"Action: {context['action_name']}\nReasoning: {context['reasoning']}"
+    log_content = f"Action: {context['action_name']}\n{context['reasoning']}"
 
     log(log_content, type="step", source="decide", title="tinyagi")
 

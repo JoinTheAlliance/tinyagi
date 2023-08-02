@@ -62,7 +62,7 @@ Epoch # | <Type>::<Subtype> (Creator): <Event>
     # reverse events
 
     # sort the events by event["metadata"]["epoch"]
-    events = sorted(events, key=lambda k: k["metadata"]["epoch"])
+    events = sorted(events, key=lambda k: int(k["metadata"].get("epoch", 0)))
 
     # annotated events
     annotated_events = "\n".join([event_to_string(event) for event in events])

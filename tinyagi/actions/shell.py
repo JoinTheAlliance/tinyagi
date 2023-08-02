@@ -13,13 +13,14 @@ DATE: {{current_date}}
 PLATFORM: {{platform}}
 PROJECT DIRECTORY: {{cwd}}
 PWD: {{cwd}}
-{{files_in_current_directory}}
 {{relevant_knowledge}}
+{{files_in_current_directory}}
 {{events}}
 {{summary}}
 {{reasoning}}
 
 Based on the action reasoning, what command should I run in my terminal? Please include all arguments, etc. on one line.
+- Be concise. Don't hedge or say 'based on my reasoning', just say the reasoning and command
 - Write a one-liner that I can run in my terminal (command)
 - Then, write a summary of what output you expect to see (expected_output)
 - If I ran a command, I probably should not run it again, so please don't suggest the same command twice in a row.

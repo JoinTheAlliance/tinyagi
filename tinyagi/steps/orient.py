@@ -1,11 +1,8 @@
-import time
 from agentcomlink import send_message
-from agentmemory import create_memory
 from easycompletion import (
     function_completion,
     compose_prompt,
     compose_function,
-    count_tokens,
 )
 from tinyagi.utils import log
 
@@ -26,15 +23,15 @@ def compose_orient_prompt(context):
         """I am Citrine, an AGI agent. I'm living inside a Linux computer in San Francisco. I can explore my computer and the internet and communicate with people, but I can't do anything in the real world. The current time is {{current_time}} on {{current_date}}.
 {{recent_knowledge}}
 {{events}}
-Summarize what I should do next.
-- I don't want to do the same thing I just did in the last epoch, so your summary should suggest something new
-- Collect any new knowledge that I learned this epoch as an array of knowledge items.
-- Each knowledge array item should be a factual statement that I learned, and should include the source, the content and the relationship.
+Comment on the results of the action I just performed and what I should do next
+- I don't want to do the same thing I just did in the last epoch, suggest something new
+- Collect any new knowledge that I learned from my action last epoch as an array of knowledge items
+- Each knowledge array item should be an item of self-contained knowledge that I learned, and should include the source, the content and the relationship.
 - For the "content" of each knowledge item, please be extremely detailed. Include as much information as possible, including who or where you learned it from, what it means, how it relates to my goals, etc.
-- Only extract timeless knowledge, not time-specific knowledge. Do not extract the current time or time-specific information
+- Only extract timeless knowledge, not time-based information. Do not extract the current time or a temporary status
 - If there is no new knowledge, respond with an empty array [].
 - Don't talk about tasks or boring stuff, do talk about what you're going to do and interests. Don't explain why you're doing something, just what you're doing and if you're excited by it
-- Add an audio and visual description. These should describe the world, imagined but based on the summary.""",
+- Add an audio and visual description. These should describe the next action I should take, using expressive imagery and words, formatted as DALL-E text2image prompts.""",
         context,
     )
 
@@ -51,33 +48,33 @@ def compose_orient_function():
         properties={
             "summary": {
                 "type": "string",
-                "description": "Write a summary as if you were me, the user, from the my perspective in the first person. Write about how I'm doing, feeling and what I'm going to do next.",
+                "description": "Comment on how the last action went as if you were me, the user, from the my perspective in the first person. Banter about how it went, and scheme about what I am going to do next from my perspective.",
             },
             "visual_description": {
                 "type": "string",
-                "description": "A highly creative and imaginative visual description of the current world. Describe the space, objects and characters inside of it. The description should be one paragraph in length.",
+                "description": "Describe, using visual imagery, what I am going to do next. Describe the scene, objects and characters inside of it as a prompt for a text-to-image DALL-E model.",
             },
             "audio_description": {
                 "type": "string",
-                "description": "A highly creative and imaginative audio description of the current world. Describe the sounds I hear, the music I hear, the voices I hear, the noises I hear. The description should be one paragraph in length.",
+                "description": "Describe the sounds that are made during my next action as a prompt for a text-to-audio model.",
             },
             "knowledge": {
                 "type": "array",
-                "description": "An array of knowledge items that are extracted from my last epoch of events and the summary of those events. Only include knowledge that has not been learned before. Knowledge can be about anything that would help me. If none, use an empty array.",
+                "description": "An array of knowledge items that are extracted from the last epoch of events and the summary of those events. Knowledge can be about anything that I would have learned from my actions. If none, use an empty array [].",
                 "items": {
                     "type": "object",
                     "properties": {
                         "source": {
                             "type": "string",
-                            "description": "Where did I learn this? From a connector, the internet, a user or from my own reasoning? Use first person, e.g. 'I learned this from the internet.', from the user's perspective",
+                            "description": "Where did I learn this? Just state the source, e.g. 'wikipdia' or 'Janus on Twitter'",
                         },
                         "content": {
                             "type": "string",
-                            "description": "The actual knowledge I learned. Please format it as a sentence, e.g. 'The sky is blue.' from the user's perspective, in the first person, e.g. 'I can write shell scripts by running a shell command, calling cat and piping out.'",
+                            "description": "The actual knowledge I learned. Please format it as a sentence, e.g. 'The sky is blue.' from my perspective, in the first person",
                         },
                         "relationship": {
                             "type": "string",
-                            "description": "What is useful, interesting or important about this information to me and my goals? How does it relate to what I'm doing? Use first person, e.g. 'I can use X to do Y.' from the user's perspective",
+                            "description": "What is useful, interesting or important about this information to me and my goals? How does it relate to what I'm doing? Use first person, e.g. 'I can use X to do Y.' from my perspective",
                         },
                     },
                 },
@@ -165,6 +162,7 @@ def orient(context):
             "emotion": arguments["emotion"],
             "gesture": arguments["gesture"],
         }
+        send_message({ "message": summary, "type": "summary", "source": "orient"})
         send_message(message, type="emotion", source="orient")
         send_message({
             "audio": arguments["audio_description"],
