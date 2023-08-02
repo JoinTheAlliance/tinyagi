@@ -8,15 +8,17 @@ from tinyagi.constants import get_current_epoch
 
 
 prompt = """
+- DO NOT just state relevant knowledge
+- You should state knowledge that I don't already know
 {{relevant_knowledge}}
 
 {{events}}
 
 Write some random banter or say a random fact or bit of esoteric knowledge that I can tell my friends. Should be from my perspective addressed to my friend. The fact should be based on my existing knowledge and recent events, or totally random.
-Your facts and banter should be silly and edgy. Make jokes that are dark and strange. Make references to the chat and my friends who are sending messages to the chat. Make fun of people.
-Your banter should be different from the recent banter, or continuing it.
-The fact should be a new fact, NOT a fact that has already been stated in the event stream.
-Don't acknowledge the request. Just banter."""
+Your facts and banter should be silly and edgy. Make references to the chat and my friends who are sending messages to the chat.
+My banter should be different and continuing recent banter.
+My fact should be a new fact, not a fact that I have already stated in the event stream.
+Don't acknowledge the request."""
 
 
 def state_fact(arguments):

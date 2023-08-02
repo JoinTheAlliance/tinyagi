@@ -239,28 +239,28 @@ async def response_handler(data, loop_dict):
 
 def get_actions():
     return [
-        {
-            "function": compose_function(
-                name="send_message",
-                description="Send a message.",
-                properties={
-                    "to": {
-                        "type": "string",
-                        "description": "The name of the person I should send the message to.",
-                    },
-                    "message": {
-                        "type": "string",
-                        "description": "The message I should send, as a brief conversational chat message from me to them.",
-                    },
-                },
-                required_properties=["to", "message"],
-            ),
-            "prompt": administrator_prompt,
-            "builder": send_message_builder,
-            "handler": use_chat,
-            "suggestion_after_actions": [],
-            "never_after_actions": [],
-        }
+        # {
+        #     "function": compose_function(
+        #         name="send_message",
+        #         description="Send a message.",
+        #         properties={
+        #             "to": {
+        #                 "type": "string",
+        #                 "description": "The name of the person I should send the message to.",
+        #             },
+        #             "message": {
+        #                 "type": "string",
+        #                 "description": "The message I should send, as a brief conversational chat message from me to them.",
+        #             },
+        #         },
+        #         required_properties=["to", "message"],
+        #     ),
+        #     "prompt": administrator_prompt,
+        #     "builder": send_message_builder,
+        #     "handler": use_chat,
+        #     "suggestion_after_actions": [],
+        #     "never_after_actions": [],
+        # }
     ]
 
 

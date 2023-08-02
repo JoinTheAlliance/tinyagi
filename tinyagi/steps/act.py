@@ -55,6 +55,9 @@ def act(context):
 
     action_result = use_action(response["function_name"], response["arguments"])
 
+    print('*************** ACTION RESULT')
+    print(action_result)
+
     if action_result is None or action_result["success"] is False:
         create_memory(
             "events",

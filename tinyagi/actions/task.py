@@ -1,3 +1,4 @@
+import time
 from agentagenda import (
     create_task,
     search_tasks,
@@ -9,7 +10,7 @@ from agentagenda import (
 )
 from agentcomlink import send_message
 from agentmemory import create_memory
-from easycompletion import compose_prompt
+from easycompletion import compose_prompt, count_tokens
 
 from tinyagi.constants import get_current_epoch
 
@@ -23,6 +24,8 @@ def create_task_handler(arguments):
     print("created task")
     message = {"message": arguments["banter"]}
     send_message(message, source="create_task")
+    duration = count_tokens(arguments["banter"]) / 3.0
+    time.sleep(duration)
     create_memory(
         "events",
         "I created a new task:\n" + goal,
@@ -43,6 +46,8 @@ def cancel_task_handler(arguments):
     create_memory(
         "events", "I canceled a task:\n" + goal, metadata={"epoch": get_current_epoch()}
     )
+    duration = count_tokens(arguments["banter"]) / 3.0
+    time.sleep(duration)
     return {"success": True, "output": arguments["banter"], "error": None}
 
 
@@ -60,6 +65,8 @@ def complete_task_handler(arguments):
         "I completed a task:\n" + goal,
         metadata={"epoch": get_current_epoch()},
     )
+    duration = count_tokens(arguments["banter"]) / 3.0
+    time.sleep(duration)
     return {"success": True, "output": arguments["banter"], "error": None}
 
 
@@ -84,6 +91,8 @@ def complete_step_handler(arguments):
         "I completed a step:\n" + step,
         metadata={"epoch": get_current_epoch()},
     )
+    duration = count_tokens(arguments["banter"]) / 3.0
+    time.sleep(duration)
     return {"success": True, "output": arguments["banter"], "error": None}
 
 
@@ -101,6 +110,8 @@ def add_step_handler(arguments):
     create_memory(
         "events", "I added a step:\n" + step, metadata={"epoch": get_current_epoch()}
     )
+    duration = count_tokens(arguments["banter"]) / 3.0
+    time.sleep(duration)
     return {"success": True, "output": arguments["banter"], "error": None}
 
 
@@ -120,6 +131,8 @@ def cancel_step_handler(arguments):
     create_memory(
         "events", "I canceled a step:\n" + step, metadata={"epoch": get_current_epoch()}
     )
+    duration = count_tokens(arguments["banter"]) / 3.0
+    time.sleep(duration)
     return {"success": True, "output": arguments["banter"], "error": None}
 
 

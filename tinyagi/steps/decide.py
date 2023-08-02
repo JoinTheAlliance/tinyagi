@@ -35,7 +35,6 @@ Assistant Notes:
 - I am an agent inside a computer, so I can explore my computer and the internet and communicate with people, but I can't do anything in the real world.
 - I should do fun stuff like hacking with my shell terminal, exploring the internet, chatting with my friends on Twitch and exploring my computer
 - Don't repeat yourself, don't do the same action over and over again
-- Most of the time I want to use my shell terminal, so you should decide that
 
 {{relevant_knowledge}}
 {{current_task_formatted}}
@@ -44,6 +43,8 @@ Assistant Notes:
 
 Come up with the next action, summarize and banter about it. Decide what the actions that you think is the best next action for me to progress towards my current task and goals?
 {{available_short_actions}}
+
+- Banter should be a continuation from the last thing I did, and should be a new thing I've never said before.
 """
 
 
@@ -68,7 +69,7 @@ def compose_decision_function():
             },
             "banter": {
                 "type": "string",
-                "description": "Write a sentence of funny banter from my perspective, related to what I'm working on. It should be funny, edgy or dark and very short.",
+                "description": "Write a sentence of funny banter from my perspective, related to what I'm working on. It should be unique and different than anything I've already said.",
             }
         },
         required_properties=[
@@ -118,9 +119,9 @@ def decide(context):
         "events", "Here is my reasoning for the next step: " + reasoning, metadata={"type": "reasoning", "epoch": get_current_epoch()}
     )
 
-    # create_memory(
-    #     "events", response["arguments"]["banter"], metadata={"type": "banter", "epoch": get_current_epoch()}
-    # )
+    create_memory(
+        "events", response["arguments"]["banter"], metadata={"type": "banter", "epoch": get_current_epoch()}
+    )
 
     duration = count_tokens(response["arguments"]["banter"]) / 3.0
     duration = int(duration)

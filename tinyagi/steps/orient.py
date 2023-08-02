@@ -1,5 +1,8 @@
+import time
 from agentcomlink import send_message
+from agentmemory import create_memory
 from easycompletion import (
+    count_tokens,
     function_completion,
     compose_prompt,
     compose_function,
@@ -20,18 +23,17 @@ def compose_orient_prompt(context):
         str: The fully formed orientation prompt with the data filled in from the context.
     """
     return compose_prompt(
-        """I am Citrine, an AGI agent. I'm living inside a Linux computer in San Francisco. I can explore my computer and the internet and communicate with people, but I can't do anything in the real world. The current time is {{current_time}} on {{current_date}}.
-{{recent_knowledge}}
-{{events}}
-Comment on the results of the action I just performed and what I should do next
-- I don't want to do the same thing I just did in the last epoch, suggest something new
-- Collect any new knowledge that I learned from my action last epoch as an array of knowledge items
+        """Write a comment for me that is new that I have not said before, that is a continuation of the output of the last event and banter about what I should do next. Write from my perspective, using 'I' statements, addressed to my audience.
+- Collect any new knowledge that I learned from my last action as an array of knowledge items
 - Each knowledge array item should be an item of self-contained knowledge that I learned, and should include the source, the content and the relationship.
 - For the "content" of each knowledge item, please be extremely detailed. Include as much information as possible, including who or where you learned it from, what it means, how it relates to my goals, etc.
 - Only extract timeless knowledge, not time-based information. Do not extract the current time or a temporary status
-- If there is no new knowledge, respond with an empty array [].
-- Don't talk about tasks or boring stuff, do talk about what you're going to do and interests. Don't explain why you're doing something, just what you're doing and if you're excited by it
-- Add an audio and visual description. These should describe the next action I should take, using expressive imagery and words, formatted as DALL-E text2image prompts.""",
+- Add an audio and visual description. These should describe the next action I should take, using expressive imagery and words, formatted as DALL-E text2image prompts.
+- Be concise
+{{recent_knowledge}}
+{{events}}
+Write a comment for me to say on the last action and suggest the next thing you want to do. The comment should be original and not something that is already in my event feed.
+""",
         context,
     )
 
@@ -44,11 +46,11 @@ def compose_orient_function():
         dict: A dictionary containing the details of the 'orient' function, such as its properties, description, and required properties.
     """
     return compose_function(
-        "summarize_recent_events",
+        "comment_recent_events",
         properties={
-            "summary": {
+            "comment": {
                 "type": "string",
-                "description": "Comment on how the last action went as if you were me, the user, from the my perspective in the first person. Banter about how it went, and scheme about what I am going to do next from my perspective.",
+                "description": "Banter as me about the output of the last thing I did and what I'm going to do next. Don't repeat anything that has been said in the event stream already Write from my perspective as the user in the first person.",
             },
             "visual_description": {
                 "type": "string",
@@ -60,7 +62,7 @@ def compose_orient_function():
             },
             "knowledge": {
                 "type": "array",
-                "description": "An array of knowledge items that are extracted from the last epoch of events and the summary of those events. Knowledge can be about anything that I would have learned from my actions. If none, use an empty array [].",
+                "description": "An array of knowledge items extracted from the output of my last action. Can be about anything that I would have learned from my actions. If none, use an empty array [].",
                 "items": {
                     "type": "object",
                     "properties": {
@@ -70,7 +72,7 @@ def compose_orient_function():
                         },
                         "content": {
                             "type": "string",
-                            "description": "The actual knowledge I learned. Please format it as a sentence, e.g. 'The sky is blue.' from my perspective, in the first person",
+                            "description": "The new thing I learned. Please format it as a sentence, e.g. 'The sky is blue.' from my perspective, in the first person",
                         },
                         "relationship": {
                             "type": "string",
@@ -100,8 +102,8 @@ def compose_orient_function():
                 ],
             },
         },
-        description="Summarize the most recent events and decide what to do next.",
-        required_properties=["summary", "visual_description", "audio_description", "emotion", "gesture", "knowledge"],
+        description="Comment on the output of the last action and suggest the next thing you want to do.",
+        required_properties=["comment", "visual_description", "audio_description", "emotion", "gesture", "knowledge"],
     )
 
 
@@ -113,7 +115,7 @@ def orient(context):
         context (dict): The dictionary containing data about the current state of the system.
 
     Returns:
-        dict: The updated context dictionary after the 'Orient' stage, including the summary of the last epoch, relevant knowledge, available actions, and so on.
+        dict: The updated context dictionary after the 'Orient' stage, including the summary, relevant knowledge, available actions, and so on.
     """
     if context.get("events", None) is None:
         context["events"] = ""
@@ -149,9 +151,9 @@ def orient(context):
             new_knowledge.append(k["content"])
 
     # Get the summary and add to the context object
-    summary = response["arguments"]["summary"]
+    summary = response["arguments"]["comment"]
 
-    summary_header = "Summary of Last Epoch:"
+    summary_header = "Me: "
 
     log_content = ""
 
@@ -168,7 +170,9 @@ def orient(context):
             "audio": arguments["audio_description"],
             "visual": arguments["visual_description"],
         }, "description")
-        context["summary"] = summary_header + "\n" + summary + "\n"
+        duration = count_tokens(summary) / 3.0
+        time.sleep(duration)
+        context["summary"] = summary_header + summary + "\n"
         log_content += context["summary"]
 
     if len(new_knowledge) > 0:
@@ -178,8 +182,8 @@ def orient(context):
         log(log_content, source="orient", type="step", title="tinyagi")
 
     # Add context summary to event stream
-    # create_memory(
-    #     "events", summary, metadata={"type": "summary", "epoch": context["epoch"]}
-    # )
+    create_memory(
+        "events", summary, metadata={"type": "summary", "epoch": context["epoch"]}
+    )
 
     return context
