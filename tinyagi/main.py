@@ -1,13 +1,11 @@
-import asyncio
 import os
-import threading
-from agentcomlink import register_message_handler
 from dotenv import load_dotenv
 from agentlogger import print_header
-from tinyagi.actions.chat import initialize_twitch, response_handler
 from tinyagi.constants import set_loop_dict
 from tinyagi.utils import log
-
+import importlib
+import os
+import sys
 from agentaction import import_actions
 from agentmemory import wipe_all_memories
 from agentloop import (
@@ -37,10 +35,30 @@ def print_logo():
     log("Starting...", type="system", color="BRIGHT_BLACK")
 
 
+def start_connectors(connectors_dir, loop_dict):
+    """
+    Build a context step function from the context builders in the given directory
+
+    Returns:
+    context: the context dictionary
+    """
+    connectors_dir = os.path.abspath(connectors_dir)
+    sys.path.insert(0, connectors_dir)
+
+    for filename in os.listdir(connectors_dir):
+        if filename.endswith(".py"):
+            module = importlib.import_module(f"{filename[:-3]}")
+
+            if hasattr(module, "start_connector"):
+                module.start_connector(loop_dict)
+    sys.path.remove(connectors_dir)
+
+
 def start(
     steps=None,
     actions_dir="./tinyagi/actions",
     context_dir="./tinyagi/context",
+    connectors_dir="./tinyagi/connectors",
     seed_data=None,
     reset=False,
     paused=False,
@@ -73,25 +91,6 @@ def start(
     loop_dict = start_loop(steps, paused=paused)
     set_loop_dict(loop_dict)
 
-    from uvicorn import Config, Server
-
-    config = Config(
-        "agentcomlink:start_server",
-        host="0.0.0.0",
-        port=int(os.getenv("PORT", 8000)),
-        factory=True,
-    )
-    server = Server(config)
-
-    def start_server():
-        asyncio.run(server.serve())
-
-    # start the server in a new thread
-    threading.Thread(target=start_server, daemon=True).start()
-
-    # Register the message handler
-    register_message_handler(lambda data: response_handler(data, loop_dict))
-
-    initialize_twitch()
+    start_connectors(connectors_dir, loop_dict)
 
     return loop_dict
