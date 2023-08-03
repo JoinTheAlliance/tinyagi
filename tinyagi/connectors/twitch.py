@@ -531,18 +531,19 @@ async def twitch_handle_loop():
     global time_last_spoken
     last_event_epoch = 0
     while True:
-        if time.time() - time_last_spoken < 45:
-            asyncio.sleep(1)
-            continue
-        time_last_spoken = time.time()
-
         try:
             new_message = queue.get_nowait()  # Try to get a new message from the queue
             if new_message:
+                time_last_spoken = time.time()
                 respond_to_twitch()  # Respond to Twitch if there's a new message
+                continue
         except asyncio.QueueEmpty:
             pass  # If there's no new message, continue as usual
 
+        # if time.time() - time_last_spoken < 45:
+        #     asyncio.sleep(1)
+        #     continue
+        time_last_spoken = time.time()
         context = build_twitch_context({})
         context = build_events_context(context)
         prompt = compose_loop_prompt(context)
@@ -552,6 +553,7 @@ async def twitch_handle_loop():
         if epoch == last_event_epoch:
             asyncio.sleep(0.1)
             continue
+        last_event_epoch = epoch
 
         response = text_completion(text=prompt, temperature=1.0, debug=True)
         response2 = function_completion(
