@@ -531,6 +531,7 @@ async def twitch_handle_loop():
     global time_last_spoken
     last_event_epoch = 0
     while True:
+        print('running')
         try:
             new_message = queue.get_nowait()  # Try to get a new message from the queue
             if new_message:
@@ -540,9 +541,9 @@ async def twitch_handle_loop():
         except asyncio.QueueEmpty:
             pass  # If there's no new message, continue as usual
 
-        # if time.time() - time_last_spoken < 45:
-        #     asyncio.sleep(1)
-        #     continue
+        if time.time() - time_last_spoken < 45:
+            await asyncio.sleep(1)
+            continue
         time_last_spoken = time.time()
         context = build_twitch_context({})
         context = build_events_context(context)
@@ -551,7 +552,7 @@ async def twitch_handle_loop():
         event = get_events(n_results=1)
         epoch = event[0]["metadata"]["epoch"] if len(event) > 0 else 0
         if epoch == last_event_epoch:
-            asyncio.sleep(0.1)
+            await asyncio.sleep(0.1)
             continue
         last_event_epoch = epoch
 
@@ -616,10 +617,11 @@ async def twitch_handle_loop():
         await async_send_message(message, source="use_chat")
         duration = count_tokens(banter) / 3.0
         duration = int(duration)
-        asyncio.sleep(duration)
+        await asyncio.sleep(duration)
 
 
 def start_connector(loop_dict):
+    print("Starting Twitch connector...")
     twitch_state = {
         "sock": None,
         "partial": b"",
@@ -631,8 +633,8 @@ def start_connector(loop_dict):
 
     async def run_both_loops(twitch_state):
         await asyncio.gather(
-            asyncio.create_task(twitch_handle_messages(twitch_state)),
             asyncio.create_task(twitch_handle_loop()),
+            asyncio.create_task(twitch_handle_messages(twitch_state)),
         )
 
     asyncio.run(run_both_loops(twitch_state))
