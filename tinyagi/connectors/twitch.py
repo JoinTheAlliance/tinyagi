@@ -37,7 +37,7 @@ re_prog = re.compile(
     b"^(?::(?:([^ !\r\n]+)![^ \r\n]*|[^ \r\n]*) )?([^ \r\n]+)(?: ([^:\r\n]*))?(?: :([^\r\n]*))?\r\n",
     re.MULTILINE,
 )
-TWITCH_CHANNEL = "avaer"
+TWITCH_CHANNEL = "isekai_citrine"
 MAX_WORKERS = 100  # Maximum number of threads you can process at a time
 
 message_queue = []
@@ -534,7 +534,7 @@ async def twitch_handle_loop():
     global time_last_spoken
     last_event_epoch = 0
     while True:
-        if time.time() - time_last_spoken < 0:
+        if time.time() - time_last_spoken < 40:
             await asyncio.sleep(1)
             continue
         time_last_spoken = time.time()
