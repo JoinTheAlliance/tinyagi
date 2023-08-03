@@ -37,7 +37,7 @@ re_prog = re.compile(
     b"^(?::(?:([^ !\r\n]+)![^ \r\n]*|[^ \r\n]*) )?([^ \r\n]+)(?: ([^:\r\n]*))?(?: :([^\r\n]*))?\r\n",
     re.MULTILINE,
 )
-TWITCH_CHANNEL = "isekai_citrine"
+TWITCH_CHANNEL = "avaer"
 MAX_WORKERS = 100  # Maximum number of threads you can process at a time
 
 message_queue = []
@@ -449,8 +449,12 @@ def receive_and_parse_data(twitch_state):
 
     return []
 
+async def twitch_receive_messages(twitch_state):
+    loop = asyncio.get_event_loop()
+    privmsgs = await loop.run_in_executor(None, _twitch_receive_messages_sync, twitch_state)
+    return privmsgs
 
-def twitch_receive_messages(twitch_state):
+def _twitch_receive_messages_sync(twitch_state):
     privmsgs = []
     for irc_message in receive_and_parse_data(twitch_state):
         cmd = irc_message["command"]
@@ -508,7 +512,7 @@ async def twitch_handle_messages(twitch_state):
     global twitch_active_tasks
     global time_last_spoken
     while True:
-        new_messages = twitch_receive_messages(twitch_state)
+        new_messages = await twitch_receive_messages(twitch_state)
         if new_messages:
             for message in new_messages:
                 log(
@@ -530,7 +534,7 @@ async def twitch_handle_loop():
     global time_last_spoken
     last_event_epoch = 0
     while True:
-        if time.time() - time_last_spoken < 45:
+        if time.time() - time_last_spoken < 0:
             await asyncio.sleep(1)
             continue
         time_last_spoken = time.time()
