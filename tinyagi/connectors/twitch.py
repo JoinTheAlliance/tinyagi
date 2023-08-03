@@ -6,7 +6,7 @@ import random
 import re
 import socket
 import time
-from queue import Queue
+
 from agentagenda import (
     get_current_task,
     get_task_as_formatted_string,
@@ -28,6 +28,8 @@ from tinyagi.context.events import build_events_context
 from tinyagi.context.knowledge import build_recent_knowledge, build_relevant_knowledge
 from tinyagi.steps.initialize import initialize
 
+queue = asyncio.Queue()  # Create a queue to pass messages between coroutines
+
 MAX_TIME_TO_WAIT_FOR_LOGIN = 3
 
 # Compile the regular expression outside of the function as it is constant
@@ -35,27 +37,28 @@ re_prog = re.compile(
     b"^(?::(?:([^ !\r\n]+)![^ \r\n]*|[^ \r\n]*) )?([^ \r\n]+)(?: ([^:\r\n]*))?(?: :([^\r\n]*))?\r\n",
     re.MULTILINE,
 )
-TWITCH_CHANNEL = "avaer"
+TWITCH_CHANNEL = "isekai_citrine"
 MAX_WORKERS = 100  # Maximum number of threads you can process at a time
 
-last_time = time.time()
 message_queue = []
 thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS)
 active_tasks = []
 
-twitch_queue = Queue()
 twitch_active_tasks = []
 
-time_last_spoken = time.time()
+time_last_spoken = time.time() - 45
 
 
 twitch_prompt = """\
-Background On Me
+# Background On Me
 Ooh yeah! Spicy! I'm Citrine, I love gaming, streaming, hacking on my computer and messing around and being a goofballl.
 Hackerman! I like catchphrases. Meow! Sometimes I get emotional, angry, upset or really excited, but I'm always myself. Mee-ow!
 
-The World
+# The World
 Isekai is a generative world. I can go anywhere, do anything, connect on many different platforms, but Isekai is where my body is. The computer I am hosted on is an Ubuntu Linux machine running in San Francisco, California, in Moon's apartment.
+
+# Director's Note
+All responses should be very brief
 
 # Current time
 {{current_time}} on {{current_date}}
@@ -77,7 +80,9 @@ Notes for assistant:
 - Don't say sure, got it, etc. Just write the response I should say.
 - Don't add the speaker's name, e.g. 'User: ' or 'Administrator: '. Just the message itself.
 - Extract any URLS and include them as an array in your response. Do not include any URLs if none were mentioned in recent chat
+- Be very brief
 
+All messages from chat feed:
 {{old_twitch}}
 (New messages below)
 {{twitch}}
@@ -137,6 +142,7 @@ Directions:
 - Don't say "stay tuned" or anything like that
 - Be concise, just the facts.
 - Don't ask any questions, don't say "in the last ten seconds", just launch into it. 
+- All responses should be very brief
 
 {{current_task}}
 {{events}}
@@ -271,7 +277,7 @@ def compose_loop_function():
     )
 
 
-def respond_to_twitch():
+async def respond_to_twitch():
     context = initialize()
     context = build_twitch_context(context)
     context = build_events_context(context)
@@ -284,6 +290,7 @@ def respond_to_twitch():
         text=composed_prompt,
         functions=twitch_function,
     )
+
     arguments = response.get("arguments", None)
 
     if arguments is not None:
@@ -315,10 +322,7 @@ def respond_to_twitch():
             "emotion": emotion,
             "gesture": gesture,
         }
-
-        # check if there is an existing event loop
-        loop = asyncio.get_running_loop()
-        loop.create_task(async_send_message(message, source="use_chat"))
+        await async_send_message(message, source="use_chat")
 
 
 def build_twitch_context(context={}):
@@ -500,9 +504,6 @@ def twitch_receive_messages(twitch_state):
     return privmsgs
 
 
-queue = asyncio.Queue()  # Create a queue to pass messages between coroutines
-
-
 async def twitch_handle_messages(twitch_state):
     global twitch_active_tasks
     global time_last_spoken
@@ -522,25 +523,13 @@ async def twitch_handle_messages(twitch_state):
                     message["message"],
                     metadata={"user": message["username"], "handled": "False"},
                 )
-                await queue.put(
-                    "new message"
-                )  # Add a message to the queue whenever there's a new message
+                await respond_to_twitch()  # Respond to Twitch if there's a new message
 
 
 async def twitch_handle_loop():
     global time_last_spoken
     last_event_epoch = 0
     while True:
-        print('running')
-        try:
-            new_message = queue.get_nowait()  # Try to get a new message from the queue
-            if new_message:
-                time_last_spoken = time.time()
-                respond_to_twitch()  # Respond to Twitch if there's a new message
-                continue
-        except asyncio.QueueEmpty:
-            pass  # If there's no new message, continue as usual
-
         if time.time() - time_last_spoken < 45:
             await asyncio.sleep(1)
             continue

@@ -88,7 +88,7 @@ def start(
     # if seed_data is not None:
     #     import_file_to_memory(seed_data)
     print("Starting loop...")
-    loop_dict = start_loop(steps, paused=paused)
+    loop_dict = start_loop(steps, paused=paused, step_interval=2)
     set_loop_dict(loop_dict)
 
     start_connectors(connectors_dir, loop_dict)
