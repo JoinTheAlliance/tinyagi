@@ -9,7 +9,7 @@ from agentcomlink import (
     list_files_formatted,
     register_message_handler,
 )
-from agentevents import get_events
+from agentmemory import get_events
 from agentloop import pause, unpause
 from agentmemory import create_event, get_memories
 from easycompletion import compose_function, compose_prompt, function_completion

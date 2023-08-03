@@ -13,7 +13,7 @@ from agentagenda import (
     list_tasks_as_formatted_string,
 )
 from agentcomlink import async_send_message, list_files_formatted
-from agentevents import get_events
+from agentmemory import get_events
 from agentmemory import create_memory, get_memories, update_memory, create_event
 from easycompletion import (
     compose_function,
@@ -22,12 +22,31 @@ from easycompletion import (
     function_completion,
     text_completion,
 )
+from agentlogger import log
 
 from tinyagi.context.events import build_events_context
 from tinyagi.context.knowledge import build_recent_knowledge, build_relevant_knowledge
 from tinyagi.steps.initialize import initialize
 
 MAX_TIME_TO_WAIT_FOR_LOGIN = 3
+
+# Compile the regular expression outside of the function as it is constant
+re_prog = re.compile(
+    b"^(?::(?:([^ !\r\n]+)![^ \r\n]*|[^ \r\n]*) )?([^ \r\n]+)(?: ([^:\r\n]*))?(?: :([^\r\n]*))?\r\n",
+    re.MULTILINE,
+)
+TWITCH_CHANNEL = "avaer"
+MAX_WORKERS = 100  # Maximum number of threads you can process at a time
+
+last_time = time.time()
+message_queue = []
+thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS)
+active_tasks = []
+
+twitch_queue = Queue()
+twitch_active_tasks = []
+
+time_last_spoken = time.time()
 
 
 twitch_prompt = """\
@@ -174,6 +193,7 @@ prompt6 = """{{events}}
 {{current_task}}
 Director: Please ponder what is next for the current task. Be concise, just one sentence please.
 Me:"""
+
 
 def compose_loop_prompt(context):
     """
@@ -327,202 +347,177 @@ def build_twitch_context(context={}):
     return context
 
 
-class Twitch:
-    re_prog = None
-    sock = None
-    partial = b""
-    login_ok = False
-    channel = ""
-    login_timestamp = 0
+def twitch_connect(twitch_state, channel):
+    if twitch_state["sock"]:
+        twitch_state["sock"].close()
+    twitch_state["sock"] = None
+    twitch_state["partial"] = b""
+    twitch_state["login_ok"] = False
+    twitch_state["channel"] = channel
 
-    def twitch_connect(self, channel):
-        if self.sock:
-            self.sock.close()
-        self.sock = None
-        self.partial = b""
-        self.login_ok = False
-        self.channel = channel
+    # Create socket
+    print("Connecting to Twitch...")
+    twitch_state["sock"] = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        # Compile regular expression
-        self.re_prog = re.compile(
-            b"^(?::(?:([^ !\r\n]+)![^ \r\n]*|[^ \r\n]*) )?([^ \r\n]+)(?: ([^:\r\n]*))?(?: :([^\r\n]*))?\r\n",
-            re.MULTILINE,
-        )
+    # Attempt to connect socket
+    twitch_state["sock"].connect(("irc.chat.twitch.tv", 6667))
 
-        # Create socket
-        print("Connecting to Twitch...")
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # Log in anonymously
+    user = "justinfan%i" % random.randint(10000, 99999)
+    print("Connected to Twitch. Logging in anonymously...")
+    twitch_state["sock"].send(("PASS asdf\r\nNICK %s\r\n" % user).encode())
 
-        # Attempt to connect socket
-        self.sock.connect(("irc.chat.twitch.tv", 6667))
+    twitch_state["sock"].settimeout(1.0 / 60.0)
 
-        # Log in anonymously
-        user = "justinfan%i" % random.randint(10000, 99999)
-        print("Connected to Twitch. Logging in anonymously...")
-        self.sock.send(("PASS asdf\r\nNICK %s\r\n" % user).encode())
+    twitch_state["login_timestamp"] = time.time()
 
-        self.sock.settimeout(1.0 / 60.0)
-
-        self.login_timestamp = time.time()
-
-    # Attempt to reconnect after a delay
-    def reconnect(self, delay):
-        time.sleep(delay)
-        self.twitch_connect(self.channel)
-
-    # Returns a list of irc messages received
-    def receive_and_parse_data(self):
-        buffer = b""
-        while True:
-            received = b""
-            try:
-                received = self.sock.recv(4096)
-            except socket.timeout:
-                break
-            # except OSError as e:
-            #     if e.winerror == 10035:
-            #         # This "error" is expected -- we receive it if timeout is set to zero, and there is no data to read on the socket.
-            #         break
-            except Exception as e:
-                print("Unexpected connection error. Reconnecting in a second...", e)
-                self.reconnect(1)
-                return []
-            if not received:
-                print("Connection closed by Twitch. Reconnecting in 5 seconds...")
-                self.reconnect(5)
-                return []
-            buffer += received
-
-        if buffer:
-            # Prepend unparsed data from previous iterations
-            if self.partial:
-                buffer = self.partial + buffer
-                self.partial = []
-
-            # Parse irc messages
-            res = []
-            matches = list(self.re_prog.finditer(buffer))
-            for match in matches:
-                res.append(
-                    {
-                        "name": (match.group(1) or b"").decode(errors="replace"),
-                        "command": (match.group(2) or b"").decode(errors="replace"),
-                        "params": list(
-                            map(
-                                lambda p: p.decode(errors="replace"),
-                                (match.group(3) or b"").split(b" "),
-                            )
-                        ),
-                        "trailing": (match.group(4) or b"").decode(errors="replace"),
-                    }
-                )
-
-            # Save any data we couldn't parse for the next iteration
-            if not matches:
-                self.partial += buffer
-            else:
-                end = matches[-1].end()
-                if end < len(buffer):
-                    self.partial = buffer[end:]
-
-                if matches[0].start() != 0:
-                    # If we get here, we might have missed a message. pepeW
-                    print("Error...")
-
-            return res
-
-        return []
-
-    def twitch_receive_messages(self):
-        privmsgs = []
-        for irc_message in self.receive_and_parse_data():
-            cmd = irc_message["command"]
-            if cmd == "PRIVMSG":
-                privmsgs.append(
-                    {
-                        "username": irc_message["name"],
-                        "message": irc_message["trailing"],
-                    }
-                )
-            elif cmd == "PING":
-                self.sock.send(b"PONG :tmi.twitch.tv\r\n")
-            elif cmd == "001":
-                print("Successfully logged in. Joining channel %s." % self.channel)
-                self.sock.send(("JOIN #%s\r\n" % self.channel).encode())
-                self.login_ok = True
-            elif cmd == "JOIN":
-                print("Successfully joined channel %s" % irc_message["params"][0])
-            elif cmd == "NOTICE":
-                print("Server notice:", irc_message["params"], irc_message["trailing"])
-            elif cmd == "002":
-                continue
-            elif cmd == "003":
-                continue
-            elif cmd == "004":
-                continue
-            elif cmd == "375":
-                continue
-            elif cmd == "372":
-                continue
-            elif cmd == "376":
-                continue
-            elif cmd == "353":
-                continue
-            elif cmd == "366":
-                continue
-            else:
-                print("Unhandled irc message:", irc_message)
-
-        if not self.login_ok:
-            # We are still waiting for the initial login message. If we've waited longer than we should, try to reconnect.
-            if time.time() - self.login_timestamp > MAX_TIME_TO_WAIT_FOR_LOGIN:
-                print("No response from Twitch. Reconnecting...")
-                self.reconnect(0)
-                return []
-
-        return privmsgs
+    return twitch_state
 
 
-##################### GAME VARIABLES #####################
-
-# Replace this with your Twitch username. Must be all lowercase.
-TWITCH_CHANNEL = "isekai_citrine"
-MAX_WORKERS = 100  # Maximum number of threads you can process at a time
-
-last_time = time.time()
-message_queue = []
-thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS)
-active_tasks = []
-
-t = Twitch()
-t.twitch_connect(TWITCH_CHANNEL)
+# Modify this function to take the 'twitch_state' dictionary as an argument
+def reconnect(twitch_state, delay):
+    time.sleep(delay)
+    return twitch_connect(twitch_state, twitch_state["channel"])
 
 
-twitch_queue = Queue()
-twitch_active_tasks = []
+# Returns a list of irc messages received
+def receive_and_parse_data(twitch_state):
+    buffer = b""
+    while True:
+        received = b""
+        try:
+            received = twitch_state["sock"].recv(4096)
+        except socket.timeout:
+            break
+        # except OSError as e:
+        #     if e.winerror == 10035:
+        #         # This "error" is expected -- we receive it if timeout is set to zero, and there is no data to read on the socket.
+        #         break
+        except Exception as e:
+            print("Unexpected connection error. Reconnecting in a second...", e)
+            reconnect(twitch_state, 1)
+            return []
+        if not received:
+            print("Connection closed by Twitch. Reconnecting in 5 seconds...")
+            reconnect(twitch_state, 5)
+            return []
+        buffer += received
 
-time_last_spoken = time.time()
+    if buffer:
+        # Prepend unparsed data from previous iterations
+        if twitch_state["partial"]:
+            buffer = twitch_state["partial"] + buffer
+            twitch_state["partial"] = []
+
+        # Parse irc messages
+        res = []
+        matches = list(re_prog.finditer(buffer))
+        for match in matches:
+            res.append(
+                {
+                    "name": (match.group(1) or b"").decode(errors="replace"),
+                    "command": (match.group(2) or b"").decode(errors="replace"),
+                    "params": list(
+                        map(
+                            lambda p: p.decode(errors="replace"),
+                            (match.group(3) or b"").split(b" "),
+                        )
+                    ),
+                    "trailing": (match.group(4) or b"").decode(errors="replace"),
+                }
+            )
+
+        # Save any data we couldn't parse for the next iteration
+        if not matches:
+            twitch_state["partial"] += buffer
+        else:
+            end = matches[-1].end()
+            if end < len(buffer):
+                twitch_state["partial"] = buffer[end:]
+
+            if matches[0].start() != 0:
+                # If we get here, we might have missed a message. pepeW
+                print("Error...")
+
+        return res
+
+    return []
 
 
-async def twitch_handle_messages():
+def twitch_receive_messages(twitch_state):
+    privmsgs = []
+    for irc_message in receive_and_parse_data(twitch_state):
+        cmd = irc_message["command"]
+        if cmd == "PRIVMSG":
+            privmsgs.append(
+                {
+                    "username": irc_message["name"],
+                    "message": irc_message["trailing"],
+                }
+            )
+        elif cmd == "PING":
+            twitch_state["sock"].send(b"PONG :tmi.twitch.tv\r\n")
+        elif cmd == "001":
+            print(
+                "Successfully logged in. Joining channel %s." % twitch_state["channel"]
+            )
+            twitch_state["sock"].send(
+                ("JOIN #%s\r\n" % twitch_state["channel"]).encode()
+            )
+            twitch_state["login_ok"] = True
+        elif cmd == "JOIN":
+            print("Successfully joined channel %s" % irc_message["params"][0])
+        elif cmd == "NOTICE":
+            print("Server notice:", irc_message["params"], irc_message["trailing"])
+        elif cmd == "002":
+            continue
+        elif cmd == "003":
+            continue
+        elif cmd == "004":
+            continue
+        elif cmd == "375":
+            continue
+        elif cmd == "372":
+            continue
+        elif cmd == "376":
+            continue
+        elif cmd == "353":
+            continue
+        elif cmd == "366":
+            continue
+        else:
+            print("Unhandled irc message:", irc_message)
+
+    if not twitch_state["login_ok"]:
+        # We are still waiting for the initial login message. If we've waited longer than we should, try to reconnect.
+        if time.time() - twitch_state["login_timestamp"] > MAX_TIME_TO_WAIT_FOR_LOGIN:
+            print("No response from Twitch. Reconnecting...")
+            reconnect(twitch_state, 0)
+            return []
+
+    return privmsgs
+
+
+queue = asyncio.Queue()  # Create a queue to pass messages between coroutines
+
+
+async def twitch_handle_messages(twitch_state):
     global twitch_active_tasks
     global time_last_spoken
-    global twitch_queue
     while True:
-        loop = asyncio.get_running_loop()
-        new_messages = await loop.run_in_executor(None, t.twitch_receive_messages)
+        new_messages = twitch_receive_messages(twitch_state)
         if new_messages:
             for message in new_messages:
+                log(message["username"] + ": " + message["message"], source="twitch", color="purple", type="info")
                 time_last_spoken = time.time()
                 create_memory(
                     "twitch_message",
                     message["message"],
                     metadata={"user": message["username"], "handled": "False"},
                 )
-        memories = get_memories("twitch_message", filter_metadata={"handled": "False"})
-
-        if len(memories) > 0:
-            await loop.run_in_executor(None, respond_to_twitch)
+                await queue.put(
+                    "new message"
+                )  # Add a message to the queue whenever there's a new message
 
 
 async def twitch_handle_loop():
@@ -530,9 +525,16 @@ async def twitch_handle_loop():
     last_event_epoch = 0
     while True:
         if time.time() - time_last_spoken < 30:
-            time.sleep(.1)
+            asyncio.sleep(0.1)
             continue
         time_last_spoken = time.time()
+
+        try:
+            new_message = queue.get_nowait()  # Try to get a new message from the queue
+            if new_message:
+                respond_to_twitch()  # Respond to Twitch if there's a new message
+        except asyncio.QueueEmpty:
+            pass  # If there's no new message, continue as usual
 
         context = build_twitch_context({})
         context = build_events_context(context)
@@ -540,21 +542,13 @@ async def twitch_handle_loop():
 
         event = get_events(n_results=1)
         epoch = event[0]["metadata"]["epoch"] if len(event) > 0 else 0
-        print("epoch is" + str(epoch))
         if epoch == last_event_epoch:
-            time.sleep(.1)
+            asyncio.sleep(0.1)
             continue
 
-        response = text_completion(
-            text=prompt,
-            temperature=1.0,
-            debug=True
-        )
+        response = text_completion(text=prompt, temperature=1.0, debug=True)
         response2 = function_completion(
-            text=prompt,
-            temperature=0.3,
-            functions=compose_loop_function(),
-            debug=True
+            text=prompt, temperature=0.3, functions=compose_loop_function(), debug=True
         )
         arguments = response2.get("arguments", None)
         banter = response["text"]
@@ -603,21 +597,34 @@ async def twitch_handle_loop():
 
         current_task = get_current_task()
         if current_task is not None:
-            current_task = get_task_as_formatted_string(current_task, include_plan=False, include_status=False, include_steps=False)
+            current_task = get_task_as_formatted_string(
+                current_task,
+                include_plan=False,
+                include_status=False,
+                include_steps=False,
+            )
             await async_send_message(current_task, type="task", source="use_chat")
 
         await async_send_message(message, source="use_chat")
         duration = count_tokens(banter) / 3.0
         duration = int(duration)
-        time.sleep(duration)
+        asyncio.sleep(duration)
+
 
 def start_connector(loop_dict):
-    asyncio.run(start(loop_dict))
+    twitch_state = {
+        "sock": None,
+        "partial": b"",
+        "login_ok": False,
+        "channel": "",
+        "login_timestamp": 0,
+    }
+    twitch_state = twitch_connect(twitch_state, TWITCH_CHANNEL)
 
-async def start(loop_dict):
-    t = Twitch()
-    t.twitch_connect(TWITCH_CHANNEL)
-    await asyncio.gather(
-        twitch_handle_loop(),
-        twitch_handle_messages(),
-    )
+    async def run_both_loops(twitch_state):
+        await asyncio.gather(
+            asyncio.create_task(twitch_handle_messages(twitch_state)),
+            asyncio.create_task(twitch_handle_loop()),
+        )
+
+    asyncio.run(run_both_loops(twitch_state))

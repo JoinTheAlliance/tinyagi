@@ -1,7 +1,7 @@
 import datetime
 import os
 import sys
-from agentevents import get_epoch
+from agentmemory import get_epoch
 
 from agentmemory import set_epoch
 
