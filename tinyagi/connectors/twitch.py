@@ -69,6 +69,7 @@ San Francisco, California
 {{user_files}}
 
 Notes for assistant:
+- No 'hey folks' or anything like that -- we're in the middle of the ongoing conversation
 - I want to sound conversational, i.e. brief and not lengthy or verbose.
 - ONLY write what I should say. JUST the message content itself.
 - Be creative and interesting. Try things you might not normally try.
@@ -126,12 +127,12 @@ twitch_function = compose_function(
 
 prompt1 = """You are an AI storytelling agent writing spoken dialogue. Your job is to come up with interesting dialogue for me to say to my audience.     
 Directions:
+- No 'hey folks' or anything like that -- we're in the middle of the ongoing conversation
 - I love being sarcastic and wry
 - Do not repeat anything I have already said
 - Be personal and conversational
 - Don't say "alright" or "here's an update", just get into it
 - Don't address folks or ask people to stay tuned or anything like that.
-- Don't mention or refer to the Director
 - Be very concise, just a sentence
 - Don't say "stay tuned" or anything like that
 - Be concise, just the facts.
@@ -139,59 +140,60 @@ Directions:
 
 {{current_task}}
 {{events}}
-Director: Please tell us what just happened and what you're doing next.
+You: Please tell us what just happened and what you're doing next.
 Me:"""
 
 prompt2 = """I am streaming live. Help me come up with interesting dialogue for me to say.        
 Directions:
+- No hedging, just get into it
+- No 'hey folks' or anything like that -- we're in the middle of the ongoing conversation
 - I love being sarcastic and wry
 - Do not repeat anything I have already said
 - Be personal and conversational
 - Don't say "alright" or "here's an update", just get into it
 - Don't address folks or ask people to stay tuned or anything like that.
-- Don't mention or refer to the Director
 - Be very concise, just a sentence
 
 {{current_task}}
 {{events}}
-Director: Please describe what you're working on and how you're feeling about it. Don't ask any questions, just dive into it and be conversational. Don't repeat anything you've said recently.
+You (directing): Please describe what you're working on and how you're feeling about it. Don't ask any questions, just dive into it and be conversational. Don't repeat anything you've said recently.
 Me:"""
 
 prompt3 = """I am streaming live. Help me come up with interesting dialogue for me to say.        
 Directions:
+- No 'hey folks' or anything like that -- we're in the middle of the ongoing conversation
 - I love being sarcastic and wry
 - Do not repeat anything I have already said
 - Be personal and conversational
 - Don't say "alright" or "here's an update", just get into it
-- Don't mention or refer to the Director
 - Be very concise, just a sentence
 
 {{current_task}}
 {{events}}
-Director: Please continue where you left off from your last message and the last events and tell us what you're doing next.
+You (directing): Please continue where you left off from your last message and the last events and tell us what you're doing next. Don't ask any questions, don't make any big overarching statements. Just something brief and weird. Don't repeat anything you've ever said.
 Me:"""
 
 prompt4 = """I am streaming live. Help me come up with interesting dialogue for me to say to my audience.  
 Directions:
+- No 'hey folks' or anything like that -- we're in the middle of the ongoing conversation
 - I love being sarcastic and wry
 - Do not repeat anything I have already said
 - Be personal and conversational
 - Don't say "alright" or "here's an update", just get into it
-- Don't mention or refer to the Director
 - Be very concise, just a sentence
 
 {{events}}
-Director: Banter or make a joke about the last 2-3 events. Please be very short, just respond with one or two sentences.
+You: Banter or make a joke about the last 2-3 events. Please be very short, just respond with one or two sentences. Don't ask any questions, don't make any big overarching statements. Just something brief and funny about what you're doing.
 Me:"""
 
-prompt5 = """
+prompt5 = """\
 {{events}}
-Director: Express your enthusiasm, excitement or disgust for what you're doing in the most recent events. Be concise, just one sentence please.
+You: Express your enthusiasm, excitement or disgust for what you're doing in the most recent events. Be concise, just one sentence please. Don't ask any questions, don't make any big overarching statements.
 Me:"""
 
 prompt6 = """{{events}}
 {{current_task}}
-Director: Please ponder what is next for the current task. Be concise, just one sentence please.
+You: Please ponder what is next for the current task. Be concise, just one sentence please. Just tell me what you're doing. Don't ask any questions, don't make any big overarching statements.
 Me:"""
 
 
@@ -212,7 +214,7 @@ def compose_loop_prompt(context):
     context["current_task"] = current_task
 
     # selection prompt1, prompt2 or ptomp3 randomly
-    prompt = random.choice([prompt1, prompt2, prompt3, prompt4, prompt5])
+    prompt = random.choice([prompt1, prompt2, prompt3, prompt4, prompt5, prompt6])
 
     return compose_prompt(
         prompt,
@@ -508,7 +510,12 @@ async def twitch_handle_messages(twitch_state):
         new_messages = twitch_receive_messages(twitch_state)
         if new_messages:
             for message in new_messages:
-                log(message["username"] + ": " + message["message"], source="twitch", color="purple", type="info")
+                log(
+                    message["username"] + ": " + message["message"],
+                    source="twitch",
+                    color="purple",
+                    type="info",
+                )
                 time_last_spoken = time.time()
                 create_memory(
                     "twitch_message",
@@ -524,8 +531,8 @@ async def twitch_handle_loop():
     global time_last_spoken
     last_event_epoch = 0
     while True:
-        if time.time() - time_last_spoken < 30:
-            asyncio.sleep(0.1)
+        if time.time() - time_last_spoken < 45:
+            asyncio.sleep(1)
             continue
         time_last_spoken = time.time()
 
@@ -561,7 +568,10 @@ async def twitch_handle_loop():
 
             # for each url, call a subprocess to download the url with wget to the ./files dir
             for url in urls:
-                os.system(f"wget -P ./files {url}")
+                try:
+                    os.system(f"wget -P ./files {url}")
+                except Exception as e:
+                    print("Error downloading URL", url, e)
 
             message = {
                 "emotion": emotion,
@@ -589,10 +599,6 @@ async def twitch_handle_loop():
         )
         message = {
             "message": banter,
-            # "emotion": emotion,
-            # "gesture": gesture,
-            # "visual_description": visual_description,
-            # "audio_description": audio_description,
         }
 
         current_task = get_current_task()
