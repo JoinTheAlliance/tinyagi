@@ -1,13 +1,12 @@
 import json
 import time
 from agentcomlink import send_message
-from agentmemory import create_memory
+from agentevents import create_event
 from easycompletion import compose_prompt, count_tokens
 
-from tinyagi.constants import get_current_epoch
 
-
-prompt = """\
+prompt = """Notes:
+- Be brief. Don't address viewers. Just get into the poem. be concise.
 - Please do not acknowledge the request. Just write the poem. Your response should only include the poem.
 - This poem should be brand new and not something that I've already written or that is in the event stream already.
 
@@ -29,7 +28,7 @@ def write_poem(arguments):
     )
     
     send_message(message, "chat", source="poem")
-    create_memory("events", "I wrote a poem:\n" + poem, metadata={"epoch": get_current_epoch()})
+    create_event("I wrote a poem:\n" + poem)
     duration = count_tokens(poem) / 3.0
     duration = int(duration)
 

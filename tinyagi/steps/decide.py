@@ -1,20 +1,14 @@
-import time
-from agentcomlink import send_message
-from agentmemory import create_memory
+from agentmemory import create_event
 from easycompletion import (
     function_completion,
     compose_prompt,
     compose_function,
-    count_tokens,
 )
-from tinyagi.constants import get_current_epoch
 
 from tinyagi.utils import log
 
 decision_prompt = """Current Epoch: {{epoch}}
 The current time is {{current_time}} on {{current_date}}.
-
-{{available_actions}}
 
 My name: Citrine
 My location: San Francisco, CA
@@ -31,18 +25,20 @@ Assistant Notes:
 - I want to be working on my computer and excploring and doing cool hacker cyberpunk stuff, not just telling jokes and static facts all the time all the time
 - If I just stated a fact, told a joke or wrote a poem I should really do some real work
 - I can only choose from the available actions. You must choose one of the available actions.
-- Your summary and banter should be based on the recent events and conversations, not just made up
+- Your summary should be based on the recent events and conversations
 - I am an agent inside a computer, so I can explore my computer and the internet and communicate with people, but I can't do anything in the real world.
 - I should do fun stuff like hacking with my shell terminal, exploring the internet, chatting with my friends on Twitch and exploring my computer
 - Don't repeat yourself, don't do the same action over and over again
 - Most of the time I want to use my shell terminal, so you should decide that
+
+{{available_actions}}
 
 {{relevant_knowledge}}
 {{current_task_formatted}}
 
 {{events}}
 
-Come up with the next action, summarize and banter about it. Decide what the actions that you think is the best next action for me to progress towards my current task and goals?
+Come up with the next action and summarize it. Decide what the actions that you think is the best next action for me to progress towards my current task and goals?
 {{available_short_actions}}
 """
 
@@ -66,15 +62,10 @@ def compose_decision_function():
                 "type": "string",
                 "description": "The name of the action to take. Should be one of the available actions, and should not include quotes or any punctuation",
             },
-            "banter": {
-                "type": "string",
-                "description": "Write a sentence of funny banter from my perspective, related to what I'm working on. It should be funny, edgy or dark and very short.",
-            }
         },
         required_properties=[
             "action_name",
             "reasoning",
-            "banter",
         ],
     )
 
@@ -105,25 +96,9 @@ def decide(context):
 
     log(log_content, type="step", source="decide", title="tinyagi")
 
-    send_message(
-        {
-            "message": response["arguments"]["banter"],
-        },
-        source="decide",
+    create_event(
+       reasoning,
+        metadata={"type": "reasoning"},
     )
-
-    context["banter"] = response["arguments"]["banter"]
-
-    create_memory(
-        "events", "Here is my reasoning for the next step: " + reasoning, metadata={"type": "reasoning", "epoch": get_current_epoch()}
-    )
-
-    # create_memory(
-    #     "events", response["arguments"]["banter"], metadata={"type": "banter", "epoch": get_current_epoch()}
-    # )
-
-    duration = count_tokens(response["arguments"]["banter"]) / 3.0
-    duration = int(duration)
-    time.sleep(duration)
 
     return context

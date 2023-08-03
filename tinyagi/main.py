@@ -62,7 +62,7 @@ def start(
     seed_data=None,
     reset=False,
     paused=False,
-    verbose=False
+    verbose=False,
 ):
     print_logo()
 

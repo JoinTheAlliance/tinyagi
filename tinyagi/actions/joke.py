@@ -1,13 +1,12 @@
 import json
 import time
 from agentcomlink import send_message
-from agentmemory import create_memory
+from agentevents import create_event
 from easycompletion import compose_prompt, count_tokens
 
-from tinyagi.constants import get_current_epoch
 
-
-prompt = """\
+prompt = """Notes:
+- Be brief. Don't address viewers. Just get into the joke. be concise.
 - The joke should be very dark and strange. Don't acknowledge the request. Just tell the joke. Your response should only include the joke.
 - This joke should be brand new and not something that I've already said or thought of. Do not tell a joke if it is in the event stream already.
 {{relevant_knowledge}}
@@ -25,7 +24,7 @@ def write_joke(arguments):
         }
     )
     send_message(message, "chat", source="joke")
-    create_memory("events", "I told a joke:\n" + joke, metadata={"epoch": get_current_epoch()})
+    create_event("I told a joke:\n" + joke)
     duration = count_tokens(joke) / 3.0
     duration = int(duration)
 

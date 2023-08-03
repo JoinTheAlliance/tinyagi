@@ -4,9 +4,8 @@ from agentaction import (
     use_action,
 )
 
-from agentmemory import create_memory
+from agentmemory import create_event
 from easycompletion import function_completion
-from tinyagi.constants import get_current_epoch
 from tinyagi.utils import log
 
 
@@ -24,13 +23,11 @@ def act(context):
     action = get_action(action_name)
 
     if action is None:
-        create_memory(
-            "events",
+        create_event(
             f"I tried to use the action `{action_name}`, but it was not found.",
             metadata={
                 "type": "error",
                 "subtype": "action_not_found",
-                "epoch": get_current_epoch(),
             },
         )
         return {"error": f"Action {action_name} not found"}
@@ -56,13 +53,11 @@ def act(context):
     action_result = use_action(response["function_name"], response["arguments"])
 
     if action_result is None or action_result["success"] is False:
-        create_memory(
-            "events",
+        create_event(
             f"I tried to use the action `{action_name}`, but it failed.",
             metadata={
                 "type": "error",
                 "subtype": "action_failed",
-                "epoch": get_current_epoch(),
             },
         )
         log(
@@ -72,13 +67,11 @@ def act(context):
             title="tinyagi",
         )
     else:
-        create_memory(
-            "events",
+        create_event(
             f"I used the action `{action_name}` successfully.\nOutput:\n{action_result.get('output', '')}",
             metadata={
                 "type": "success",
                 "subtype": "action_success",
-                "epoch": get_current_epoch(),
             },
         )
         log(

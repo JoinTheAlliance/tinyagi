@@ -9,12 +9,12 @@ from agentcomlink import (
     list_files_formatted,
     register_message_handler,
 )
+from agentevents import get_events
 from agentloop import pause, unpause
-from agentmemory import create_memory, get_memories
+from agentmemory import create_event, get_memories
 from easycompletion import compose_function, compose_prompt, function_completion
 from uvicorn import Config, Server
 
-from tinyagi.constants import get_current_epoch
 from tinyagi.context.events import build_events_context
 from tinyagi.context.knowledge import build_relevant_knowledge
 from tinyagi.steps.initialize import initialize
@@ -86,7 +86,7 @@ administrator_function = compose_function(
 
 
 def build_chat_context(context={}):
-    events = get_memories("events", n_results=10, filter_metadata={"type": "message"})
+    events = get_events(n_results=10, filter_metadata={"type": "message"})
 
     # reverse events
     events = events[::-1]
@@ -95,7 +95,7 @@ def build_chat_context(context={}):
     context["chat"] = (
         "\n".join(
             [
-                (event["metadata"]["sender"] + ": " + event["document"])
+                (event["metadata"]["creator"] + ": " + event["document"])
                 for event in events
             ]
         )
@@ -105,7 +105,6 @@ def build_chat_context(context={}):
 
 
 async def response_handler(data, loop_dict):
-    events = get_memories("events", n_results=1)
     message = data["message"]
 
     # if the beginning of the message is "/pause", call pause
@@ -127,13 +126,11 @@ async def response_handler(data, loop_dict):
         return
 
     type = data["type"]
-    create_memory(
-        "events",
+    create_event(
         message,
         metadata={
             "type": type,
-            "sender": "administrator",
-            "epoch": get_current_epoch(),
+            "creator": "administrator",
         },
     )
 
@@ -170,13 +167,11 @@ async def response_handler(data, loop_dict):
             }
         )
         await async_send_message(message, source="chat_response")
-        create_memory(
-            "events",
+        create_event(
             "I responded to the administrator: " + arguments["message"],
             metadata={
                 "type": "message",
-                "sender": "user",
-                "epoch": get_current_epoch(),
+                "creator": "user",
             },
         )
         return
@@ -192,10 +187,9 @@ async def response_handler(data, loop_dict):
             send_to_feed=False,
         )
 
-    create_memory(
-        "events",
+    create_event(
         message["message"],
-        metadata={"type": "message", "sender": "user", "epoch": get_current_epoch()},
+        metadata={"type": "message", "creator": "user"},
     )
 
 

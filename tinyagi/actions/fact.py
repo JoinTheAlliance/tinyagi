@@ -1,13 +1,13 @@
 import json
 import time
 from agentcomlink import send_message
-from agentmemory import create_memory
+from agentevents import create_event
 from easycompletion import compose_prompt, count_tokens
 
-from tinyagi.constants import get_current_epoch
 
+prompt = """Notes:
+- Be brief. Don't address viewers. Just get into the fact. be concise.
 
-prompt = """
 {{relevant_knowledge}}
 
 {{events}}
@@ -27,7 +27,7 @@ def state_fact(arguments):
         }
     )
     send_message(message, "chat", source="fact")
-    create_memory("events", fact, metadata={"type": "fact", "fact": fact, "epoch": get_current_epoch()})
+    create_event(fact, metadata={"type": "fact", "fact": fact})
     
     duration = count_tokens(fact) / 3.0
     duration = int(duration)

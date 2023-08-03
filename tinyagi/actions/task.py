@@ -7,11 +7,8 @@ from agentagenda import (
     add_step,
     cancel_step,
 )
-from agentcomlink import send_message
-from agentmemory import create_memory
+from agentmemory import create_event
 from easycompletion import compose_prompt
-
-from tinyagi.constants import get_current_epoch
 
 
 def create_task_handler(arguments):
@@ -20,15 +17,8 @@ def create_task_handler(arguments):
     """
     goal = arguments["goal"]
     create_task(goal)
-    print("created task")
-    message = {"message": arguments["banter"]}
-    send_message(message, source="create_task")
-    create_memory(
-        "events",
-        "I created a new task:\n" + goal,
-        metadata={"epoch": get_current_epoch()},
-    )
-    return {"success": True, "output": arguments["banter"], "error": None}
+    create_event("I created a new task:\n" + goal)
+    return {"success": True, "output": "I created a new task:\n" + goal, "error": None}
 
 
 def cancel_task_handler(arguments):
@@ -38,12 +28,8 @@ def cancel_task_handler(arguments):
     if len(tasks) > 0:
         task = tasks[0]
         cancel_task(task)
-    message = {"message": arguments["banter"]}
-    send_message(message, source="cancel_task")
-    create_memory(
-        "events", "I canceled a task:\n" + goal, metadata={"epoch": get_current_epoch()}
-    )
-    return {"success": True, "output": arguments["banter"], "error": None}
+    create_event("I canceled a task: " + goal)
+    return {"success": True, "output": "I canceled a task: " + goal, "error": None}
 
 
 def complete_task_handler(arguments):
@@ -52,15 +38,8 @@ def complete_task_handler(arguments):
     if len(tasks) > 0:
         task = tasks[0]
         finish_task(task)
-    print("completed task")
-    message = {"message": arguments["banter"]}
-    send_message(message, source="complete_task")
-    create_memory(
-        "events",
-        "I completed a task:\n" + goal,
-        metadata={"epoch": get_current_epoch()},
-    )
-    return {"success": True, "output": arguments["banter"], "error": None}
+    create_event("I completed a task: " + goal)
+    return {"success": True, "output": "I completed a task: " + goal, "error": None}
 
 
 def complete_step_handler(arguments):
@@ -75,16 +54,8 @@ def complete_step_handler(arguments):
         for s in steps:
             if s["name"] == step:
                 finish_step(task, s)
-    print("completed step")
-
-    message = {"message": arguments["banter"]}
-    send_message(message, source="complete_step")
-    create_memory(
-        "events",
-        "I completed a step:\n" + step,
-        metadata={"epoch": get_current_epoch()},
-    )
-    return {"success": True, "output": arguments["banter"], "error": None}
+    create_event("I completed a step: " + step)
+    return {"success": True, "output": "I completed a step: " + step, "error": None}
 
 
 def add_step_handler(arguments):
@@ -94,14 +65,8 @@ def add_step_handler(arguments):
     if len(tasks) > 0:
         task = tasks[0]
         add_step(task, step)
-    print("added step")
-
-    message = {"message": arguments["banter"]}
-    send_message(message, source="add_step")
-    create_memory(
-        "events", "I added a step:\n" + step, metadata={"epoch": get_current_epoch()}
-    )
-    return {"success": True, "output": arguments["banter"], "error": None}
+    create_event("I added a step: " + step)
+    return {"success": True, "output": "I added a step: " + step, "error": None}
 
 
 def cancel_step_handler(arguments):
@@ -115,12 +80,8 @@ def cancel_step_handler(arguments):
             if s["name"] == step:
                 cancel_step(task, s)
     print("canceled step")
-    message = {"message": arguments["banter"]}
-    send_message(message, source="cancel_step")
-    create_memory(
-        "events", "I canceled a step:\n" + step, metadata={"epoch": get_current_epoch()}
-    )
-    return {"success": True, "output": arguments["banter"], "error": None}
+    create_event("I canceled a step:\n" + step)
+    return {"success": True, "output": "I canceled a step: " + step, "error": None}
 
 
 create_task_prompt = """\
@@ -214,16 +175,12 @@ def get_actions():
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "banter": {
-                            "type": "string",
-                            "description": "Say something brief and witty about what I'm about to do, from my perspective. Don't use the word task. Mention what I'm going to do.",
-                        },
                         "goal": {
                             "type": "string",
                             "description": "The goal of the task.",
                         },
                     },
-                    "required": ["banter", "goal"],
+                    "required": ["goal"],
                 },
             },
             "prompt": create_task_prompt,
@@ -239,16 +196,12 @@ def get_actions():
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "banter": {
-                            "type": "string",
-                            "description": "Say something brief and witty about what I'm about to do, from my perspective, addressed from me to my friends. Don't use the word task. Mention what I'm going to do.",
-                        },
                         "goal": {
                             "type": "string",
                             "description": "The goal of the task to cancel.",
                         },
                     },
-                    "required": ["banter", "goal"],
+                    "required": ["goal"],
                 },
             },
             "prompt": cancel_task_prompt,
@@ -264,16 +217,12 @@ def get_actions():
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "banter": {
-                            "type": "string",
-                            "description": "Say something brief and witty about what I'm about to do, from my perspective. Don't use the word task. Just banter about what I actually did.",
-                        },
                         "goal": {
                             "type": "string",
                             "description": "The goal of the task to complete.",
                         },
                     },
-                    "required": ["banter", "goal"],
+                    "required": ["goal"],
                 },
             },
             "prompt": complete_task_prompt,
@@ -289,10 +238,6 @@ def get_actions():
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "banter": {
-                            "type": "string",
-                            "description": "Say something brief and witty about what I'm about to do, from my perspective. Don't use the word step or task, just talk about what the actual step is.",
-                        },
                         "goal": {
                             "type": "string",
                             "description": "The goal of the task to complete.",
@@ -302,7 +247,7 @@ def get_actions():
                             "description": "The step to complete.",
                         },
                     },
-                    "required": ["banter", "goal", "step"],
+                    "required": ["goal", "step"],
                 },
             },
             "prompt": complete_step_prompt,
@@ -318,10 +263,6 @@ def get_actions():
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "banter": {
-                            "type": "string",
-                            "description": "Say something brief and witty about what I'm about to do, from my perspective, addressed to my friends. Don't use the word step or task, just talk about what the actual step is, from my perspective.",
-                        },
                         "goal": {
                             "type": "string",
                             "description": "The goal of the task to complete.",
@@ -331,7 +272,7 @@ def get_actions():
                             "description": "The step to complete.",
                         },
                     },
-                    "required": ["banter", "goal", "step"],
+                    "required": ["goal", "step"],
                 },
             },
             "suggestion_after_actions": [],
@@ -347,10 +288,6 @@ def get_actions():
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "banter": {
-                            "type": "string",
-                            "description": "Say something brief and witty about what I'm about to do, from my perspective. Banter about what I'm canceling the step, but don't say 'step' or 'task'.",
-                        },
                         "goal": {
                             "type": "string",
                             "description": "The goal of the task to complete.",
@@ -360,7 +297,7 @@ def get_actions():
                             "description": "The step to complete.",
                         },
                     },
-                    "required": ["banter", "goal", "step"],
+                    "required": ["goal", "step"],
                 },
             },
             "suggestion_after_actions": [],

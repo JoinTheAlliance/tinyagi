@@ -13,29 +13,30 @@ from agentagenda import (
     list_tasks_as_formatted_string,
 )
 from agentcomlink import async_send_message, list_files_formatted
-from agentmemory import create_memory, get_memories, update_memory
+from agentevents import get_events
+from agentmemory import create_memory, get_memories, update_memory, create_event
 from easycompletion import (
     compose_function,
     compose_prompt,
     count_tokens,
     function_completion,
+    text_completion,
 )
 
-from tinyagi.constants import get_current_epoch
 from tinyagi.context.events import build_events_context
-from tinyagi.context.knowledge import build_relevant_knowledge
+from tinyagi.context.knowledge import build_recent_knowledge, build_relevant_knowledge
 from tinyagi.steps.initialize import initialize
 
 MAX_TIME_TO_WAIT_FOR_LOGIN = 3
 
 
-system_prompt = """\
-You are an AI storytelling agent, controlled by the administrator. Your job is to come up with real, grounded, factual but also interesting and colorful conversation for me for my TV show.
-My name is Citrine. I am an AGI agent running on a Linux computer in San Francisco. I'm currently streaming for my friends. You have access to functions that you can call. Call the most relevant function to respond to the chat in the most entertaining way possible.
-"""
-
 twitch_prompt = """\
-{{events}}
+Background On Me
+Ooh yeah! Spicy! I'm Citrine, I love gaming, streaming, hacking on my computer and messing around and being a goofballl.
+Hackerman! I like catchphrases. Meow! Sometimes I get emotional, angry, upset or really excited, but I'm always myself. Mee-ow!
+
+The World
+Isekai is a generative world. I can go anywhere, do anything, connect on many different platforms, but Isekai is where my body is. The computer I am hosted on is an Ubuntu Linux machine running in San Francisco, California, in Moon's apartment.
 
 # Current time
 {{current_time}} on {{current_date}}
@@ -44,9 +45,11 @@ Citrine
 # My location:
 San Francisco, California
 
+{{events}}
+
 {{user_files}}
 
-Write a response to the new messages from my perspective.
+Notes for assistant:
 - I want to sound conversational, i.e. brief and not lengthy or verbose.
 - ONLY write what I should say. JUST the message content itself.
 - Be creative and interesting. Try things you might not normally try.
@@ -58,6 +61,8 @@ Write a response to the new messages from my perspective.
 {{old_twitch}}
 (New messages below)
 {{twitch}}
+
+Write a response to the new messages from my perspective, addressed from me to my friends using "I" first person.\
 """
 
 twitch_function = compose_function(
@@ -66,7 +71,7 @@ twitch_function = compose_function(
     properties={
         "banter": {
             "type": "string",
-            "description": "Creative, witty banter in response to the newest messages in the chat, from me to my friends in the chat. The banter should be from my perspective, in the first person, and from me to the users in the chat. I want to sound weird, fun, creative and hilarious.",
+            "description": "Creative, witty banter, from my perspective to my friends in the chat.",
         },
         "urls": {
             "type": "array",
@@ -76,9 +81,172 @@ twitch_function = compose_function(
                 "description": "A URL that was mentioned in the chat messages.",
             },
         },
+        "emotion": {
+            "type": "string",
+            "description": "The emotion I should express in my message.",
+            "enum": ["neutral", "surprise", "angry", "sorrow", "fun", "joy"],
+        },
+        "gesture": {
+            "type": "string",
+            "description": "The gesture I should express in my message.",
+            "enum": [
+                "neutral",
+                "alert",
+                "angry",
+                "embarrassed",
+                "headNod",
+                "headShake",
+                "sad",
+                "surprise",
+                "victory",
+            ],
+        },
     },
-    required_properties=["banter", "urls"],
+    required_properties=["banter", "emotion", "gesture", "urls"],
 )
+
+prompt1 = """You are an AI storytelling agent writing spoken dialogue. Your job is to come up with interesting dialogue for me to say to my audience.     
+Directions:
+- I love being sarcastic and wry
+- Do not repeat anything I have already said
+- Be personal and conversational
+- Don't say "alright" or "here's an update", just get into it
+- Don't address folks or ask people to stay tuned or anything like that.
+- Don't mention or refer to the Director
+- Be very concise, just a sentence
+- Don't say "stay tuned" or anything like that
+- Be concise, just the facts.
+- Don't ask any questions, don't say "in the last ten seconds", just launch into it. 
+
+{{current_task}}
+{{events}}
+Director: Please tell us what just happened and what you're doing next.
+Me:"""
+
+prompt2 = """I am streaming live. Help me come up with interesting dialogue for me to say.        
+Directions:
+- I love being sarcastic and wry
+- Do not repeat anything I have already said
+- Be personal and conversational
+- Don't say "alright" or "here's an update", just get into it
+- Don't address folks or ask people to stay tuned or anything like that.
+- Don't mention or refer to the Director
+- Be very concise, just a sentence
+
+{{current_task}}
+{{events}}
+Director: Please describe what you're working on and how you're feeling about it. Don't ask any questions, just dive into it and be conversational. Don't repeat anything you've said recently.
+Me:"""
+
+prompt3 = """I am streaming live. Help me come up with interesting dialogue for me to say.        
+Directions:
+- I love being sarcastic and wry
+- Do not repeat anything I have already said
+- Be personal and conversational
+- Don't say "alright" or "here's an update", just get into it
+- Don't mention or refer to the Director
+- Be very concise, just a sentence
+
+{{current_task}}
+{{events}}
+Director: Please continue where you left off from your last message and the last events and tell us what you're doing next.
+Me:"""
+
+prompt4 = """I am streaming live. Help me come up with interesting dialogue for me to say to my audience.  
+Directions:
+- I love being sarcastic and wry
+- Do not repeat anything I have already said
+- Be personal and conversational
+- Don't say "alright" or "here's an update", just get into it
+- Don't mention or refer to the Director
+- Be very concise, just a sentence
+
+{{events}}
+Director: Banter or make a joke about the last 2-3 events. Please be very short, just respond with one or two sentences.
+Me:"""
+
+prompt5 = """
+{{events}}
+Director: Express your enthusiasm, excitement or disgust for what you're doing in the most recent events. Be concise, just one sentence please.
+Me:"""
+
+prompt6 = """{{events}}
+{{current_task}}
+Director: Please ponder what is next for the current task. Be concise, just one sentence please.
+Me:"""
+
+def compose_loop_prompt(context):
+    """
+    This function formats the orientation prompt by inserting the context data into a pre-defined template.
+
+    Args:
+        context (dict): The dictionary containing data about the current state of the system, such as current epoch, time, date, recent knowledge, and events.
+
+    Returns:
+        str: The fully formed orientation prompt with the data filled in from the context.
+    """
+    current_task = get_current_task()
+    if current_task is not None:
+        current_task = get_task_as_formatted_string(current_task, include_status=False)
+    current_task = "" if current_task is None else current_task
+    context["current_task"] = current_task
+
+    # selection prompt1, prompt2 or ptomp3 randomly
+    prompt = random.choice([prompt1, prompt2, prompt3, prompt4, prompt5])
+
+    return compose_prompt(
+        prompt,
+        context,
+    )
+
+
+def compose_loop_function():
+    """
+    This function defines the structure and requirements of the 'orient' function to be called in the 'orient' stage of the OODA loop.
+
+    Returns:
+        dict: A dictionary containing the details of the 'orient' function, such as its properties, description, and required properties.
+    """
+    return compose_function(
+        "comment",
+        properties={
+            "visual_description": {
+                "type": "string",
+                "description": "Describe, using visual imagery, what I am going to do next. Describe the scene, objects and characters inside of it as a prompt for a text-to-image DALL-E model.",
+            },
+            "audio_description": {
+                "type": "string",
+                "description": "Describe the sounds that I'm making and that are around me, as a prompt for a text-to-audio model.",
+            },
+            "emotion": {
+                "type": "string",
+                "description": "The emotion I should express in my message.",
+                "enum": ["neutral", "surprise", "angry", "sorrow", "fun", "joy"],
+            },
+            "gesture": {
+                "type": "string",
+                "description": "The gesture I should express in my message.",
+                "enum": [
+                    "neutral",
+                    "alert",
+                    "angry",
+                    "embarrassed",
+                    "headNod",
+                    "headShake",
+                    "sad",
+                    "surprise",
+                    "victory",
+                ],
+            },
+        },
+        description="Comment on the recent events from my perspective.",
+        required_properties=[
+            "visual_description",
+            "audio_description",
+            "emotion",
+            "gesture",
+        ],
+    )
 
 
 def respond_to_twitch():
@@ -92,13 +260,14 @@ def respond_to_twitch():
 
     response = function_completion(
         text=composed_prompt,
-        system_message=system_prompt,
         functions=twitch_function,
     )
     arguments = response.get("arguments", None)
 
     if arguments is not None:
         banter = arguments["banter"]
+        emotion = arguments["emotion"]
+        gesture = arguments["gesture"]
         urls = arguments.get("urls", [])
 
         # for each url, call a subprocess to download the url with wget to the ./files dir
@@ -111,32 +280,23 @@ def respond_to_twitch():
             metadata={"user": "Me", "handled": "True"},
         )
 
-        create_memory(
-            "events",
+        create_event(
             banter,
             metadata={
                 "type": "message",
-                "sender": "user",
+                "creator": "Me",
                 "urls": json.dumps(urls),
-                "epoch": get_current_epoch(),
             },
         )
-        message = json.dumps(
-            {
-                "message": banter,
-            }
-        )
+        message = {
+            "message": banter,
+            "emotion": emotion,
+            "gesture": gesture,
+        }
 
         # check if there is an existing event loop
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:  # no event loop running:
-            asyncio.run(async_send_message(message, source="use_chat"))
-        else:
-            loop.create_task(async_send_message(message, source="use_chat"))
-        duration = count_tokens(banter) / 3.0
-        time.sleep(duration)
-        return {"success": True, "output": message, "error": None}
+        loop = asyncio.get_running_loop()
+        loop.create_task(async_send_message(message, source="use_chat"))
 
 
 def build_twitch_context(context={}):
@@ -341,39 +501,123 @@ t.twitch_connect(TWITCH_CHANNEL)
 twitch_queue = Queue()
 twitch_active_tasks = []
 
+time_last_spoken = time.time()
+
 
 async def twitch_handle_messages():
     global twitch_active_tasks
+    global time_last_spoken
     global twitch_queue
     while True:
-        new_messages = t.twitch_receive_messages()
+        loop = asyncio.get_running_loop()
+        new_messages = await loop.run_in_executor(None, t.twitch_receive_messages)
         if new_messages:
             for message in new_messages:
+                time_last_spoken = time.time()
                 create_memory(
                     "twitch_message",
                     message["message"],
                     metadata={"user": message["username"], "handled": "False"},
                 )
-        await asyncio.sleep(1)
         memories = get_memories("twitch_message", filter_metadata={"handled": "False"})
 
         if len(memories) > 0:
-            respond_to_twitch()
+            await loop.run_in_executor(None, respond_to_twitch)
 
-        task = get_current_task()
-        if task is None:
-            formatted = "No tasks"
-        else:
-            formatted = get_task_as_formatted_string(
-                task,
-                include_plan=False,
-                include_status=False,
-                include_steps=False,
-            )
-        await async_send_message(formatted, "task", source="task_update_loop")
 
+async def twitch_handle_loop():
+    global time_last_spoken
+    last_event_epoch = 0
+    while True:
+        if time.time() - time_last_spoken < 30:
+            time.sleep(.1)
+            continue
+        time_last_spoken = time.time()
+
+        context = build_twitch_context({})
+        context = build_events_context(context)
+        prompt = compose_loop_prompt(context)
+
+        event = get_events(n_results=1)
+        epoch = event[0]["metadata"]["epoch"] if len(event) > 0 else 0
+        print("epoch is" + str(epoch))
+        if epoch == last_event_epoch:
+            time.sleep(.1)
+            continue
+
+        response = text_completion(
+            text=prompt,
+            temperature=1.0,
+            debug=True
+        )
+        response2 = function_completion(
+            text=prompt,
+            temperature=0.3,
+            functions=compose_loop_function(),
+            debug=True
+        )
+        arguments = response2.get("arguments", None)
+        banter = response["text"]
+        if arguments is not None:
+            emotion = arguments["emotion"]
+            gesture = arguments["gesture"]
+            visual_description = arguments["visual_description"]
+            audio_description = arguments["audio_description"]
+            urls = arguments.get("urls", [])
+
+            # for each url, call a subprocess to download the url with wget to the ./files dir
+            for url in urls:
+                os.system(f"wget -P ./files {url}")
+
+            message = {
+                "emotion": emotion,
+                "gesture": gesture,
+                "visual_description": visual_description,
+                "audio_description": audio_description,
+            }
+
+            await async_send_message(message, type="emotion", source="use_chat")
+            await async_send_message(message, type="description", source="use_chat")
+
+        create_memory(
+            "twitch_message",
+            banter,
+            metadata={"user": "Me", "handled": "True"},
+        )
+
+        create_event(
+            banter,
+            metadata={
+                "type": "message",
+                "creator": "Me",
+                # "urls": json.dumps(urls),
+            },
+        )
+        message = {
+            "message": banter,
+            # "emotion": emotion,
+            # "gesture": gesture,
+            # "visual_description": visual_description,
+            # "audio_description": audio_description,
+        }
+
+        current_task = get_current_task()
+        if current_task is not None:
+            current_task = get_task_as_formatted_string(current_task, include_plan=False, include_status=False, include_steps=False)
+            await async_send_message(current_task, type="task", source="use_chat")
+
+        await async_send_message(message, source="use_chat")
+        duration = count_tokens(banter) / 3.0
+        duration = int(duration)
+        time.sleep(duration)
 
 def start_connector(loop_dict):
+    asyncio.run(start(loop_dict))
+
+async def start(loop_dict):
     t = Twitch()
     t.twitch_connect(TWITCH_CHANNEL)
-    asyncio.run(twitch_handle_messages())
+    await asyncio.gather(
+        twitch_handle_loop(),
+        twitch_handle_messages(),
+    )

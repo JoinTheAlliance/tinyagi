@@ -1,5 +1,5 @@
 import json
-from agentmemory import get_memories
+from agentmemory import get_events
 from tinyagi.constants import (
     MAX_PROMPT_LIST_ITEMS,
     MAX_PROMPT_LIST_TOKENS,
@@ -26,14 +26,14 @@ def event_to_string(event):
     # check if e_m['epoch'] is none, set it to 0 if it is
     if e_m.get("epoch") is None:
         e_m["epoch"] = 0
-    if e_m.get("type") is None:
-        e_m["type"] = "unknown"
-    new_event = f"{e_m['epoch']} | {e_m['type']}"
-    if e_m.get("subtype") is not None:
-        new_event += f"::{e_m['subtype']}"
+    # if e_m.get("type") is None:
+    #     e_m["type"] = "unknown"
+    new_event = f"{e_m['epoch']} | "#{e_m['type']}"
+    # if e_m.get("subtype") is not None:
+    #     new_event += f"::{e_m['subtype']}"
     if e_m.get("creator") is not None:
-        new_event += f" ({e_m['creator']})"
-    new_event += f": {event['document']}"
+        new_event += f"{e_m['creator']}: "
+    new_event += f"{event['document']}"
     return new_event
 
 
@@ -47,19 +47,10 @@ def build_events_context(context={}):
     """
     events_header = """\
 Recent Events are formatted as follows:
-Epoch # | <Type>::<Subtype> (Creator): <Event>
+Epoch # | Creator: <Event>
 ============================================"""
 
-    events = get_memories("events", n_results=MAX_PROMPT_LIST_ITEMS)
-
-    # get the 'document' from all events and make an array
-    event_documents = [{ "document": event["document"], "metadata": event["metadata"] } for event in events]
-
-    # format events with pretty json to view
-    events_to_print = json.dumps(event_documents, indent=4, sort_keys=True)
-    print(events_to_print)
-
-    # reverse events
+    events = get_events(n_results=MAX_PROMPT_LIST_ITEMS)
 
     # sort the events by event["metadata"]["epoch"]
     events = sorted(events, key=lambda k: int(k["metadata"].get("epoch", 0)))

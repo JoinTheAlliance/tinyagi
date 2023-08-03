@@ -8,9 +8,8 @@ from agentmemory import (
     delete_similar_memories,
     get_memories,
     search_memory,
+    get_epoch
 )
-
-from tinyagi.constants import get_current_epoch
 
 MAX_PROMPT_LIST_TOKENS = 1536  # 2048 - 512
 MAX_PROMPT_TOKENS = 3072  # 4096 - 1024
@@ -73,7 +72,7 @@ def build_recent_knowledge(context):
     Returns: str - A string containing the formatted recent knowledge.
     """
     recent_knowledge = get_memories(
-        "knowledge", filter_metadata={"epoch": get_current_epoch() - 1}
+        "knowledge", filter_metadata={"epoch": get_epoch() - 1}
     )
 
     # trim any individual knowledge, just in case

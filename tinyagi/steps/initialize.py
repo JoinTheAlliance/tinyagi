@@ -1,7 +1,9 @@
 import datetime
 import os
 import sys
-from tinyagi.constants import set_current_epoch
+from agentevents import get_epoch
+
+from agentmemory import set_epoch
 
 from tinyagi.utils import log
 
@@ -18,14 +20,14 @@ def initialize(context={}):
     Returns:
         context: a dictionary containing the current context
     """
+    set_epoch(get_epoch() + 1)
     if context is None:
         context = {}
-        context["epoch"] = 0
+        context["epoch"] = get_epoch()
         context["last_epoch"] = 0
     else:
         context["last_epoch"] = context.get("epoch", 0)
-        context["epoch"] = context.get("epoch", 0) + 1
-        set_current_epoch(context["epoch"])
+        context["epoch"] = get_epoch()
     context["current_time"] = datetime.now().strftime("%H:%M")
     context["current_date"] = datetime.now().strftime("%Y-%m-%d")
     context["platform"] = sys.platform
