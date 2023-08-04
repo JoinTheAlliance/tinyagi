@@ -22,7 +22,7 @@ from easycompletion import (
     function_completion,
     text_completion,
 )
-from agentlogger import log
+from tinyagi.utils import log
 
 from tinyagi.context.events import build_events_context
 from tinyagi.context.knowledge import build_recent_knowledge, build_relevant_knowledge
@@ -535,7 +535,7 @@ async def twitch_handle_loop():
     global time_last_spoken
     last_event_epoch = 0
     while True:
-        if time.time() - time_last_spoken < 40:
+        if time.time() - time_last_spoken < 45:
             await asyncio.sleep(1)
             continue
         time_last_spoken = time.time()

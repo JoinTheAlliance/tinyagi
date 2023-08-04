@@ -12,6 +12,8 @@ def log(message, header=None, type="info", title="tinyagi", source="tinyagi", co
         # if message is not a str
         if not isinstance(message, str) and message.get("message", None) is not None:
             message = message["message"]
+        elif not isinstance(message, str):
+            message = str(message)
 
         output = {
             "message": message,

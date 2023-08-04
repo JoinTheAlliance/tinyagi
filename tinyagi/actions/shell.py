@@ -60,7 +60,7 @@ def get_actions():
             "prompt": use_shell_prompt,
             "builder": compose_use_shell_prompt,
             "handler": use_shell_handler,
-            "suggestion_after_actions": ["use_shell"],  # suggest self
+            "suggestion_after_actions": [],  # suggest self
             "never_after_actions": [],
         }
     ]
