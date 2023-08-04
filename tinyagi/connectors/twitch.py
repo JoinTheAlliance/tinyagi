@@ -15,6 +15,7 @@ from agentagenda import (
 from agentcomlink import async_send_message, list_files_formatted
 from agentmemory import get_events
 from agentmemory import create_memory, get_memories, update_memory, create_event
+from agentshell import get_cwd, get_history_formatted
 from easycompletion import (
     compose_function,
     compose_prompt,
@@ -534,8 +535,30 @@ async def twitch_handle_messages(twitch_state):
 async def twitch_handle_loop():
     global time_last_spoken
     last_event_epoch = 0
+
+    last_task = None
+
     while True:
         if time.time() - time_last_spoken < 45:
+            current_task = get_current_task()
+            if last_task != current_task and current_task is not None:
+                current_task = get_task_as_formatted_string(
+                    current_task,
+                    include_plan=False,
+                    include_status=False,
+                    include_steps=False,
+                )
+                await async_send_message(current_task, type="task", source="use_chat")
+                last_task = current_task
+            shell_data = get_history_formatted()
+            cwd = get_cwd()
+            message = {
+                "cwd": cwd,
+                "shell_data": shell_data,
+            }
+
+            await async_send_message(message, type="shell", source="use_chat")
+            
             await asyncio.sleep(1)
             continue
         time_last_spoken = time.time()
@@ -597,16 +620,6 @@ async def twitch_handle_loop():
         message = {
             "message": banter,
         }
-
-        current_task = get_current_task()
-        if current_task is not None:
-            current_task = get_task_as_formatted_string(
-                current_task,
-                include_plan=False,
-                include_status=False,
-                include_steps=False,
-            )
-            await async_send_message(current_task, type="task", source="use_chat")
 
         await async_send_message(message, source="use_chat")
         duration = count_tokens(banter) / 3.0
