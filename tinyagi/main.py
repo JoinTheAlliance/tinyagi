@@ -80,14 +80,14 @@ def start(
         wipe_all_memories()
 
     if actions_dir is not None:
-        print("Imported actions from " + actions_dir)
+        log("WARNING: Imported actions from " + actions_dir, type="warning")
         import_actions(actions_dir)
     else:
         print("No actions directory provided, skipping import")
 
     # if seed_data is not None:
     #     import_file_to_memory(seed_data)
-    print("Starting loop...")
+    log("Starting loop...", type="system")
     loop_dict = start_loop(steps, paused=paused, step_interval=2)
     set_loop_dict(loop_dict)
 

@@ -125,21 +125,19 @@ def orient(context):
     # Get the summary and add to the context object
     summary = response["arguments"]["summary"]
 
-    summary_header = "Summary of Recent Events:"
-
     log_content = ""
 
     if summary is "" or summary is None:
         context["summary"] = None
     else:
-        context["summary"] = summary_header + "\n" + summary + "\n"
+        context["summary"] = summary + "\n"
         log_content += context["summary"]
 
     if len(new_knowledge) > 0:
         log_content += "\nNew Knowledge:\n" + "\n".join(new_knowledge)
 
     if len(log_content) > 0:
-        log(log_content, source="orient", type="step", title="tinyagi")
+        log(log_content, header="Summary of Last Epoch", source="orient", type="step", title="tinyagi")
 
     # Add context summary to event stream
     create_event(summary, metadata={"type": "summary", "epoch": context["epoch"]})

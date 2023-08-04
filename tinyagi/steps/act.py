@@ -48,7 +48,7 @@ def act(context):
         f"Using action {response['function_name']} with arguments {formatted_arguments}"
     )
 
-    log(log_content, type="step", source="decide", title="tinyagi")
+    log(log_content, type="step", source="decide", title="tinyagi", send_to_feed=False)
 
     action_result = use_action(response["function_name"], response["arguments"])
 
@@ -61,7 +61,8 @@ def act(context):
             },
         )
         log(
-            f"Action {action_name} failed",
+            action_result,
+            header=f"Action {action_name} failed",
             type="error",
             source="decide",
             title="tinyagi",
@@ -75,7 +76,8 @@ def act(context):
             },
         )
         log(
-            f"Action {action_name} succeeded\nOutput:\n{action_result.get('output', '')}",
+            action_result.get('output', '<The action had no output>'),
+            header=f"Action {action_name} succeeded",
             type="success",
             source="decide",
             title="tinyagi",

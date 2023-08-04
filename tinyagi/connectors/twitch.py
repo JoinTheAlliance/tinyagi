@@ -520,6 +520,7 @@ async def twitch_handle_messages(twitch_state):
                     source="twitch",
                     color="purple",
                     type="info",
+                    send_to_feed=False,
                 )
                 time_last_spoken = time.time()
                 create_memory(

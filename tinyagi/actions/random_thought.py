@@ -19,8 +19,6 @@ Come up with a random, highly creative idea or thought for me.
 
 
 def have_thought(arguments):
-    print('thought arguments are')
-    print(arguments)
     thought = arguments.get("thought", None)
     message = json.dumps(
         {

@@ -79,7 +79,6 @@ def cancel_step_handler(arguments):
         for s in steps:
             if s["name"] == step:
                 cancel_step(task, s)
-    print("canceled step")
     create_event("I canceled a step:\n" + step)
     return {"success": True, "output": "I canceled a step: " + step, "error": None}
 

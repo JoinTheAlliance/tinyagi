@@ -18,8 +18,6 @@ Write an strange, abstract or silly poem based on the most recent events that in
 
 
 def write_poem(arguments):
-    print('poem arguments are')
-    print(arguments)
     poem = arguments.get("poem", None)
     message = json.dumps(
         {
