@@ -20,6 +20,15 @@ def log(message, header=None, type="info", title="tinyagi", source="tinyagi", co
         }
         send_message(output, "feed", "log")
 
+        print('**********')
+        print('message', message)
+        print('header', header)
+        print('type', type)
+
+    # if header is a dict
+    if isinstance(header, dict):
+        header = header.get("message", str(header))
+
     message_out = f"# {header}\n" + message if header else message
 
     if color is not None:
