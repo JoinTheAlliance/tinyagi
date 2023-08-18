@@ -1,6 +1,6 @@
 import json
 import time
-from agentcomlink import send_message
+from agentcomms.adminpanel import send_message
 from agentmemory import create_event
 from easycompletion import compose_prompt, count_tokens
 

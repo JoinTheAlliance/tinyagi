@@ -4,14 +4,14 @@ import os
 import threading
 
 from agentagenda import list_tasks_as_formatted_string
-from agentcomlink import (
+from agentcomms.adminpanel import (
     async_send_message,
     list_files_formatted,
     register_message_handler,
 )
 from agentmemory import get_events
 from agentloop import pause, unpause
-from agentmemory import create_event, get_memories
+from agentmemory import create_event
 from easycompletion import compose_function, compose_prompt, function_completion
 from uvicorn import Config, Server
 
@@ -21,7 +21,7 @@ from tinyagi.steps.initialize import initialize
 from tinyagi.utils import log
 
 config = Config(
-    "agentcomlink:start_server",
+    "agentcomms:start_server",
     host="0.0.0.0",
     port=int(os.getenv("PORT", 8000)),
     factory=True,

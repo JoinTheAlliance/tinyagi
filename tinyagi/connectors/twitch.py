@@ -12,7 +12,7 @@ from agentagenda import (
     get_task_as_formatted_string,
     list_tasks_as_formatted_string,
 )
-from agentcomlink import async_send_message, list_files_formatted
+from agentcomms.adminpanel import async_send_message, list_files_formatted
 from agentmemory import get_events
 from agentmemory import create_memory, get_memories, update_memory, create_event
 from agentshell import get_cwd, get_history_formatted

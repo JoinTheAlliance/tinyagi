@@ -6,3 +6,9 @@ logs/
 unused/
 memory/
 files/
+data/
+cookies.json
+twitter.cookies
+notifications.json
+inbox.json
+timeline.json

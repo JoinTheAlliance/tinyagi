@@ -1,4 +1,4 @@
-from agentcomlink import send_message
+from agentcomms.adminpanel import send_message
 from agentlogger import log as agentlog, DEFAULT_TYPE_COLORS
 
 

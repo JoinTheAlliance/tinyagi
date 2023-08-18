@@ -4,9 +4,11 @@ agentlogger
 agentloop
 agentmemory
 agentshell
-agentcomlink
+agentcomms
 easycompletion
 agentagenda
 python-dotenv
 python-multipart
 bs4
+py-cord[voice]
+twitter-api-client
